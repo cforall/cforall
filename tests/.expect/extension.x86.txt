@@ -119,7 +119,7 @@ static inline void _X12_constructorFv_U1U_autogen___1(__attribute__ ((unused)) u
 }
 static inline void _X12_constructorFv_U1UU1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1, __attribute__ ((unused)) union U _X4_srcU1U_1){
     {
-        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X4_srcU1U_1)), ((unsigned long int )sizeof(union U ))));
+        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X4_srcU1U_1)), sizeof(union U )));
     }
 
 }
@@ -128,7 +128,7 @@ static inline void _X11_destructorFv_U1U_autogen___1(__attribute__ ((unused)) un
 static inline union U _X16_operator_assignFU1U_U1UU1U_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1, __attribute__ ((unused)) union U _X4_srcU1U_1){
     __attribute__ ((unused)) union U _X4_retU1U_1;
     {
-        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X4_srcU1U_1)), ((unsigned long int )sizeof(union U ))));
+        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X4_srcU1U_1)), sizeof(union U )));
     }
 
     {
@@ -139,7 +139,7 @@ static inline union U _X16_operator_assignFU1U_U1UU1U_autogen___1(__attribute__ 
 }
 static inline void _X12_constructorFv_U1Ui_autogen___1(__attribute__ ((unused)) union U *_X4_dstU1U_1, signed int _X1ai_1){
     {
-        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X1ai_1)), ((unsigned long int )sizeof(signed int ))));
+        ((void)__builtin_memcpy(((void *)_X4_dstU1U_1), ((const void *)(&_X1ai_1)), sizeof(signed int )));
     }
 
 }

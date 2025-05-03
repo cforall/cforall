@@ -58,14 +58,14 @@ void printMyFredsFwd(fred & f) {
     with( DLINK_VIA( fred, fred.mine ) )
 	do {
 		sout | f.adatum;
-	} while (f`moveNext);
+	} while (advance( f ));
 }
 
 void printMyFredsRev(fred & f) {
     with( DLINK_VIA( fred, fred.mine ) )
 	do {
 		sout | f.adatum;
-	} while (f`movePrev);
+	} while (recede( f ));
 }
 
 
@@ -93,14 +93,14 @@ void printYourFredsFwd(fred & f) {
     with( DLINK_VIA( fred, fred.yours ) )
 	do {
 		sout | f.adatum;
-	} while (f`moveNext);
+	} while (advance( f ));
 }
 
 void printYourFredsRev(fred & f) {
     with( DLINK_VIA( fred, fred.yours ) )
 	do {
 		sout | f.adatum;
-	} while (f`movePrev);
+	} while (recede( f ));
 }
 
 void printYourFreddies(fred &f1, fred &f2, int isBefore) {
@@ -126,13 +126,13 @@ void printYourFreddies(fred &f1, fred &f2, int isBefore) {
 void printMariesFwd(mary &m) {
 	do {
 		sout | m.anotherdatum;
-	} while (m`moveNext);
+	} while (advance( m ));
 }
 
 void printMariesRev(mary &m) {
 	do {
 		sout | m.anotherdatum;
-	} while (m`movePrev);
+	} while (recede( m ));
 }
 
 void printMariatheotokos(mary &m1, mary &m2, int isBefore) {
@@ -422,13 +422,13 @@ void test__insertafter_after_last__fred_mine() {
 
 	dlist(fred, fred.mine) lf;
 
-	assert( & lf`first == 0p );
-	assert( & lf`last == 0p );
+	assert( &first( lf ) == 0p );
+	assert( &last( lf ) == 0p );
 
 	insert_first(lf, f1);
 
-	assert( & lf`first == & f1 );
-	assert( & lf`last  == & f1 );
+	assert( &first( lf ) == &f1 );
+	assert( &last( lf )  == &f1 );
 
 	verify(validate(lf));
 
@@ -439,8 +439,8 @@ void test__insertafter_after_last__fred_mine() {
 	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
 	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
 
-	assert( & lf`first == & f1 );
-	assert( & lf`last  == & f2 );
+	assert( &first( lf ) == &f1 );
+	assert( &last( lf )  == &f2 );
 }
 
 void test__insertafter_after_last__fred_yours() {
@@ -450,13 +450,13 @@ void test__insertafter_after_last__fred_yours() {
 
 	dlist(fred, fred.yours) lf;
 
-	assert( & lf`first == 0p );
-	assert( & lf`last == 0p );
+	assert( &first( lf ) == 0p );
+	assert( &last( lf ) == 0p );
 
 	insert_first(lf, f1);
 
-	assert( & lf`first == & f1 );
-	assert( & lf`last  == & f1 );
+	assert( &first( lf ) == & f1 );
+	assert( &last( lf )  == & f1 );
 
 	verify(validate(lf));
 
@@ -467,8 +467,8 @@ void test__insertafter_after_last__fred_yours() {
 	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
 	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
 
-	assert( & lf`first == & f1 );
-	assert( & lf`last  == & f2 );
+	assert( &first( lf ) == & f1 );
+	assert( &last( lf )  == & f2 );
 }
 
 void test__insertafter_after_last__mary() {
@@ -478,13 +478,13 @@ void test__insertafter_after_last__mary() {
 
 	dlist(mary) lm;
 
-	assert( & lm`first == 0p );
-	assert( & lm`last == 0p );
+	assert( &first( lm ) == 0p );
+	assert( &last( lm ) == 0p );
 
 	insert_first(lm, m1);
 
-	assert( & lm`first == & m1 );
-	assert( & lm`last  == & m1 );
+	assert( &first( lm ) == & m1 );
+	assert( &last( lm )  == & m1 );
 
 	verify(validate(lm));
 
@@ -494,8 +494,8 @@ void test__insertafter_after_last__mary() {
 
 	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
 
-	assert( & lm`first == & m1 );
-	assert( & lm`last  == & m2 );
+	assert( &first( lm ) == & m1 );
+	assert( &last( lm )  == & m2 );
 }
 
 ////////////////////////////////////////////////////////////
@@ -515,13 +515,13 @@ void test__insertbefore_before_first__fred_mine() {
 
 	dlist(fred, fred.mine) lf;
 
-	assert( & lf`first == 0p );
-	assert( & lf`last == 0p );
+	assert( &first( lf ) == 0p );
+	assert( &last( lf ) == 0p );
 
 	insert_last(lf, f2);
 
-	assert( & lf`first == & f2 );
-	assert( & lf`last  == & f2 );
+	assert( &first( lf ) == & f2 );
+	assert( &last( lf )  == & f2 );
 
 	verify(validate(lf));
 
@@ -532,8 +532,8 @@ void test__insertbefore_before_first__fred_mine() {
 	printMyFreddies(f1, f2, 0);     // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
 	printYourFreddies(f1, f2, 0);   // 3.14; 3.14; 0.5; 0.5 (unmodified)
 
-	assert( & lf`first == & f1 );
-	assert( & lf`last  == & f2 );
+	assert( &first( lf ) == & f1 );
+	assert( &last( lf )  == & f2 );
 }
 
 void test__insertbefore_before_first__fred_yours() {
@@ -543,13 +543,13 @@ void test__insertbefore_before_first__fred_yours() {
 
 	dlist(fred, fred.yours) lf;
 
-	assert( & lf`first == 0p );
-	assert( & lf`last == 0p );
+	assert( &first( lf ) == 0p );
+	assert( &last( lf ) == 0p );
 
 	insert_last(lf, f2);
 
-	assert( & lf`first == & f2 );
-	assert( & lf`last  == & f2 );
+	assert( &first( lf ) == & f2 );
+	assert( &last( lf )  == & f2 );
 
 	verify(validate(lf));
 
@@ -560,8 +560,8 @@ void test__insertbefore_before_first__fred_yours() {
 	printMyFreddies(f1, f2, 0);     // 3.14; 3.14; 0.5; 0.5 (unmodified)
 	printYourFreddies(f1, f2, 0);   // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
 
-	assert( & lf`first == & f1 );
-	assert( & lf`last  == & f2 );
+	assert( &first( lf ) == & f1 );
+	assert( &last( lf )  == & f2 );
 }
 
 void test__insertbefore_before_first__mary() {
@@ -571,13 +571,13 @@ void test__insertbefore_before_first__mary() {
 
 	dlist(mary) lm;
 
-	assert( & lm`first == 0p );
-	assert( & lm`last == 0p );
+	assert( &first( lm ) == 0p );
+	assert( &last( lm ) == 0p );
 
 	insert_last(lm, m2);
 
-	assert( & lm`first == & m2 );
-	assert( & lm`last  == & m2 );
+	assert( &first( lm ) == & m2 );
+	assert( &last( lm )  == & m2 );
 
 	verify(validate(lm));
 
@@ -587,8 +587,8 @@ void test__insertbefore_before_first__mary() {
 
 	printMariatheotokos(m1, m2, 0); // 3.14, 0.5; 3.14; 0.5; 0.5, 3.14 (modified)
 
-	assert( & lm`first == & m1 );
-	assert( & lm`last  == & m2 );
+	assert( &first( lm ) == & m1 );
+	assert( &last( lm )  == & m2 );
 }
 #if 0
 
@@ -890,8 +890,8 @@ void test__remove_at_head__fred_mine() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
@@ -901,8 +901,8 @@ void test__remove_at_head__fred_mine() {
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
-	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
 
 	// observe f1 is now solo in mine; in yours, it was just traversed
 	printMyFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
@@ -929,8 +929,8 @@ void test__remove_at_head__fred_yours() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
@@ -940,8 +940,8 @@ void test__remove_at_head__fred_yours() {
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
-	printYourFreddies(fly`first, fly`last, 0);   // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
 
 	// observe f1 is now solo in yours; in mine, it was just traversed
 	printYourFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
@@ -962,7 +962,7 @@ void test__remove_at_head__mary() {
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMariatheotokos(first( ml ), last( ml ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(ml));
 
@@ -970,7 +970,7 @@ void test__remove_at_head__mary() {
 
 	verify(validate(ml));
 
-	printMariatheotokos(ml`first, ml`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printMariatheotokos(first( ml ), last( ml ), 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
 
 	// observe m1 is now solo
 	printMariatheotokos(m1, *0p, 0);               // 1.7; 1.7; ;
@@ -1006,8 +1006,8 @@ void test__remove_at_tail__fred_mine() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
@@ -1017,8 +1017,8 @@ void test__remove_at_tail__fred_mine() {
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
-	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
 
 	// observe f3 is now solo in mine; in yours, it was just traversed
 	printMyFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
@@ -1044,8 +1044,8 @@ void test__remove_at_tail__fred_yours() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
@@ -1055,8 +1055,8 @@ void test__remove_at_tail__fred_yours() {
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
-	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
 
 	// observe f3 is now solo in yours; in mine, it was just traversed
 	printYourFreddies(f3, *0p, 0);               // 3.7; 3.7; ;
@@ -1077,7 +1077,7 @@ void test__remove_at_tail__mary() {
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMariatheotokos(first( ml ), last( ml ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(ml));
 
@@ -1085,7 +1085,7 @@ void test__remove_at_tail__mary() {
 
 	verify(validate(ml));
 
-	printMariatheotokos(ml`first, ml`last, 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printMariatheotokos(first( ml ), last( ml ), 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
 
 	// observe m3 is now solo
 	printMariatheotokos(m3, *0p, 0);               //3.7; 3.7; ;
@@ -1115,8 +1115,8 @@ void test__remove_of_sole__fred_mine() {
 	dlist(fred, fred.yours) fly;
 	insert_last(fly, f);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 0.7; 0.7; 0.7; 0.7
-	printYourFreddies(fly`first, fly`last, 1);   // 0.7; 0.7; 0.7; 0.7
+	printMyFreddies(first( flm ), last( flm ), 1);     // 0.7; 0.7; 0.7; 0.7
+	printYourFreddies(first( fly ), last( fly ), 1);   // 0.7; 0.7; 0.7; 0.7
 
 	verify(validate(fly));
 	verify(validate(flm));
@@ -1126,10 +1126,10 @@ void test__remove_of_sole__fred_mine() {
 	verify(validate(fly));
 	verify(validate(flm));
 
-	assert( & flm`first == 0p );
-	assert( & flm`last == 0p );
+	assert( &first( flm ) == 0p );
+	assert( &last( flm ) == 0p );
 
-	printYourFreddies(fly`first, fly`last, 0);   // 0.7; 0.7; 0.7; 0.7 (unmodified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 0.7; 0.7; 0.7; 0.7 (unmodified)
 
 	// observe f is solo in mine (now unlisted); in yours, it was just traversed
 	printMyFreddies(f, *0p, 0);    // 0.7; 0.7; ;
@@ -1141,7 +1141,7 @@ void test__remove_of_sole__fred_mine() {
 	insert_last(flm, f);
 	verify(validate(fly));
 	verify(validate(flm));
-	printMyFreddies(flm`first, flm`last, 0);     // 0.7; 0.7; 0.7; 0.7
+	printMyFreddies(first( flm ), last( flm ), 0);     // 0.7; 0.7; 0.7; 0.7
 }
 
 void test__remove_of_sole__fred_yours() {
@@ -1154,8 +1154,8 @@ void test__remove_of_sole__fred_yours() {
 	dlist(fred, fred.yours) fly;
 	insert_last(fly, f);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 0.7; 0.7; 0.7; 0.7
-	printYourFreddies(fly`first, fly`last, 1);   // 0.7; 0.7; 0.7; 0.7
+	printMyFreddies(first( flm ), last( flm ), 1);     // 0.7; 0.7; 0.7; 0.7
+	printYourFreddies(first( fly ), last( fly ), 1);   // 0.7; 0.7; 0.7; 0.7
 
 	verify(validate(fly));
 	verify(validate(flm));
@@ -1165,10 +1165,10 @@ void test__remove_of_sole__fred_yours() {
 	verify(validate(fly));
 	verify(validate(flm));
 
-	assert( & fly`first == 0p );
-	assert( & fly`last == 0p );
+	assert( &first( fly ) == 0p );
+	assert( &last( fly ) == 0p );
 
-	printYourFreddies(flm`first, flm`last, 0);   // 0.7; 0.7; 0.7; 0.7 (unmodified)
+	printYourFreddies(first( flm ), last( flm ), 0);   // 0.7; 0.7; 0.7; 0.7 (unmodified)
 
 	// observe f is solo in yours (now unlisted); in mine, it was just traversed
 	printYourFreddies(f, *0p, 0);    // 0.7; 0.7; ;
@@ -1180,7 +1180,7 @@ void test__remove_of_sole__fred_yours() {
 	insert_last(fly, f);
 	verify(validate(fly));
 	verify(validate(flm));
-	printYourFreddies(fly`first, fly`last, 0);     // 0.7; 0.7; 0.7; 0.7
+	printYourFreddies(first( fly ), last( fly ), 0);     // 0.7; 0.7; 0.7; 0.7
 }
 
 void test__remove_of_sole__mary() {
@@ -1190,7 +1190,7 @@ void test__remove_of_sole__mary() {
 	dlist(mary) ml;
 	insert_last(ml, m);
 
-	printMariatheotokos(ml`first, ml`last, 1);     // 0.7; 0.7; 0.7; 0.7
+	printMariatheotokos(first( ml ), last( ml ), 1);     // 0.7; 0.7; 0.7; 0.7
 
 	verify(validate(ml));
 
@@ -1198,8 +1198,8 @@ void test__remove_of_sole__mary() {
 
 	verify(validate(ml));
 
-	assert( & ml`first == 0p );
-	assert( & ml`last == 0p );
+	assert( &first( ml ) == 0p );
+	assert( &last( ml ) == 0p );
 
 	// observe f is solo in mine (now unlisted); in yours, it was just traversed
 	printMariatheotokos(m, *0p, 0);    // 0.7; 0.7; ;
@@ -1210,7 +1210,7 @@ void test__remove_of_sole__mary() {
 
 	insert_last(ml, m);
 	verify(validate(ml));
-	printMariatheotokos(ml`first, ml`last, 0);     // 0.7; 0.7; 0.7; 0.7
+	printMariatheotokos(first( ml ), last( ml ), 0);     // 0.7; 0.7; 0.7; 0.7
 }
 
 ////////////////////////////////////////////////////////////
@@ -1241,19 +1241,19 @@ void test__pop_first__fred_mine() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	fred & popped = try_pop_front(flm);
+	fred & popped = remove_first(flm);
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
-	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
 
 	// observe f1 is now solo in mine; in yours, it was just traversed
 	printMyFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
@@ -1277,19 +1277,19 @@ void test__pop_first__fred_yours() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	fred & popped = try_pop_front(fly);
+	fred & popped = remove_first(fly);
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
-	printYourFreddies(fly`first, fly`last, 0);   // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
 
 	// observe f1 is now solo in yours; in mine, it was just traversed
 	printYourFreddies(f1, *0p, 0);    // 1.7; 1.7; ;
@@ -1308,15 +1308,15 @@ void test__pop_first__maries() {
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMariatheotokos(first( ml ), last( ml ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(ml));
 
-	mary & popped = try_pop_front(ml);
+	mary & popped = remove_first(ml);
 
 	verify(validate(ml));
 
-	printMariatheotokos(ml`first, ml`last, 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
+	printMariatheotokos(first( ml ), last( ml ), 0);     // 2.7, 3.7;       2.7;  3.7;  3.7, 2.7      (modified)
 
 	// observe m1 is now solo
 	printMariatheotokos(m1, *0p, 0);               // 1.7; 1.7; ;
@@ -1340,19 +1340,19 @@ void test__pop_last__fred_mine() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	fred & popped = try_pop_back(flm);
+	fred & popped = remove_last(flm);
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
-	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
 
 	// observe f3 is now solo in mine; in yours, it was just traversed
 	printMyFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
@@ -1376,19 +1376,19 @@ void test__pop_last__fred_yours() {
 	insert_last(fly, f2);
 	insert_last(fly, f3);
 
-	printMyFreddies(flm`first, flm`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
-	printYourFreddies(fly`first, fly`last, 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMyFreddies(first( flm ), last( flm ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printYourFreddies(first( fly ), last( fly ), 1);   // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	fred & popped = try_pop_back(fly);
+	fred & popped = remove_last(fly);
 
 	verify(validate(fly));
 	verify(validate(flm));
 
-	printMyFreddies(flm`first, flm`last, 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
-	printYourFreddies(fly`first, fly`last, 0);   // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printMyFreddies(first( flm ), last( flm ), 0);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 (unmodified)
+	printYourFreddies(first( fly ), last( fly ), 0);   // 1.7, 2.7;       1.7;  2.7;  2.7, 1.7      (modified)
 
 	// observe f3 is now solo in yours; in mine, it was just traversed
 	printYourFreddies(f3, *0p, 0);    // 3.7; 3.7; ;
@@ -1407,15 +1407,15 @@ void test__pop_last__maries() {
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	printMariatheotokos(ml`first, ml`last, 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
+	printMariatheotokos(first( ml ), last( ml ), 1);     // 1.7, 2.7, 3.7;  1.7;  3.7;  3.7, 2.7, 1.7 
 
 	verify(validate(ml));
 
-	mary & popped = try_pop_back(ml);
+	mary & popped = remove_last(ml);
 
 	verify(validate(ml));
 
-	printMariatheotokos(ml`first, ml`last, 0);     // 1.7, 1.7;       1.7;  2.7;  2.7, 1.7      (modified)
+	printMariatheotokos(first( ml ), last( ml ), 0);     // 1.7, 1.7;       1.7;  2.7;  2.7, 1.7      (modified)
 
 	// observe m1 is now solo
 	printMariatheotokos(m3, *0p, 0);               // 3.7; 3.7; ;
@@ -1427,8 +1427,8 @@ void test__pop_last__maries() {
 //
 // Section 4g
 //
-// Test cases of `isEmpty, `hasPrev, `hasNext,
-// try_pop_front, try_pop_back, modifications via `elems
+// Test cases of isEmpty, isFirst, isLast,
+// remove_first, remove_last, modifications via iter
 //
 // Example of call-side user code
 //
@@ -1440,32 +1440,32 @@ void test__accessor_cases__mary() {
 	mary m2 = {2.7};
 	mary m3 = {3.7};
 
-	dlist(mary) ml;			assert( ml`isEmpty);
+	dlist(mary) ml;			assert( isEmpty( ml ));
 
-	insert_last(ml, m1);	assert(!ml`isEmpty);
-	insert_last(ml, m2);	assert(!ml`isEmpty);
-	insert_last(ml, m3);	assert(!ml`isEmpty);
+	insert_last(ml, m1);	assert(!isEmpty( ml ));
+	insert_last(ml, m2);	assert(!isEmpty( ml ));
+	insert_last(ml, m3);	assert(!isEmpty( ml ));
 
-	mary & m1prev = m1`prev;
-	mary & m1next = m1`next;
-	mary & m2prev = m2`prev;
-	mary & m2next = m2`next;
-	mary & m3prev = m3`prev;
-	mary & m3next = m3`next;
+	mary & m1prev = prev( m1 );
+	mary & m1next = next( m1 );
+	mary & m2prev = prev( m2 );
+	mary & m2next = next( m2 );
+	mary & m3prev = prev( m3 );
+	mary & m3next = next( m3 );
 
-	assert (&m1prev == 0p);
-	assert (&m1next == &m2);
-	assert (&m2prev == &m1);
-	assert (&m2next == &m3);
-	assert (&m3prev == &m2);
-	assert (&m3next == 0p);
+	assert( &m1prev == 0p );
+	assert( &m1next == &m2 );
+	assert( &m2prev == &m1 );
+	assert( &m2next == &m3 );
+	assert( &m3prev == &m2 );
+	assert( &m3next == 0p );
 
-	assert(!m1`hasPrev);
-	assert( m1`hasNext);
-	assert( m2`hasPrev);
-	assert( m2`hasNext);
-	assert( m3`hasPrev);
-	assert(!m3`hasNext);
+	assert( ! isFirst( m1 ) );
+	assert( isLast( m1 ) );
+	assert( isFirst( m2 ) );
+	assert( isLast( m2 ) );
+	assert( isFirst( m3 ) );
+	assert( ! isLast( m3 ) );
 
 	printf("accessor_cases done\n");
 }
@@ -1485,16 +1485,16 @@ void test__try_pop__mary() {
 
 	// queue, back to front
 
-	assert( ml`isEmpty);
+	assert( isEmpty( ml ));
 
 	insert_last(ml, m1);
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	&m1r = & try_pop_front(ml);	assert(!ml`isEmpty);
-	&m2r = & try_pop_front(ml);	assert(!ml`isEmpty);
-	&m3r = & try_pop_front(ml);	assert( ml`isEmpty);
-	&mxr = & try_pop_front(ml);	assert( ml`isEmpty);
+	&m1r = & remove_first(ml);	assert(!isEmpty( ml ));
+	&m2r = & remove_first(ml);	assert(!isEmpty( ml ));
+	&m3r = & remove_first(ml);	assert( isEmpty( ml ));
+	&mxr = & remove_first(ml);	assert( isEmpty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1507,16 +1507,16 @@ void test__try_pop__mary() {
 
 	// queue, front to back
 
-	assert( ml`isEmpty);
+	assert( isEmpty( ml ));
 
 	insert_first(ml, m1);
 	insert_first(ml, m2);
 	insert_first(ml, m3);
 
-	&m1r = & try_pop_back(ml);	assert(!ml`isEmpty);
-	&m2r = & try_pop_back(ml);	assert(!ml`isEmpty);
-	&m3r = & try_pop_back(ml);	assert( ml`isEmpty);
-	&mxr = & try_pop_back(ml);	assert( ml`isEmpty);
+	&m1r = & remove_last(ml);	assert(!isEmpty( ml ));
+	&m2r = & remove_last(ml);	assert(!isEmpty( ml ));
+	&m3r = & remove_last(ml);	assert( isEmpty( ml ));
+	&mxr = & remove_last(ml);	assert( isEmpty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1529,16 +1529,16 @@ void test__try_pop__mary() {
 
 	// stack at front
 
-	assert( ml`isEmpty);
+	assert( isEmpty( ml ));
 
 	insert_first(ml, m1);
 	insert_first(ml, m2);
 	insert_first(ml, m3);
 
-	&m3r = & try_pop_front(ml);	assert(!ml`isEmpty);
-	&m2r = & try_pop_front(ml);	assert(!ml`isEmpty);
-	&m1r = & try_pop_front(ml);	assert( ml`isEmpty);
-	&mxr = & try_pop_front(ml);	assert( ml`isEmpty);
+	&m3r = & remove_first(ml);	assert(!isEmpty( ml ));
+	&m2r = & remove_first(ml);	assert(!isEmpty( ml ));
+	&m1r = & remove_first(ml);	assert( isEmpty( ml ));
+	&mxr = & remove_first(ml);	assert( isEmpty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1551,16 +1551,16 @@ void test__try_pop__mary() {
 
 	// stack at back
 
-	assert( ml`isEmpty);
+	assert( isEmpty( ml ));
 
 	insert_last(ml, m1);
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	&m3r = & try_pop_back(ml);	assert(!ml`isEmpty);
-	&m2r = & try_pop_back(ml);	assert(!ml`isEmpty);
-	&m1r = & try_pop_back(ml);	assert( ml`isEmpty);
-	&mxr = & try_pop_back(ml);	assert( ml`isEmpty);
+	&m3r = & remove_last(ml);	assert(!isEmpty( ml ));
+	&m2r = & remove_last(ml);	assert(!isEmpty( ml ));
+	&m1r = & remove_last(ml);	assert( isEmpty( ml ));
+	&mxr = & remove_last(ml);	assert( isEmpty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1579,23 +1579,23 @@ void test__origin_mutation__mary() {
 	mary m1 = {1.7};
 
 	dlist(mary) ml;
-	mary & mlorigin = ml`elems;
+	mary & mlorigin = iter( ml );
 
 	// insert before the origin
 
-	insert_before( ml`elems, m1 );
-	assert( ! ml`isEmpty );
+	insert_before( iter( ml ), m1 );
+	assert( ! isEmpty( ml ) );
 
-	mary & mlfirst = ml`first;
-	mary & mllast = ml`last;
+	mary & mlfirst = first( ml );
+	mary & mllast = last( ml );
 
 	assert( &m1 == & mlfirst );
 	assert( &m1 == & mllast );
 
 	// moveNext after last goes back to origin, &vv
 
-	bool canMoveNext = mllast`moveNext;
-	bool canMovePrev = mlfirst`movePrev;
+	bool canMoveNext = advance( mllast );
+	bool canMovePrev = recede( mlfirst );
 
 	assert( ! canMoveNext );
 	assert( ! canMovePrev );
@@ -1608,19 +1608,19 @@ void test__origin_mutation__mary() {
 
 void test__isListed_cases__mary() {
 
-	mary m1 = {1.7};        assert(! m1`isListed);
-	mary m2 = {2.7};        assert(! m2`isListed);
-	mary m3 = {3.7};        assert(! m3`isListed);
+	mary m1 = {1.7};        assert( ! isListed( m1 ) );
+	mary m2 = {2.7};        assert( ! isListed( m2 ) );
+	mary m3 = {3.7};        assert( ! isListed( m3 ) );
 
 	dlist(mary) ml;
 
-	insert_last(ml, m1);	assert(  m1`isListed);  assert(! m2`isListed);
-	insert_last(ml, m2);	assert(  m2`isListed);  assert(! m3`isListed);
-	insert_last(ml, m3);	assert(  m3`isListed);
+	insert_last(ml, m1);	assert( isListed( m1 ) );  assert(! isListed( m2 ) );
+	insert_last(ml, m2);	assert( isListed( m2 ) );  assert(! isListed( m3 ) );
+	insert_last(ml, m3);	assert( isListed( m3 ) );
 
-	remove( m1 );           assert(! m1`isListed);  assert(  m2`isListed);
-	remove( m2 );           assert(! m2`isListed);  assert(  m3`isListed);
-	remove( m3 );           assert(! m3`isListed);
+	remove( m1 );           assert( ! isListed( m1 ) );  assert(  isListed( m2 ) );
+	remove( m2 );           assert( ! isListed( m2 ) );  assert(  isListed( m3 ) );
+	remove( m3 );           assert( ! isListed( m3 ) );
 
 	printf("isListed cases done\n");
 }

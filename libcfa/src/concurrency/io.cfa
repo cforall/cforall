@@ -94,7 +94,7 @@
 
 	static inline void __post(oneshot & this, bool kernel, unpark_hint hint) {
 		thread$ * t = post( this, false );
-		if(kernel) __kernel_unpark( t, hint );
+		if (kernel) __kernel_unpark( t, hint );
 		else unpark( t, hint );
 	}
 
@@ -107,7 +107,7 @@
 		for() {
 			// do the system call in a loop, repeat on interrupts
 			ret = syscall( __NR_io_uring_enter, ctx.fd, ctx.sq.to_submit, min_comp, flags, (sigset_t *)0p, _NSIG / 8);
-			if( ret < 0 ) {
+			if ( ret < 0 ) {
 				switch((int)errno) {
 				case EINTR:
 					continue;
@@ -153,11 +153,11 @@
 			const __u32 head = *ctx->cq.head;
 			const __u32 tail = *ctx->cq.tail;
 
-			if(head == tail) return false;
+			if (head == tail) return false;
 		}
 
 		// try a simple spinlock acquire, it's likely there are completions to drain
-		if(!__atomic_try_acquire(&ctx->cq.try_lock)) {
+		if ( ! __atomic_try_acquire(&ctx->cq.try_lock)) {
 			// some other processor already has it
 			__STATS__( false, io.calls.locked++; )
 			return false;
@@ -213,7 +213,7 @@
 			ctx->proc->idle_wctx.drain_time = ts_next;
 
 			// we finished draining the completions... unless the ring buffer was full and there are more secret completions in the kernel.
-			if(likely(count < num)) break;
+			if (likely(count < num)) break;
 
 			// the ring buffer was full, there could be more stuff in the kernel.
 			ioring_syscsll( *ctx, 0, IORING_ENTER_GETEVENTS);
@@ -242,7 +242,7 @@
 		__ioarbiter_flush( ctx, kernel );
 
 		// if submitting must be submitted, do the system call
-		if(ctx.sq.to_submit != 0) {
+		if (ctx.sq.to_submit != 0) {
 			ioring_syscsll(ctx, 0, 0);
 		}
 	}
@@ -277,14 +277,14 @@
 
 			// only help once every other time
 			// pick a target when not helping
-			if(proc->io.target == UINT_MAX) {
+			if (proc->io.target == UINT_MAX) {
 				uint64_t chaos = __tls_rand();
 				// choose who to help and whether to accept helping far processors 
 				unsigned ext = chaos & 0xff;
 				unsigned other  = (chaos >> 8) % (ctxs_count);
 
 				// if the processor is on the same cache line or is lucky ( 3 out of 256 odds ) help it
-				if(ext < 3 || __atomic_load_n(&caches[other / __shard_factor.io].id, __ATOMIC_RELAXED) == this_cache) {
+				if (ext < 3 || __atomic_load_n(&caches[other / __shard_factor.io].id, __ATOMIC_RELAXED) == this_cache) {
 					proc->io.target = other;
 				}
 			}
@@ -293,22 +293,22 @@
 				const unsigned target = proc->io.target;
 				/* paranoid */ verify( io.tscs[target].t.tv != ULLONG_MAX );
 				// make sure the target hasn't stopped existing since last time
-				HELP: if(target < ctxs_count) {
+				HELP: if (target < ctxs_count) {
 					// calculate it's age and how young it could be before we give up on helping
 					const __readyQ_avg_t cutoff = calc_cutoff(ctsc, ctx->cq.id, ctxs_count, io.data, io.tscs, __shard_factor.io, false);
 					const __readyQ_avg_t age = moving_average(ctsc, io.tscs[target].t.tv, io.tscs[target].t.ma, false);
 					__cfadbg_print_safe(io, "Kernel I/O: Help attempt on %u from %u, age %'llu vs cutoff %'llu, %s\n", target, ctx->cq.id, age, cutoff, age > cutoff ? "yes" : "no");
 					// is the target older than the cutoff, recall 0 is oldest and bigger ints are younger
-					if(age <= cutoff) break HELP;
+					if (age <= cutoff) break HELP;
 
 					// attempt to help the submission side
 					__cfa_do_flush( *io.data[target], true );
 
 					// attempt to help the completion side
-					if(!try_acquire(io.data[target])) break HELP; // already acquire no help needed
+					if ( ! try_acquire(io.data[target])) break HELP; // already acquire no help needed
 
 					// actually help
-					if(!__cfa_do_drain( io.data[target], cltr )) break HELP;
+					if ( ! __cfa_do_drain( io.data[target], cltr )) break HELP;
 
 					// track we did help someone
 					remote = true;
@@ -321,7 +321,7 @@
 		}
 
 		// Drain the local queue
-		if(try_acquire( proc->io.ctx )) {
+		if (try_acquire( proc->io.ctx )) {
 			local = __cfa_do_drain( proc->io.ctx, cltr );
 		}
 
@@ -389,7 +389,7 @@
 		__u32 ftail = sq.free_ring.tail;    // get the current tail of the queue
 
 		// If we don't have enough sqes, fail
-		if((ftail - fhead) < want) { return false; }
+		if ((ftail - fhead) < want) { return false; }
 
 		// copy all the indexes we want from the available list
 		for(i; want) {
@@ -421,7 +421,7 @@
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to fast allocation\n");
 
 		// We can proceed to the fast path
-		if( __alloc(ctx, idxs, want) ) {
+		if ( __alloc(ctx, idxs, want) ) {
 			// Allocation was successful
 			__STATS__( true, io.alloc.fast += 1; )
 			enable_interrupts();
@@ -455,7 +455,7 @@
 	// submission
 	// barebones logic to submit a group of sqes
 	static inline void __submit_only( struct io_context$ * ctx, __u32 idxs[], __u32 have, bool lock) {
-		if(!lock) 
+		if ( ! lock) 
 			lock( ctx->ext_sq.lock __cfaabi_dbg_ctx2 );
 		// We can proceed to the fast path
 		// Get the right objects
@@ -477,7 +477,7 @@
 		__atomic_store_n(&ctx->proc->io.pending, true, __ATOMIC_RELAXED);
 		__atomic_store_n(&ctx->proc->io.dirty  , true, __ATOMIC_RELAXED);
 
-		if(!lock) 
+		if ( ! lock) 
 			unlock( ctx->ext_sq.lock );
 	}
 
@@ -486,11 +486,11 @@
 		__sub_ring_t & sq = ctx->sq;
 		__submit_only(ctx, idxs, have, false);
 
-		if(sq.to_submit > 30) {
+		if (sq.to_submit > 30) {
 			__tls_stats()->io.flush.full++;
 			__cfa_io_flush( ctx->proc );
 		}
-		if(!lazy) {
+		if ( ! lazy ) {
 			__tls_stats()->io.flush.eager++;
 			__cfa_io_flush( ctx->proc );
 		}
@@ -502,14 +502,14 @@
 		// __cfadbg_print_safe(io, "Kernel I/O : attempting to submit %u (%s)\n", have, lazy ? "lazy" : "eager");
 
 		disable_interrupts();
-		__STATS__( true, if(!lazy) io.submit.eagr += 1; )
+		__STATS__( true, if ( ! lazy ) io.submit.eagr += 1; )
 		struct processor * proc = __cfaabi_tls.this_processor;
 		io_context$ * ctx = proc->io.ctx;
 		/* paranoid */ verify( __cfaabi_tls.this_processor );
 		/* paranoid */ verify( ctx );
 
 		// Can we proceed to the fast path
-		if( ctx == inctx )		// We have the right instance?
+		if ( ctx == inctx )		// We have the right instance?
 		{
 			// yes! fast submit
 			__submit(ctx, idxs, have, lazy);
@@ -563,7 +563,7 @@
 		// find the range we need to clear
 		__u32 count = chead - phead;
 
-		if(count == 0) {
+		if (count == 0) {
 			return 0;
 		}
 
@@ -593,7 +593,7 @@
 		// Lock the list, it's not thread safe
 		lock( queue.lock __cfaabi_dbg_ctx2 );
 		{
-			was_empty = queue.queue`isEmpty;
+			was_empty = isEmpty( queue.queue );
 
 			// Add our request to the list
 			insert_last( queue.queue, item );
@@ -631,7 +631,7 @@
 
 	// notify the arbiter that new allocations are available
 	static void __ioarbiter_notify( io_arbiter$ & this, io_context$ * ctx ) {
-		/* paranoid */ verify( !this.pending.queue`isEmpty );
+		/* paranoid */ verify( ! isEmpty( this.pending.queue ) );
 		/* paranoid */ verify( __preemption_enabled() );
 
 		// mutual exclusion is needed
@@ -641,16 +641,16 @@
 
 			// as long as there are pending allocations try to satisfy them
 			// for simplicity do it in FIFO order
-			while( !this.pending.queue`isEmpty ) {
+			while( ! isEmpty( this.pending.queue ) ) {
 				// get first pending allocs
 				__u32 have = ctx->sq.free_ring.tail - ctx->sq.free_ring.head;
-				__pending_alloc & pa = (__pending_alloc&)(this.pending.queue`first);
+				__pending_alloc & pa = (__pending_alloc&)( first( this.pending.queue ));
 
 				// check if we have enough to satisfy the request
-				if( have > pa.want ) goto DONE;
+				if ( have > pa.want ) goto DONE;
 
 				// if there are enough allocations it means we can drop the request
-				try_pop_front( this.pending.queue );
+				remove_first( this.pending.queue );
 
 				/* paranoid */__attribute__((unused)) bool ret =
 
@@ -675,7 +675,7 @@
 
 	// short hand to avoid the mutual exclusion of the pending is empty regardless
 	static void __ioarbiter_notify( io_context$ & ctx ) {
-		if(empty( ctx.arbiter->pending )) return;
+		if (empty( ctx.arbiter->pending )) return;
 		__ioarbiter_notify( *ctx.arbiter, &ctx );
 	}
 
@@ -699,7 +699,7 @@
 
 		// if this is the first to be enqueued, signal the processor in an attempt to speed up flushing
 		// if it's not the first enqueue, a signal is already in transit
-		if( we ) {
+		if ( we ) {
 			sigval_t value = { PREEMPT_IO };
 			__cfaabi_pthread_sigqueue(ctx->proc->kernel_thread, SIGUSR1, value);
 			__STATS__( false, io.flush.signal += 1; )
@@ -715,7 +715,7 @@
 	// flush the io arbiter: move all external io operations to the submission ring
 	static void __ioarbiter_flush( io_context$ & ctx, bool kernel ) {
 		// if there are no external operations just return
-		if(empty( ctx.ext_sq )) return;
+		if ( empty( ctx.ext_sq ) ) return;
 
 		// stats and logs
 		__STATS__( false, io.flush.external += 1; )
@@ -726,9 +726,9 @@
 		{
 			// pop each operation one at a time.
 			// There is no wait morphing because of the io sq ring
-			while( !ctx.ext_sq.queue`isEmpty ) {
+			while( ! isEmpty( ctx.ext_sq.queue ) ) {
 				// drop the element from the queue
-				__external_io & ei = (__external_io&)try_pop_front( ctx.ext_sq.queue );
+				__external_io & ei = (__external_io&)remove_first( ctx.ext_sq.queue );
 
 				// submit it
 				__submit_only(&ctx, ei.idxs, ei.have, true);

@@ -136,7 +136,7 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
 		return (Timmed &)a.strides[i];
 	}
 
-	static inline size_t ?`len( arpk( N, S, Timmed, Tbase ) & ) {
+	static inline size_t len( arpk( N, S, Timmed, Tbase ) & ) {
 		return N;
 	}
 
@@ -281,25 +281,25 @@ static inline result & ?[?]( arpk( N, S, Te, Tbase ) & this, all_t ) {
 //
 
 // desired:
-// forall(A &, Tv &, [N])
+// forall( A &, Tv &, [N] )
 // trait ar {
-//	 Tv& ?[?]( A&, zero_t );
-//	 Tv& ?[?]( A&, one_t  );
-//	 Tv& ?[?]( A&, int	);
+//	 Tv& ?[?]( A &, zero_t );
+//	 Tv& ?[?]( A &, one_t  );
+//	 Tv& ?[?]( A &, int	);
 //				   ...
-//	 size_t ?`len( A& );
+//	 size_t len( A & );
 //	 void __taglen( tag(C), tag(N) );
 // };
 
 // working around N's not being accepted as arguments to traits
 
 #define ar( A, Tv, N ) {				\
-	Tv& ?[?]( A&, zero_t );				\
-	Tv& ?[?]( A&, one_t );				\
-	Tv& ?[?]( A&, int );				\
-	Tv& ?[?]( A&, unsigned int );		\
-	Tv& ?[?]( A&, long int );			\
-	Tv& ?[?]( A&, unsigned long int );	\
-	size_t ?`len( A& );					\
+	Tv& ?[?]( A &, zero_t );			\
+	Tv& ?[?]( A &, one_t );				\
+	Tv& ?[?]( A &, int );				\
+	Tv& ?[?]( A &, unsigned int );		\
+	Tv& ?[?]( A &, long int );			\
+	Tv& ?[?]( A &, unsigned long int );	\
+	size_t len( A & );					\
 	void __taglen( tag(A), tag(N) );	\
 }

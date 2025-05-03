@@ -1,4 +1,5 @@
 #include <string_res.hfa>
+#include <fstream.hfa>
 
 size_t bytesRemaining() {
     return DEBUG_string_bytes_avail_until_gc( DEBUG_string_heap() );
@@ -11,7 +12,7 @@ size_t heapOffsetStart( string_res & s ) {
 }
 
 void prtStrRep(const char * label, string_res & s) {
-    sout | label | "from" | heapOffsetStart(s) | "to" | (heapOffsetStart(s) + size(s));
+    sout | label | "from" | heapOffsetStart(s) | "to" | (heapOffsetStart(s) + len(s));
 }
 #define PRT_STR_REP(s) prtStrRep( #s, s )
 
@@ -28,7 +29,7 @@ void basicFillCompact() {
 
     // x and padder overlap
     sout | "--A";
-    sout | "length of x:" | size(x);
+    sout | "length of x:" | len(x);
     PRT_STR_REP(padder);
     PRT_STR_REP(x);
 
@@ -38,7 +39,7 @@ void basicFillCompact() {
 
     // x and padder still overlap; now x is huge
     sout | "--B";
-    sout | "length of x:" | size(x);
+    sout | "length of x:" | len(x);
     PRT_STR_REP(padder);
     PRT_STR_REP(x);
 
@@ -52,7 +53,7 @@ void basicFillCompact() {
     PRT_STR_REP(x);
 
     // want the next edit to straddle the bound
-    assert( bytesRemaining() < size(padder) );
+    assert( bytesRemaining() < len(padder) );
 
     sout | "--D";
     sout | "before append, x = " | x;     // q

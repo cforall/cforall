@@ -11,7 +11,7 @@ simple_owner_lock C;
 volatile bool done = false;
 
 thread Server1 {};
-void main( Server1 & this ) {
+void main( Server1 & ) {
     while( !done ) {
         lock(A);
         unlock(A);
@@ -43,7 +43,7 @@ int main() {
                     or when( i % 4 < 2 ) waituntil( B ) { b++; }
                 )
                 and when( i < 4 ) waituntil( C ) { c++; }
-                
+
                 when( i % 2 == 0 ) waituntil( A ) { a++; }
                 and when( i % 4 < 2 ) waituntil( B ) { b++; }
                 and when( i < 4 ) waituntil( C ) { c++; }

@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon Feb 13 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar  2 16:04:46 2023
-// Update Count     : 11
+// Last Modified On : Mon Apr 21 18:08:48 2025
+// Update Count     : 12
 //
 
 #pragma once
@@ -286,8 +286,7 @@ void ready_mutate_unlock( uint_fast32_t /* value returned by lock */ );
 // For convenience, also acquires the lock
 static inline [unsigned, uint_fast32_t] ready_mutate_register() {
 	unsigned id = register_proc_id();
-	uint_fast32_t last = ready_mutate_lock();
-	return [id, last];
+	return [id, ready_mutate_lock()];
 }
 
 // Unregister a processor from a given cluster using its id, getting back the original pointer

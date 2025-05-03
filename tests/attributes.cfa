@@ -3,14 +3,14 @@
 //
 // The contents of this file are covered under the licence agreement in the
 // file "LICENCE" distributed with Cforall.
-//
-// attributes.cfa --
+// 
+// attributes.cfa -- 
 //
 // Author           : Peter A. Buhr
 // Created On       : Mon Feb  6 16:07:02 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 20 15:32:21 2024
-// Update Count     : 53
+// Last Modified On : Thu Feb  6 12:06:22 2025
+// Update Count     : 117
 //
 
 #pragma GCC diagnostic ignored "-Wattributes"
@@ -36,6 +36,7 @@ struct __attribute__(( unused )) Agn4 {} ( int );
 
 
 // field_declaring_list
+typedef short int shint;
 struct Fdl {
     int f1 __attribute__(( unused ));
     int __attribute__(( unused )) f2;
@@ -49,6 +50,11 @@ struct Fdl {
     int ( ( __attribute__(( unused )) * f12  __attribute__(( unused )) ) __attribute__(( unused )) );
     int ( ( __attribute__(( unused )) * (f13)  __attribute__(( unused )) ) __attribute__(( unused )) );
     int ( ( ( __attribute__(( unused )) * (f14) )  __attribute__(( unused )) ) __attribute__(( unused )) );
+//	shint __attribute__(( used )) shi1;
+//	shint __attribute__(( used )) shi2 __attribute__(( used ));
+	__attribute__(( used )) shint shi3;
+	__attribute__(( used )) shint shi4 __attribute__(( used ));
+//	__attribute__(( used )) shint __attribute__(( used )) shi5 __attribute__(( used ));
 };
 
 
@@ -62,6 +68,7 @@ const __attribute__(( used )) int __attribute__(( used )) * __attribute__(( used
 const __attribute__(( used )) int __attribute__(( used )) vd5[5] __attribute__(( used )), __attribute__(( unused )) ((vd6)[5]) __attribute__(( used ));
 const __attribute__(( used )) int __attribute__(( used )) (* __attribute__(( used )) vd7)() __attribute__(( used )), __attribute__(( unused )) ((* __attribute__(( used )) vd8)()) __attribute__(( used ));
 const __attribute__(( used )) int __attribute__(( used )) ( __attribute__(( used )) * vd9)() __attribute__(( used )), __attribute__(( unused )) (( __attribute__(( used )) * vd10)()) __attribute__(( used ));
+
 
 // function_declarator
 __attribute__(( unused )) int f1() __attribute__(( used ));
@@ -90,7 +97,6 @@ void vtr() {
     __attribute__(( unused )) int __attribute__(( unused )) t6() __attribute__(( unused ));
     __attribute__(( unused )) int __attribute__(( unused )) * __attribute__(( unused )) ((t6))() __attribute__(( unused ));
 }
-
 
 // identifier_parameter_declarator
 void ipd1( __attribute__(( unused )) int __attribute__(( unused )) p __attribute__(( unused )),
@@ -163,33 +169,49 @@ struct Vad {
     int __attribute__(( unused )) :4, __attribute__(( unused )) :6;
 };
 
-[[ noreturn ]] void fred() {
+
+// statments
+void fred() {
 	int [[unused]] i;
 	// C23 attributes are parsed but not pushed through the compiler.
 	// int [[gnu::xxx]] j;
 	switch ( 3 ) {
+		__attribute__((unused)) int ret;
 	  case 2:
 		4;
-//		__attribute__(( fallthrough ))
-//		[[fallthrough]]
+		__attribute__(( fallthrough ));
+		[[fallthrough]];
 	  case 1:
 		3;
 	}
-	abort();
+  L : __attribute__(( unused )) goto L;
+  L1 : [[ unused ]] L2 : [[ unused ]] goto L2;
+	__attribute__(( unused )) return;
+	[[ noreturn ]] return;
+	__attribute__(( noreturn )) return;
+	[[ GNU::fred ]] i += 1;
 }
 
-@[ noreturn ] void mary() {
-	@[aligned(16)] struct S { int i; };
+void mary() {
+	@[aligned(64)] struct S { int i; };
 	int @[unused] i;
 	switch ( 3 ) {
 	  case 2:
 		4;
-//		__attribute__(( fallthrough ))
-//		[[fallthrough]]
+		__attribute__(( fallthrough ));
+		@[fallthrough];
 	  case 1:
 		3;
 	}
-	abort();
+  L : __attribute__(( unused )) goto L;
+  L1 : @[ unused ] L2 : @[ unused ] goto L2;
+	__attribute__(( unused )) return;
+	@[ noreturn ] return;
+	__attribute__(( noreturn )) return;
+}
+
+[[ noreturn ]] void jack() {
+	exit( -1 );
 }
 
 // Local Variables: //

@@ -289,7 +289,7 @@ void Mangler::printQualifiers( const ast::Type * type ) {
 	// Skip if not including qualifiers:
 	if ( typeMode ) return;
 	auto funcType = dynamic_cast<const ast::FunctionType *>( type );
-	if ( funcType && !funcType->forall.empty() ) {
+	if ( funcType && (!funcType->forall.empty() || !funcType->assertions.empty()) ) {
 		std::list< std::string > assertionNames;
 		int dcount = 0, fcount = 0, vcount = 0, acount = 0;
 		mangleName += Encoding::forall;

@@ -1485,9 +1485,18 @@ namespace {
 	}
 
 	void Finder::postvisit( const ast::SizeofExpr * sizeofExpr ) {
+		const ast::Type * type = resolveTypeof( sizeofExpr->type, context );
+		const ast::Type * sizeType = context.global.sizeType.get();
 		addCandidate(
-			new ast::SizeofExpr{
-				sizeofExpr->location, resolveTypeof( sizeofExpr->type, context ) },
+			new ast::SizeofExpr( sizeofExpr->location, type, sizeType ),
+			tenv );
+	}
+
+	void Finder::postvisit( const ast::AlignofExpr * alignofExpr ) {
+		const ast::Type * type = resolveTypeof( alignofExpr->type, context );
+		const ast::Type * sizeType = context.global.sizeType.get();
+		addCandidate(
+			new ast::AlignofExpr( alignofExpr->location, type, sizeType ),
 			tenv );
 	}
 
@@ -1515,23 +1524,17 @@ namespace {
 		addCandidate( *choice, choice->expr );
 	}
 
-	void Finder::postvisit( const ast::AlignofExpr * alignofExpr ) {
-		addCandidate(
-			new ast::AlignofExpr{
-				alignofExpr->location, resolveTypeof( alignofExpr->type, context ) },
-			tenv );
-	}
-
 	void Finder::postvisit( const ast::UntypedOffsetofExpr * offsetofExpr ) {
 		const ast::BaseInstType * aggInst;
 		if (( aggInst = offsetofExpr->type.as< ast::StructInstType >() )) ;
 		else if (( aggInst = offsetofExpr->type.as< ast::UnionInstType >() )) ;
 		else return;
 
+		const ast::Type * sizeType = context.global.sizeType.get();
 		for ( const ast::Decl * member : aggInst->lookup( offsetofExpr->member ) ) {
 			auto dwt = strict_dynamic_cast< const ast::DeclWithType * >( member );
 			addCandidate(
-				new ast::OffsetofExpr{ offsetofExpr->location, aggInst, dwt }, tenv );
+				new ast::OffsetofExpr( offsetofExpr->location, aggInst, dwt, sizeType ), tenv );
 		}
 	}
 
@@ -2146,39 +2149,34 @@ static unsigned findChildOffset(
 	SemanticError( decl, "Cannot find the target enum." );
 }
 
-const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType * src, 
-	const ast::EnumInstType * dst, const ast::Expr * expr, Cost minCost ) {
+const ast::Expr * CandidateFinder::makeEnumOffsetCast( const ast::EnumInstType * src,
+		const ast::EnumInstType * dst, const ast::Expr * expr, Cost minCost ) {
 	auto srcDecl = src->base;
 	auto dstDecl = dst->base;
 
-	if (srcDecl->name == dstDecl->name) return expr;
+	if ( srcDecl->name == dstDecl->name ) return expr;
 
-	for (auto& dstChild: dstDecl->inlinedDecl) {
+	for ( auto& dstChild : dstDecl->inlinedDecl ) {
 		Cost c = castCost(src, dstChild, false, context.symtab, env);
-		ast::CastExpr * castToDst;
-		if (c<minCost) {
-			unsigned offset = findChildOffset( dstDecl, dstChild.get()->base );
-			if (offset > 0) {
-				auto untyped = ast::UntypedExpr::createCall(
-					expr->location,
-					"?+?",
-					{ new ast::CastExpr( expr->location,
-						expr,
-						new ast::BasicType(ast::BasicKind::SignedInt),
-						ast::GeneratedFlag::ExplicitCast ),
-						ast::ConstantExpr::from_int(expr->location, offset)} );
-				CandidateFinder finder(context, env);
-				finder.find( untyped );
-				CandidateList winners = findMinCost( finder.candidates );
-				CandidateRef & choice = winners.front();
-				choice->expr = new ast::CastExpr(expr->location, choice->expr, dstChild, ast::GeneratedFlag::ExplicitCast);
-				auto destExpr = makeEnumOffsetCast( src, dstChild, choice->expr, minCost );
-				if ( !destExpr ) continue;
-				castToDst = new ast::CastExpr( destExpr, dst );
-			} else {
-				castToDst = new ast::CastExpr( expr, dst );
-			}
-			return castToDst;
+		if ( minCost <= c ) continue;
+		unsigned offset = findChildOffset( dstDecl, dstChild.get()->base );
+		if ( offset <= 0 ) return new ast::CastExpr( expr, dst );
+
+		auto untyped = ast::UntypedExpr::createCall(
+			expr->location,
+			"?+?",
+			{ new ast::CastExpr( expr->location,
+				expr,
+				new ast::BasicType( ast::BasicKind::SignedInt ),
+				ast::GeneratedFlag::ExplicitCast ),
+				ast::ConstantExpr::from_int( expr->location, offset ) } );
+		CandidateFinder finder(context, env);
+		finder.find( untyped );
+		CandidateList winners = findMinCost( finder.candidates );
+		CandidateRef & choice = winners.front();
+		choice->expr = new ast::CastExpr( expr->location, choice->expr, dstChild, ast::GeneratedFlag::ExplicitCast );
+		if ( auto destExpr = makeEnumOffsetCast( src, dstChild, choice->expr, minCost ) ) {
+			return new ast::CastExpr( destExpr, dst );
 		}
 	}
 	return nullptr;

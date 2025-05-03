@@ -16,7 +16,7 @@ typedef channel( int ) Channel;
 Channel * chain;
 
 thread Task {};
-void main(Task & this) {
+void main(Task &) {
     size_t runs = 0;
     int token = 0;
     try{
@@ -39,11 +39,13 @@ int main( int argc, char * argv[] ) {
 			Tasks = ato( argv[2] );
             if ( Tasks < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[1] );
 			if ( Processors < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 1:											// use defaults
 		break;
 	  default:

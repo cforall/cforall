@@ -1,0 +1,151 @@
+collections/string-operator.cfa:318:1 error: Cannot choose between 2 alternatives for expression
+Applying untyped:
+  Name: printf
+...to:
+  Constant Expression ("%d\n": array of char with dimension of Constant Expression (4: unsigned long int)
+  ... with resolved type:
+    unsigned long int)
+  ... with resolved type:
+    array of char with dimension of Constant Expression (4: unsigned long int)
+    ... with resolved type:
+      unsigned long int
+  Applying untyped:
+    Name: ?*?
+  ...to:
+    Constant Expression ('a': char)
+    ... with resolved type:
+      char
+    Constant Expression (3: signed int)
+    ... with resolved type:
+      signed int
+
+ Alternatives are:
+Cost ( 1, 0, 0, 3, 0, 0, 0, 0 ): Application of
+      Variable Expression: printf: extern function
+      ... with parameters
+        restrict pointer to const char
+        and a variable number of other arguments
+      ... returning
+        signed int
+
+      ... with resolved type:
+        pointer to function
+        ... with parameters
+          restrict pointer to const char
+          and a variable number of other arguments
+        ... returning
+          signed int
+
+      ... to arguments
+      Generated Cast of:
+        Constant Expression ("%d\n": pointer to char)
+        ... with resolved type:
+          pointer to char
+      ... to:
+        restrict pointer to const char
+      ... with resolved type:
+        restrict pointer to const char
+      Application of
+        Variable Expression: ?*?: function
+        ... with parameters
+          char
+          signed long long int
+        ... returning
+          instance of struct string with body
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            char
+            signed long long int
+          ... returning
+            instance of struct string with body
+
+        ... to arguments
+        Constant Expression ('a': char)
+        ... with resolved type:
+          char
+        Generated Cast of:
+          Constant Expression (3: signed int)
+          ... with resolved type:
+            signed int
+        ... to:
+          signed long long int
+        ... with resolved type:
+          signed long long int
+
+      ... with resolved type:
+        instance of struct string with body
+
+    ... with resolved type:
+      signed int
+  (types:
+    signed int
+  )
+  Environment:
+
+Cost ( 1, 0, 0, 3, 0, 0, 0, 0 ): Application of
+      Variable Expression: printf: extern function
+      ... with parameters
+        restrict pointer to const char
+        and a variable number of other arguments
+      ... returning
+        signed int
+
+      ... with resolved type:
+        pointer to function
+        ... with parameters
+          restrict pointer to const char
+          and a variable number of other arguments
+        ... returning
+          signed int
+
+      ... to arguments
+      Generated Cast of:
+        Constant Expression ("%d\n": pointer to char)
+        ... with resolved type:
+          pointer to char
+      ... to:
+        restrict pointer to const char
+      ... with resolved type:
+        restrict pointer to const char
+      Application of
+        Variable Expression: ?*?: function
+        ... with parameters
+          signed int
+          signed int
+        ... returning
+          signed int
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            signed int
+            signed int
+          ... returning
+            signed int
+
+        ... to arguments
+        Generated Cast of:
+          Constant Expression ('a': char)
+          ... with resolved type:
+            char
+        ... to:
+          signed int
+        ... with resolved type:
+          signed int
+        Constant Expression (3: signed int)
+        ... with resolved type:
+          signed int
+
+      ... with resolved type:
+        signed int
+
+    ... with resolved type:
+      signed int
+  (types:
+    signed int
+  )
+  Environment:
+
+

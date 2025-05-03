@@ -1,6 +1,7 @@
 #include <string.hfa>
 #include <string_sharectx.hfa>
 #include <string_res.hfa>
+#include <fstream.hfa>
 
 // In these tests, shared heaps are never remotely full and string sizes are tiny.
 // So here, the SUT should put a yes-sharing string in a heap with lots of spare room.

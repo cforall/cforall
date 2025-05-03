@@ -9,28 +9,28 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 13 10:51:11 2024
-// Update Count     : 60
+// Last Modified On : Sun Apr 13 21:03:37 2025
+// Update Count     : 79
 //
 
 #pragma once
 
-#include <fstream.hfa>
+#include <iostream.hfa>
 #include <string.h>    // e.g. strlen
 
-    
+
 //######################### HandleNode #########################
 //private
 
 struct VbyteHeap;
 
 struct HandleNode {
-    HandleNode *flink;					// forward link
-    HandleNode *blink;					// backward link
-    VbyteHeap *ulink;                   // upward link
+	HandleNode * flink;									// forward link
+	HandleNode * blink;									// backward link
+	VbyteHeap * ulink;									// upward link
 
-    char *s;							// pointer to byte string
-    unsigned int lnth;					// length of byte string
+	char * s;											// pointer to byte string
+	unsigned int lnth;									// length of byte string
 }; // HandleNode
 
 VbyteHeap * DEBUG_string_heap();
@@ -44,17 +44,17 @@ void TUNING_set_string_heap_liveness_threshold( double val );
 
 // A dynamically-sized string
 struct string_res {
-    HandleNode Handle; // chars, start, end, global neighbours
-    bool shareEditSet_owns_ulink;
-    string_res * shareEditSet_prev;
-    string_res * shareEditSet_next;
+	HandleNode Handle; // chars, start, end, global neighbours
+	bool shareSet_owns_ulink;
+	string_res * shareSet_prev;
+	string_res * shareSet_next;
 };
 
 
 //######################### charclass_res #########################
 
 struct charclass_res {
-    string_res chars;
+	string_res chars;
 };
 
 void ?{}( charclass_res & ) = void;
@@ -69,16 +69,16 @@ void ^?{}( charclass_res & );
 //######################### String #########################
 
 // Getters
-size_t size(const string_res & s);
+static inline size_t len( const string_res & s ) { return s.Handle.lnth; }
 
 // Constructors, Assignment Operators, Destructor
 void ?{}(string_res & s); // empty string
 void ?{}(string_res & s, const char * buffer, size_t bsize); // copy specific length from buffer
 static inline void ?{}(string_res & s, const char * rhs) { // copy from string literal (NULL-terminated)
-    (s){ rhs, strlen(rhs) };
+	(s){ rhs, strlen(rhs) };
 }
 static inline void ?{}(string_res & s, char c ) {
-    ?{}( s, &c, 1);
+	?{}( s, &c, 1);
 }
 
 // Deleting the copy constructors makes the compiler reject an attempt to call/return by value
@@ -88,10 +88,10 @@ void ?{}(string_res & s, string_res & s2) = void;
 enum StrResInitMode { COPY_VALUE, SHARE_EDITS };
 void ?{}(string_res & s, const string_res & src, StrResInitMode, size_t start, size_t len );
 static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode ) {
-    ?{}( s, src, mode, 0, size(src));
+	?{}( s, src, mode, 0, len(src));
 }
 static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode, size_t maxlen ) {
-    ?{}( s, src, mode, 0, (size(src) > maxlen)?maxlen:size(src) );
+	?{}( s, src, mode, 0, (len(src) > maxlen)?maxlen:len(src) );
 }
 void ?{}( string_res & s, ssize_t rhs );
 void ?{}( string_res & s, size_t rhs );
@@ -103,7 +103,7 @@ void ?{}( string_res & s, long double _Complex rhs );
 string_res & assign(string_res & s, const string_res & src, size_t maxlen); // copy specific length from other string
 string_res & assign(string_res & s, const char * buffer, size_t bsize); // copy specific length from buffer
 static inline string_res & ?=?(string_res & s, const char * c) {  // copy from string literal (NULL-terminated)
-    return assign(s, c, strlen(c));
+	return assign(s, c, strlen( c));
 }
 string_res & ?=?(string_res & s, const string_res & c);
 string_res & ?=?(string_res & s, string_res & c);
@@ -119,20 +119,23 @@ string_res & ?=?( string_res & s, long double _Complex rhs );
 void ^?{}(string_res & s);
 
 // IO Operator
-ofstream & ?|?(ofstream & out, const string_res & s);
-void ?|?(ofstream & out, const string_res & s);
-ifstream & ?|?(ifstream & in, string_res & s);
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?(ostype & out, const string_res & s);
+	void ?|?(ostype & out, const string_res & s);
+}
+forall( istype & | basic_istream( istype ) )
+istype & ?|?(istype & in, string_res & s);
 
 struct _Istream_Rwidth {
 	string_res * s;
 	inline _Istream_str_base;
 }; // _Istream_Rwidth
 
-struct _Istream_Rquoted {
+struct _Istream_Rquote {
 	// string_res * s;
 	// inline _Istream_str_base;
 	_Istream_Rwidth rstr;
-}; // _Istream_Rquoted
+}; // _Istream_Rquote
 
 struct _Istream_Rstr {
 	string_res * s;
@@ -144,18 +147,17 @@ static inline {
 	// read width does not include null terminator
 	_Istream_Rwidth wdi( unsigned int rwd, string_res & s ) { return (_Istream_Rwidth)@{ .s = &s, { {.scanset = 0p}, .wd = rwd, {.flags.rwd = true} } }; }
 	_Istream_Rstr getline( string_res & s, const char delimiter = '\n' ) {
-//		return (_Istream_Rstr)@{ { .s = &s, { {.delimiters = { delimiter, '\0' } }, .wd = -1, {.flags.delimiter = true} } } };
 		return (_Istream_Rstr)@{ .s = &s, { {.delimiters = { delimiter, '\0' } }, .wd = -1, {.flags.delimiter = true} } };
 	}
 	_Istream_Rstr & getline( _Istream_Rwidth & f, const char delimiter = '\n' ) {
 		f.delimiters[0] = delimiter; f.delimiters[1] = '\0'; f.flags.delimiter = true; return (_Istream_Rstr &)f;
 	}
-	_Istream_Rquoted quoted( string_res & s, const char Ldelimiter = '\"', const char Rdelimiter = '\0' ) {
-		return (_Istream_Rquoted)@{ { .s = &s, { {.delimiters = { Ldelimiter, Rdelimiter, '\0' }}, .wd = -1, {.flags.rwd = true} } } };
+	_Istream_Rquote quote( string_res & s, const char Ldelimiter = '\"', const char Rdelimiter = '\0' ) {
+		return (_Istream_Rquote)@{ { .s = &s, { {.delimiters = { Ldelimiter, Rdelimiter, '\0' }}, .wd = -1, {.flags.rwd = true} } } };
 	}
-	_Istream_Rquoted & quoted( _Istream_Rwidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
+	_Istream_Rquote & quote( _Istream_Rwidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
 		f.delimiters[0] = Ldelimiter;  f.delimiters[1] = Rdelimiter;  f.delimiters[2] = '\0';
-		return (_Istream_Rquoted &)f;
+		return (_Istream_Rquote &)f;
 	}
 	_Istream_Rstr incl( const char scanset[], string_res & s ) { return (_Istream_Rstr)@{ .s = &s, { {.scanset = scanset}, .wd = -1, {.flags.inex = false} } }; }
 	_Istream_Rstr & incl( const char scanset[], _Istream_Rwidth & f ) { f.scanset = scanset; f.flags.inex = false; return (_Istream_Rstr &)f; }
@@ -163,89 +165,88 @@ static inline {
 	_Istream_Rstr & excl( const char scanset[], _Istream_Rwidth & f ) { f.scanset = scanset; f.flags.inex = true; return (_Istream_Rstr &)f; }
 	_Istream_Rstr ignore( string_res & s ) { return (_Istream_Rstr)@{ .s = &s, { {.scanset = 0p}, .wd = -1, {.flags.ignore = true} } }; }
 	_Istream_Rstr & ignore( _Istream_Rwidth & f ) { f.flags.ignore = true; return (_Istream_Rstr &)f; }
-	_Istream_Rquoted & ignore( _Istream_Rquoted & f ) { f.rstr.flags.ignore = true; return (_Istream_Rquoted &)f; }
+	_Istream_Rquote & ignore( _Istream_Rquote & f ) { f.rstr.flags.ignore = true; return (_Istream_Rquote &)f; }
 	_Istream_Rstr & ignore( _Istream_Rstr & f ) { f.flags.ignore = true; return (_Istream_Rstr &)f; }
 } // distribution
-ifstream & ?|?( ifstream & is, _Istream_Rquoted f );
-ifstream & ?|?( ifstream & is, _Istream_Rstr f );
-static inline ifstream & ?|?( ifstream & is, _Istream_Rwidth f ) { return is | *(_Istream_Rstr *)&f; }
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, _Istream_Rquote f );
+	istype & ?|?( istype & is, _Istream_Rstr f );
+	static inline istype & ?|?( istype & is, _Istream_Rwidth f ) { return is | *(_Istream_Rstr *)&f; }
+}
 
 // Concatenation
-void ?+=?(string_res & s, const string_res & s2);
-void ?+=?(string_res & s, char c);
-void append(string_res & s, const string_res & s2, size_t maxlen);
-void ?+=?(string_res & s, const char * c);
-void append(string_res & s, const char * buffer, size_t bsize);
-
-static inline string_res & strcat(string_res & s, const string_res & s2) { s += s2; return s; }
-static inline string_res & strcat(string_res & s, const char * c) { s += c; return s; }
-static inline string_res & strncat(string_res & s, const string_res & s2, size_t maxlen) { append(s, s2, maxlen); return s; }
-static inline string_res & strncat(string_res & s, const char * buffer, size_t bsize) { append(s, buffer, bsize); return s; }
+void append( string_res & s, const char * buffer, size_t bsize );
+void append( string_res & s, const string_res & s2, size_t maxlen );
+static inline void ?+=?( string_res & s, const string_res & s2 ) { append( s, s2.Handle.s, s2.Handle.lnth ); }
+static inline void ?+=?( string_res & s, char c ) { append( s, & c, 1 ); }
+static inline void ?+=?( string_res & s, const char * c ) { append( s, c, strlen( c ) ); }
+static inline string_res & strcat( string_res & s, const string_res & s2 ) { s += s2; return s; }
+static inline string_res & strcat( string_res & s, const char * c ) { s += c; return s; }
+static inline string_res & strncat( string_res & s, const string_res & s2, size_t maxlen ) { append(s, s2, maxlen); return s; }
+static inline string_res & strncat( string_res & s, const char * buffer, size_t bsize ) { append(s, buffer, bsize); return s; }
 
 // Repetition
 void ?*=?(string_res & s, size_t factor);
 
 // Character access
-void assignAt(const string_res & s, size_t index, char val);
-char ?[?](const string_res & s, size_t index); // Mike changed to ret by val from Sunjay's ref, to match Peter's
-//char codePointAt(const string_res & s, size_t index); // revisit under Unicode
+void assignAt( const string_res & s, size_t index, char val);
+char ?[?]( const string_res & s, size_t index); // Mike changed to ret by val from Sunjay's ref, to match Peter's
+//char codePointAt( const string_res & s, size_t index); // revisit under Unicode
 
 // Comparisons
-int  strcmp (const string_res &, const string_res &);
-bool ?==?(const string_res &, const string_res &);
-bool ?!=?(const string_res &, const string_res &);
-bool ?>? (const string_res &, const string_res &);
-bool ?>=?(const string_res &, const string_res &);
-bool ?<=?(const string_res &, const string_res &);
-bool ?<? (const string_res &, const string_res &);
+int strcmp$( const char * s1, size_t l1, const char * s2, size_t l2 );
 
-int  strcmp(const string_res &, const char *);
-bool ?==?(const string_res &, const char *);
-bool ?!=?(const string_res &, const char *);
-bool ?>? (const string_res &, const char *);
-bool ?>=?(const string_res &, const char *);
-bool ?<=?(const string_res &, const char *);
-bool ?<? (const string_res &, const char *);
+static inline int strcmp( const string_res & s1, const string_res & s2 ) { return strcmp$( s1.Handle.s, s1.Handle.lnth, s2.Handle.s, s2.Handle.lnth ); }
+static inline bool ?==?( const string_res & s1, const string_res & s2 ) { return strcmp( s1, s2 ) == 0; }
+static inline bool ?!=?( const string_res & s1, const string_res & s2 ) { return strcmp( s1, s2 ) != 0; }
+static inline bool ?>? ( const string_res & s1, const string_res & s2 ) { return strcmp( s1, s2 ) >  0; }
+static inline bool ?>=?( const string_res & s1, const string_res & s2 ) { return strcmp( s1, s2 ) >= 0; }
+static inline bool ?<=?( const string_res & s1, const string_res & s2 ) { return strcmp( s1, s2 ) <= 0; }
+static inline bool ?<? ( const string_res & s1, const string_res & s2 ) { return strcmp( s1, s2 ) <  0; }
 
-int  strcmp(const char *, const string_res &);
-bool ?==?(const char *, const string_res &);
-bool ?!=?(const char *, const string_res &);
-bool ?>? (const char *, const string_res &);
-bool ?>=?(const char *, const string_res &);
-bool ?<=?(const char *, const string_res &);
-bool ?<? (const char *, const string_res &);
+static inline int strcmp( const string_res & s1, const char * s2 ) { return strcmp$( s1.Handle.s, s1.Handle.lnth, s2, strlen( s2 ) ); }
+static inline bool ?==?( const string_res & s1, const char * s2 ) { return strcmp( s1, s2 ) == 0; }
+static inline bool ?!=?( const string_res & s1, const char * s2 ) { return strcmp( s1, s2 ) != 0; }
+static inline bool ?>? ( const string_res & s1, const char * s2 ) { return strcmp( s1, s2 ) >  0; }
+static inline bool ?>=?( const string_res & s1, const char * s2 ) { return strcmp( s1, s2 ) >= 0; }
+static inline bool ?<=?( const string_res & s1, const char * s2 ) { return strcmp( s1, s2 ) <= 0; }
+static inline bool ?<? ( const string_res & s1, const char * s2 ) { return strcmp( s1, s2 ) <  0; }
+
+static inline int strcmp( const char * s1, const string_res & s2 ) { return strcmp$( s1, strlen( s1 ), s2.Handle.s, s2.Handle.lnth ); }
+static inline bool ?==?( const char * s1, const string_res & s2 ) { return strcmp( s1, s2 ) == 0; }
+static inline bool ?!=?( const char * s1, const string_res & s2 ) { return strcmp( s1, s2 ) != 0; }
+static inline bool ?>? ( const char * s1, const string_res & s2 ) { return strcmp( s1, s2 ) >  0; }
+static inline bool ?>=?( const char * s1, const string_res & s2 ) { return strcmp( s1, s2 ) >= 0; }
+static inline bool ?<=?( const char * s1, const string_res & s2 ) { return strcmp( s1, s2 ) <= 0; }
+static inline bool ?<? ( const char * s1, const string_res & s2 ) { return strcmp( s1, s2 ) <  0; }
 
 // String search
-bool contains(const string_res & s, char ch); // single character
+bool contains( const string_res & s, char ch); // single character
 
-int find(const string_res & s, char search);
-int find(const string_res & s, const string_res & search);
-int find(const string_res & s, const char * search);
-int find(const string_res & s, const char * search, size_t searchsize);
+int find$( const string_res & s, ssize_t start, ssize_t len, const string_res & key, ssize_t kstart, ssize_t klen );
 
-int findFrom(const string_res & s, size_t fromPos, char search);
-int findFrom(const string_res & s, size_t fromPos, const string_res & search);
-int findFrom(const string_res & s, size_t fromPos, const char * search);
-int findFrom(const string_res & s, size_t fromPos, const char * search, size_t searchsize);
+int find( const string_res & s, char search);
+int find( const string_res & s, const string_res & search);
+int find( const string_res & s, const char * search);
+int find( const string_res & s, const char * search, size_t searchsize);
 
-bool includes(const string_res & s, const string_res & search);
-bool includes(const string_res & s, const char * search);
-bool includes(const string_res & s, const char * search, size_t searchsize);
+int findFrom( const string_res & s, size_t fromPos, char search);
+int findFrom( const string_res & s, size_t fromPos, const string_res & search);
+int findFrom( const string_res & s, size_t fromPos, const char * search);
+int findFrom( const string_res & s, size_t fromPos, const char * search, size_t searchsize);
 
-bool startsWith(const string_res & s, const string_res & prefix);
-bool startsWith(const string_res & s, const char * prefix);
-bool startsWith(const string_res & s, const char * prefix, size_t prefixsize);
+bool includes( const string_res & s, const string_res & search);
+bool includes( const string_res & s, const char * search);
+bool includes( const string_res & s, const char * search, size_t searchsize);
 
-bool endsWith(const string_res & s, const string_res & suffix);
-bool endsWith(const string_res & s, const char * suffix);
-bool endsWith(const string_res & s, const char * suffix, size_t suffixsize);
+bool startsWith( const string_res & s, const string_res & prefix);
+bool startsWith( const string_res & s, const char * prefix);
+bool startsWith( const string_res & s, const char * prefix, size_t prefixsize);
 
-int include(const string_res & s, const charclass_res & mask);
-int exclude(const string_res & s, const charclass_res & mask);
+bool endsWith( const string_res & s, const string_res & suffix);
+bool endsWith( const string_res & s, const char * suffix);
+bool endsWith( const string_res & s, const char * suffix, size_t suffixsize);
 
-// Modifiers
-void padStart(string_res & s, size_t n);
-void padStart(string_res & s, size_t n, char padding);
-void padEnd(string_res & s, size_t n);
-void padEnd(string_res &s, size_t n, char padding);
+int include( const string_res & s, const charclass_res & mask);
+int exclude( const string_res & s, const charclass_res & mask);
 

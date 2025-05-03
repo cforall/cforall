@@ -25,28 +25,4 @@ class TranslationUnit;
 /// Insert this whenever you want additional debugging checks.
 void checkInvariants( TranslationUnit & );
 
-/// Maintains an AST-module state for contextual information needed in
-/// ast::* implementations, notably constructors:
-///    early: while parsing, use bootstrap versions
-///    late: once a whole TranslationUnit exists, use its answers
-/// When the program is in the later state, ast::* construcors effectively get
-/// the benefit of WithTranslationUnit, without having to pass them one.
-class TranslationDeps {
-
-    TranslationDeps() = delete;
-
-    friend class SizeofExpr;
-    friend class AlignofExpr;
-    friend class CountofExpr;
-    friend class OffsetofExpr;
-    friend class OffsetPackExpr;
-
-    /// Appropriate return type for built-in expressions that report on sizes
-    static const Type * getSizeType();
-
-  public:
-    /// Transition from early to late states
-    static void evolve( TranslationUnit & );
-};
-
 }

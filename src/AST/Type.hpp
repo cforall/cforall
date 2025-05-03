@@ -382,10 +382,7 @@ public:
 
 	const Type * accept( Visitor & v ) const override { return v.visit( this ); }
 
-	std::string typeString() const {
-		if (formal_usage > 0) return std::string("_") + std::to_string(formal_usage) + "_" + std::to_string(expr_id) + "_" + name;
-		else return name;
-	}
+	std::string typeString() const;
 private:
 	TypeInstType * clone() const override { return new TypeInstType{ *this }; }
 	MUTATE_FRIEND

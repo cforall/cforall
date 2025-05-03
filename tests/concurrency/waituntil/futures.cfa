@@ -7,7 +7,7 @@ future(int) A, B, C;
 semaphore s{0};
 
 thread Server1 {};
-void main( Server1 & this ) {
+void main( Server1 & ) {
     fulfil(B, 3);
     P( s );
     fulfil(A, 2);
@@ -15,7 +15,7 @@ void main( Server1 & this ) {
 }
 
 thread Server2 {};
-void main( Server2 & this ) {
+void main( Server2 & ) {
     fulfil(B, 6);
     fulfil(A, 5);
     fulfil(C, 7);

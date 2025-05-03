@@ -1,0 +1,38 @@
+// Make sure that self references in polymorphic types do not cause issues.
+
+forall(T)
+struct TreeNodeO {
+	T data;
+	TreeNodeO(T) * left;
+	TreeNodeO(T) * right;
+};
+
+forall(T &)
+struct TreeNodeD {
+	T * data;
+	TreeNodeD(T) * left;
+	TreeNodeD(T) * right;
+};
+
+// Instantiate the two types in different ways.
+forall(U)
+void tree_node(TreeNodeO(U) & this) {
+	TreeNodeO(U) local;
+	local.left = &this;
+}
+
+forall(U)
+void tree_node(TreeNodeD(U) & this) {
+	TreeNodeD(U) local;
+	local.left = &this;
+}
+
+int main() {
+	TreeNodeO(int) node0;
+	tree_node(node0);
+	TreeNodeD(int) node1;
+	tree_node(node1);
+
+	// There is nothing interesting to print, so just print some noise.
+	printf("done!\n");
+}

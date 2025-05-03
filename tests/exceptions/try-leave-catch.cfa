@@ -37,6 +37,7 @@ void test_switch() {
 			printf("Break\n");
 			break;
 		}
+		fallthrough;
 	default:
 		printf("Reached default.\n");
 	}

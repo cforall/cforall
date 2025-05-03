@@ -95,12 +95,8 @@ EXTRA_PROGRAMS = array-collections/boxed$(EXEEXT) avl_test$(EXEEXT) \
 	.dummy_hack$(EXEEXT)
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/automake/libtool.m4 \
-	$(top_srcdir)/automake/ltoptions.m4 \
-	$(top_srcdir)/automake/ltsugar.m4 \
-	$(top_srcdir)/automake/ltversion.m4 \
-	$(top_srcdir)/automake/lt~obsolete.m4 \
-	$(top_srcdir)/tools/build/cfa.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/tools/build/cfa.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -441,6 +437,7 @@ WFLAGS_LAX = \
 # Making this association implicit would be ideal, but requires learning more automake than is affordable.
 WFLAGS_OPT_LAX = \
 	${WFLAGS_OPT_LAX_EXPECT_WARN} \
+	${WFLAGS_OPT_LAX_WAITING_ON_303} \
 	${WFLAGS_OPT_LAX_TO_INVESTIGATE}
 
 
@@ -451,9 +448,9 @@ WFLAGS_OPT_LAX_EXPECT_WARN = \
 	warnings/self-assignment
 
 
-# Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
-WFLAGS_OPT_LAX_TO_INVESTIGATE = \
-	collections/vector-demo \
+# These are failing because of trac #303; it is not likely to be fixed soon.
+# It only shows up on some configurations and machines.
+WFLAGS_OPT_LAX_WAITING_ON_303 = \
 	concurrency/actors/dynamic \
 	concurrency/actors/executor \
 	concurrency/actors/inherit \
@@ -463,47 +460,17 @@ WFLAGS_OPT_LAX_TO_INVESTIGATE = \
 	concurrency/actors/poison \
 	concurrency/actors/static \
 	concurrency/actors/types \
-	concurrency/channels/churn \
-	concurrency/channels/contend \
-	concurrency/channels/daisy_chain \
-	concurrency/channels/hot_potato \
-	concurrency/channels/pub_sub \
-	concurrency/futures/multi \
-	concurrency/futures/select_future \
-	concurrency/futures/typed \
-	concurrency/lockfree_stack \
-	concurrency/pthread/bounded_buffer \
-	concurrency/pthread/pthread_attr_test \
-	concurrency/pthread/pthread_demo_create_join \
-	concurrency/pthread/pthread_demo_lock \
-	concurrency/pthread/pthread_key_test \
-	concurrency/waituntil/all_types \
-	concurrency/waituntil/basic_else \
-	concurrency/waituntil/channel_close \
-	concurrency/waituntil/channels \
-	concurrency/waituntil/futures \
-	concurrency/waituntil/locks \
-	concurrency/waituntil/repeat_close \
-	concurrency/waituntil/timeout \
-	exceptions/cardgame \
-	exceptions/defaults \
-	exceptions/defaults-threads \
-	exceptions/try-leave-catch \
-	forall \
-	include/includes \
-	include/stdincludes \
-	include/vector-collections \
-	include/vector-fstream \
-	include/vector-sequence \
 	io/away_fair \
 	io/comp_basic \
 	io/comp_fair \
-	io/manipulatorsInput \
-	io/manipulatorsInput-uchunk \
-	io/many_read \
-	raii/ctor-autogen \
-	raii/dtor-early-exit \
-	raii/init_once \
+	io/many_read
+
+
+# Tests that need investigation from the CFA team about why they require lax wflags.  Goal is to eliminate this list.
+WFLAGS_OPT_LAX_TO_INVESTIGATE = \
+	forall \
+	include/includes \
+	include/stdincludes \
 	references \
 	tuple/tupleCast \
 	tuple/tupleMember
@@ -1117,6 +1084,26 @@ array-collections/dimexpr-match-cfa-ERRS : array-collections/dimexpr-match-cfa.c
 
 alloc-ERROR : alloc.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR1
+	-cp ${test} ${abspath ${@}}
+
+collections/string-operator-ERR09 : collections/string-operator.cfa
+	${CFACOMPILE_SYNTAX} -DTRY_MR09
+	-cp ${test} ${abspath ${@}}
+
+collections/string-operator-ERR11 : collections/string-operator.cfa
+	${CFACOMPILE_SYNTAX} -DTRY_MR11
+	-cp ${test} ${abspath ${@}}
+
+collections/string-operator-ERR13 : collections/string-operator.cfa
+	${CFACOMPILE_SYNTAX} -DTRY_MR13
+	-cp ${test} ${abspath ${@}}
+
+collections/string-operator-ERR15 : collections/string-operator.cfa
+	${CFACOMPILE_SYNTAX} -DTRY_MR15
+	-cp ${test} ${abspath ${@}}
+
+collections/string-operator-ERR16 : collections/string-operator.cfa
+	${CFACOMPILE_SYNTAX} -DTRY_MR16
 	-cp ${test} ${abspath ${@}}
 
 init1-ERROR : init1.cfa ${CFACCBIN}

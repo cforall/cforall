@@ -1,4 +1,6 @@
-//Testing enum declaration
+// Testing the use of C enumerations in Cforall.
+
+// Testing enum declaration
 enum Colours {
 	Red,
 	Yellow,

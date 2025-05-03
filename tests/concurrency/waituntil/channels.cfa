@@ -8,7 +8,7 @@ volatile bool done = false;
 long long int globalTotal = 0;
 
 thread Server1 {};
-void main( Server1 & this ) {
+void main( Server1 & ) {
     long long int a, b, c, i = 0, myTotal = 0;
     for( ;;i++ ) {
         when( i % 2 == 0 ) waituntil( a << A ) { myTotal += a; }
@@ -20,7 +20,7 @@ void main( Server1 & this ) {
 }
 
 thread Drainer {}; // ensures that the changing when states of Server1 don't result in a deadlock
-void main( Drainer & this ) {
+void main( Drainer & ) {
     long long int a, b, c, myTotal = 0;
     for( ;; ) {
         waituntil( a << A ) { myTotal += a; }
@@ -32,7 +32,7 @@ void main( Drainer & this ) {
 }
 
 thread Churner {}; // performs non-waituntil try insert/remove operations to add churn/interference
-void main( Churner & this ) {
+void main( Churner & ) {
     long long int out, myTotal = 0;
     bool success;
     while( !done ) {

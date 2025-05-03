@@ -47,12 +47,11 @@ ast::EnumDecl const * EnumAndPointerDecayCore::previsit(
 				new ast::EnumInstType( decl, ast::CV::Const ) ) );
 		} else if ( auto value = member.as<ast::InlineMemberDecl>() ) {
 			auto targetEnum = symtab.lookupEnum( value->name );
-			// assert( targetEnum );
 			if (!targetEnum) {
 				SemanticError(value, "Only another enum is allowed for enum inline syntax ");
 			}
 			const ast::EnumInstType * instType = new ast::EnumInstType(targetEnum);
-			mut->inlinedDecl.push_back( std::move(instType) );
+			mut->inlinedDecl.emplace_back( instType );
 			for ( auto enumMember : targetEnum->members ) {
 				auto enumObject = enumMember.strict_as<ast::ObjectDecl>();
 				buffer.push_back(new ast::ObjectDecl(

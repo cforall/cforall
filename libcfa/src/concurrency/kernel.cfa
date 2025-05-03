@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan  9 08:42:05 2023
-// Update Count     : 77
+// Last Modified On : Fri Apr 25 07:02:42 2025
+// Update Count     : 82
 //
 
 #define __cforall_thread__
@@ -44,7 +44,7 @@ extern "C" {
 #include "invoke.h"
 #pragma GCC diagnostic pop
 
-#if !defined(__CFA_NO_STATISTICS__)
+#if ! defined(__CFA_NO_STATISTICS__)
 	#define __STATS_DEF( ...) __VA_ARGS__
 #else
 	#define __STATS_DEF( ...)
@@ -157,8 +157,8 @@ void main(processorCtx_t & runner) {
 	verify(this);
 
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p starting\n", this);
-	#if !defined(__CFA_NO_STATISTICS__)
-		if( this->print_halts ) {
+	#if ! defined(__CFA_NO_STATISTICS__)
+		if ( this->print_halts ) {
 			__cfaabi_bits_print_safe( STDOUT_FILENO, "Processor : %d - %s (%p)\n", this->unique_id, this->name, (void*)this);
 		}
 	#endif
@@ -168,7 +168,7 @@ void main(processorCtx_t & runner) {
 		preemption_scope scope = { this };
 
 		// if we need to run some special setup, now is the time to do it.
-		if(this->init.thrd) {
+		if (this->init.thrd) {
 			this->init.thrd->curr_cluster = this->cltr;
 			__run_thread(this, this->init.thrd);
 		}
@@ -184,7 +184,7 @@ void main(processorCtx_t & runner) {
 			// Try to get the next thread
 			readyThread = __next_thread( this->cltr );
 
-			if( !readyThread ) {
+			if ( ! readyThread ) {
 				// there is no point in holding submissions if we are idle
 				__IO_STATS__(true, io.flush.idle++; )
 				__cfa_io_flush( this );
@@ -195,10 +195,10 @@ void main(processorCtx_t & runner) {
 				readyThread = __next_thread( this->cltr );
 			}
 
-			if( !readyThread ) for(5) {
+			if ( ! readyThread ) for(5) {
 				readyThread = __next_thread_slow( this->cltr );
 
-				if( readyThread ) break;
+				if ( readyThread ) break;
 
 				// It's unlikely we still I/O to submit, but the arbiter could
 				__IO_STATS__(true, io.flush.idle++; )
@@ -209,16 +209,16 @@ void main(processorCtx_t & runner) {
 			}
 
 			HALT:
-			if( !readyThread ) {
+			if ( ! readyThread ) {
 				// Don't block if we are done
-				if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
+				if ( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
 				// Push self to idle stack
-				if(!mark_idle(this->cltr->procs, * this)) continue MAIN_LOOP;
+				if ( ! mark_idle(this->cltr->procs, * this)) continue MAIN_LOOP;
 
 				// Confirm the ready-queue is empty
 				readyThread = __next_thread_search( this->cltr );
-				if( readyThread ) {
+				if ( readyThread ) {
 					// A thread was found, cancel the halt
 					mark_awake(this->cltr->procs, * this);
 
@@ -246,9 +246,9 @@ void main(processorCtx_t & runner) {
 			__run_thread(this, readyThread);
 
 			// Are we done?
-			if( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
+			if ( __atomic_load_n(&this->do_terminate, __ATOMIC_SEQ_CST) ) break MAIN_LOOP;
 
-			if(__atomic_load_n(&this->io.pending, __ATOMIC_RELAXED) && !__atomic_load_n(&this->io.dirty, __ATOMIC_RELAXED)) {
+			if (__atomic_load_n(&this->io.pending, __ATOMIC_RELAXED) && ! __atomic_load_n(&this->io.dirty, __ATOMIC_RELAXED)) {
 				__IO_STATS__(true, io.flush.dirty++; )
 				__cfa_io_flush( this );
 			}
@@ -262,7 +262,7 @@ void main(processorCtx_t & runner) {
 
 	post( this->terminated );
 
-	if(this == mainProcessor) {
+	if (this == mainProcessor) {
 		// HACK : the coroutine context switch expects this_thread to be set
 		// and it make sense for it to be set in all other cases except here
 		// fake it
@@ -293,7 +293,8 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 	proc_cor->state = Blocked;
 
 	// Actually run the thread
-	RUNNING:  while(true) {
+	RUNNING:
+	while( true ) {
 		thrd_dst->preempted = __NO_PREEMPTION;
 
 		// Update global state
@@ -338,7 +339,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 		// In case 1, we may have won a race so we can't write to the state again.
 		// In case 2, we lost the race so we now own the thread.
 
-		if(unlikely(thrd_dst->preempted != __NO_PREEMPTION)) {
+		if (unlikely(thrd_dst->preempted != __NO_PREEMPTION)) {
 			// Reset the this_thread now that we know
 			// the state isn't active anymore
 			kernelTLS().this_thread = 0p;
@@ -348,7 +349,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 			break RUNNING;
 		}
 
-		if(unlikely(thrd_dst->state == Halting)) {
+		if (unlikely(thrd_dst->state == Halting)) {
 			// Reset the this_thread now that we know
 			// the state isn't active anymore
 			kernelTLS().this_thread = 0p;
@@ -417,9 +418,9 @@ static void returnToKernel() {
 		*__volatile_errno() = local_errno;
 	}
 
-	#if !defined(__CFA_NO_STATISTICS__)
+	#if ! defined(__CFA_NO_STATISTICS__)
 		/* paranoid */ verify( thrd_src->last_proc != 0p );
-		if(thrd_src->last_proc != kernelTLS().this_processor) {
+		if (thrd_src->last_proc != kernelTLS().this_processor) {
 			__tls_stats()->ready.threads.migration++;
 		}
 	#endif
@@ -439,9 +440,9 @@ static void __schedule_thread( thread$ * thrd, unpark_hint hint ) {
 	/* paranoid */ verify( thrd->state != Halted );
 	/* paranoid */ verify( thrd->curr_cluster );
 	/* paranoid */ #if defined( __CFA_WITH_VERIFY__ )
-	/* paranoid */ 	if( thrd->state == Blocked || thrd->state == Start ) assertf( thrd->preempted == __NO_PREEMPTION,
+	/* paranoid */ 	if ( thrd->state == Blocked || thrd->state == Start ) assertf( thrd->preempted == __NO_PREEMPTION,
 					"Error inactive thread marked as preempted, state %d, preemption %d\n", thrd->state, thrd->preempted );
-	/* paranoid */ 	if( thrd->preempted != __NO_PREEMPTION ) assertf(thrd->state == Active,
+	/* paranoid */ 	if ( thrd->preempted != __NO_PREEMPTION ) assertf(thrd->state == Active,
 					"Error preempted thread marked as not currently running, state %d, preemption %d\n", thrd->state, thrd->preempted );
 	/* paranoid */ #endif
 	/* paranoid */ verifyf( thrd->rdy_link.next == 0p, "Expected null got %p", thrd->rdy_link.next );
@@ -462,10 +463,10 @@ static void __schedule_thread( thread$ * thrd, unpark_hint hint ) {
 	// wake the cluster using the save variable.
 	__wake_one( cl );
 
-	#if !defined(__CFA_NO_STATISTICS__)
-		if( kernelTLS().this_stats ) {
+	#if ! defined(__CFA_NO_STATISTICS__)
+		if ( kernelTLS().this_stats ) {
 			__tls_stats()->ready.threads.threads++;
-			if(outside) {
+			if (outside) {
 				__tls_stats()->ready.threads.extunpark++;
 			}
 		}
@@ -541,9 +542,9 @@ void __kernel_unpark( thread$ * thrd, unpark_hint hint ) {
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( ready_schedule_islocked());
 
-	if( !thrd ) return;
+	if ( ! thrd ) return;
 
-	if(__must_unpark(thrd)) {
+	if (__must_unpark(thrd)) {
 		// Wake lost the race,
 		__schedule_thread( thrd, hint );
 	}
@@ -553,9 +554,9 @@ void __kernel_unpark( thread$ * thrd, unpark_hint hint ) {
 }
 
 void unpark( thread$ * thrd, unpark_hint hint ) libcfa_public {
-	if( !thrd ) return;
+	if ( ! thrd ) return;
 
-	if(__must_unpark(thrd)) {
+	if (__must_unpark(thrd)) {
 		disable_interrupts();
 			// Wake lost the race,
 			schedule_thread$( thrd, hint );
@@ -591,9 +592,9 @@ extern "C" {
 		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) > ((uintptr_t)__get_stack(thrd->curr_cor)->limit), "ERROR : thread$ %p has been corrupted.\n StackPointer too large.\n", thrd );
 		/* paranoid */ verifyf( ((uintptr_t)thrd->context.SP) < ((uintptr_t)__get_stack(thrd->curr_cor)->base ), "ERROR : thread$ %p has been corrupted.\n StackPointer too small.\n", thrd );
 
-		if( TICKET_RUNNING != thrd->ticket ) { abort( "Thread terminated with pending unpark" ); }
-		if( thrd != this->owner ) { abort( "Thread internal monitor has incorrect owner" ); }
-		if( this->recursion != 1) { abort( "Thread internal monitor has unbalanced recursion" ); }
+		if ( TICKET_RUNNING != thrd->ticket ) { abort( "Thread terminated with pending unpark" ); }
+		if ( thrd != this->owner ) { abort( "Thread internal monitor has incorrect owner" ); }
+		if ( this->recursion != 1) { abort( "Thread internal monitor has unbalanced recursion" ); }
 
 		thrd->state = Halting;
 		thrd->ticket = TICKET_DEAD;
@@ -617,7 +618,7 @@ bool force_yield( __Preemption_Reason reason ) libcfa_public {
 		// intrusive fields then we can't use them to preempt the thread
 		// If that is the case, abandon the preemption.
 		bool preempted = false;
-		if(thrd->rdy_link.next == 0p) {
+		if (thrd->rdy_link.next == 0p) {
 			preempted = true;
 			thrd->preempted = reason;
 			returnToKernel();
@@ -640,10 +641,10 @@ static void __wake_one(cluster * this) {
 	struct __fd_waitctx * fdp = __atomic_load_n(&this->procs.fdw, __ATOMIC_SEQ_CST);
 
 	// If no one is sleeping: we are done
-	if( fdp == 0p ) return;
+	if ( fdp == 0p ) return;
 
 	int fd = 1;
-	if( __atomic_load_n(&fdp->sem, __ATOMIC_SEQ_CST) != 1 ) {
+	if ( __atomic_load_n(&fdp->sem, __ATOMIC_SEQ_CST) != 1 ) {
 		fd = __atomic_exchange_n(&fdp->sem, 1, __ATOMIC_RELAXED);
 	}
 
@@ -651,15 +652,15 @@ static void __wake_one(cluster * this) {
 		__attribute__((unused)) int ret;
 	case 0:
 		// If the processor isn't ready to sleep then the exchange will already wake it up
-		#if !defined(__CFA_NO_STATISTICS__)
-			if( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.early++;
+		#if ! defined(__CFA_NO_STATISTICS__)
+			if ( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.early++;
 			} else { __atomic_fetch_add(&this->stats->ready.sleep.early, 1, __ATOMIC_RELAXED); }
 		#endif
 		break;
 	case 1:
 		// If someone else already said they will wake them: we are done
-		#if !defined(__CFA_NO_STATISTICS__)
-			if( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.seen++;
+		#if ! defined(__CFA_NO_STATISTICS__)
+			if ( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.seen++;
 			} else { __atomic_fetch_add(&this->stats->ready.sleep.seen, 1, __ATOMIC_RELAXED); }
 		#endif
 		break;
@@ -669,8 +670,8 @@ static void __wake_one(cluster * this) {
 		ret = eventfd_write( fd, val );
 		/* paranoid */ verifyf( ret == 0, "Expected return to be 0, was %d\n", ret );
 
-		#if !defined(__CFA_NO_STATISTICS__)
-			if( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.wakes++;
+		#if ! defined(__CFA_NO_STATISTICS__)
+			if ( kernelTLS().this_stats ) { __tls_stats()->ready.sleep.wakes++;
 			} else { __atomic_fetch_add(&this->stats->ready.sleep.wakes, 1, __ATOMIC_RELAXED); }
 		#endif
 		break;
@@ -709,18 +710,18 @@ static void idle_sleep(processor * this) {
 		int expected = this->idle_wctx.sem;
 
 		// Someone already told us to wake-up! No time for a nap.
-		if(expected == 1) { return; }
+		if (expected == 1) { return; }
 
 		// Try to mark that we are going to sleep
-		if(__atomic_compare_exchange_n(&this->idle_wctx.sem, &expected, this->idle_wctx.evfd, false,  __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) ) {
+		if (__atomic_compare_exchange_n(&this->idle_wctx.sem, &expected, this->idle_wctx.evfd, false,  __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST) ) {
 			// Every one agreed, taking a nap
 			break;
 		}
 	}
 
 
-	#if !defined(__CFA_NO_STATISTICS__)
-		if(this->print_halts) {
+	#if ! defined(__CFA_NO_STATISTICS__)
+		if (this->print_halts) {
 			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl());
 		}
 	#endif
@@ -730,7 +731,7 @@ static void idle_sleep(processor * this) {
 	{
 		eventfd_t val;
 		ssize_t ret = read( this->idle_wctx.evfd, &val, sizeof(val) );
-		if(ret < 0) {
+		if (ret < 0) {
 			switch((int)errno) {
 			case EAGAIN:
 			#if EAGAIN != EWOULDBLOCK
@@ -745,8 +746,8 @@ static void idle_sleep(processor * this) {
 		}
 	}
 
-	#if !defined(__CFA_NO_STATISTICS__)
-		if(this->print_halts) {
+	#if ! defined(__CFA_NO_STATISTICS__)
+		if (this->print_halts) {
 			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl());
 		}
 	#endif
@@ -758,7 +759,7 @@ static bool mark_idle(__cluster_proc_list & this, processor & proc) {
 	proc.idle_wctx.sem = 0;
 
 	/* paranoid */ verify( ! __preemption_enabled() );
-	if(!try_lock( this )) return false;
+	if ( ! try_lock( this )) return false;
 		this.idle++;
 		/* paranoid */ verify( this.idle <= this.total );
 		remove(proc);
@@ -783,7 +784,7 @@ static void mark_awake(__cluster_proc_list & this, processor & proc) {
 		{
 			// update the pointer to the head wait context
 			struct __fd_waitctx * wctx = 0;
-			if(!this.idles`isEmpty) wctx = &this.idles`first.idle_wctx;
+			if ( ! isEmpty( this.idles )) wctx = &first( this. idles ).idle_wctx;
 			__atomic_store_n(&this.fdw, wctx, __ATOMIC_SEQ_CST);
 		}
 
@@ -797,7 +798,7 @@ static void mark_awake(__cluster_proc_list & this, processor & proc) {
 void __kernel_abort_msg( char * abort_text, int abort_text_size ) {
 	thread$ * thrd = __cfaabi_tls.this_thread;
 
-	if(thrd) {
+	if (thrd) {
 		int len = snprintf( abort_text, abort_text_size, "Error occurred while executing thread %.256s (%p)", thrd->self_cor.name, thrd );
 		__cfaabi_bits_write( STDERR_FILENO, abort_text, len );
 
@@ -846,7 +847,7 @@ bool threading_enabled(void) __attribute__((const)) libcfa_public {
 
 //-----------------------------------------------------------------------------
 // Statistics
-#if !defined(__CFA_NO_STATISTICS__)
+#if ! defined(__CFA_NO_STATISTICS__)
 	void print_halts( processor & this ) libcfa_public {
 		this.print_halts = true;
 	}
@@ -854,13 +855,13 @@ bool threading_enabled(void) __attribute__((const)) libcfa_public {
 	static void crawl_list( cluster * cltr, dlist(processor) & list, unsigned count ) {
 		/* paranoid */ verify( cltr->stats );
 
-		processor * it = &list`first;
+		processor * it = &first( list );
 		for(unsigned i = 0; i < count; i++) {
 			/* paranoid */ verifyf( it, "Unexpected null iterator, at index %u of %u\n", i, count);
 			/* paranoid */ verify( it->local_data->this_stats );
 			// __print_stats( it->local_data->this_stats, cltr->print_stats, "Processor", it->name, (void*)it );
 			__tally_stats( cltr->stats, it->local_data->this_stats );
-			it = &(*it)`next;
+			it = &next( *it );
 		}
 	}
 

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 13 10:49:40 2024
-// Update Count     : 765
+// Last Modified On : Mon Apr 14 20:42:53 2025
+// Update Count     : 767
 //
 
 #pragma once
@@ -21,45 +21,56 @@
 // *********************************** ostream ***********************************
 
 forall( ostype & )
-trait basic_ostream {
+struct basic_ostream_data {
 	// private
-	bool sepPrt$( ostype & );							// get separator state (on/off)
-	void sepReset$( ostype & );							// set separator state to default state
-	void sepReset$( ostype &, bool );					// set separator and default state
-	const char * sepGetCur$( ostype & );				// get current separator string
-	void sepSetCur$( ostype &, const char [] );			// set current separator string
-	bool getNL$( ostype & );							// get newline
-	bool setNL$( ostype &, bool );						// set newline
-	bool getANL$( ostype & );							// get auto newline (on/off)
-	bool setANL$( ostype &, bool );						// set auto newline (on/off), and return previous state
-	bool getPrt$( ostype & );							// get fmt called in output cascade
-	bool setPrt$( ostype &, bool );						// set fmt called in output cascade
+	bool (*sepPrt$)( ostype & );							// get separator state (on/off)
+	void (*sepReset$)( ostype & );							// set separator state to default state
+	void (*sepReset$)( ostype &, bool );					// set separator and default state
+	const char * (*sepGetCur$)( ostype & );				// get current separator string
+	void (*sepSetCur$)( ostype &, const char [] );			// set current separator string
+	bool (*getNL$)( ostype & );							// get newline
+	bool (*setNL$)( ostype &, bool );						// set newline
+	bool (*getANL$)( ostype & );							// get auto newline (on/off)
+	bool (*setANL$)( ostype &, bool );						// set auto newline (on/off), and return previous state
+	bool (*getPrt$)( ostype & );							// get fmt called in output cascade
+	bool (*setPrt$)( ostype &, bool );						// set fmt called in output cascade
 	// public
-	void nlOn( ostype & );								// turn auto-newline state on
-	void nlOff( ostype & );								// turn auto-newline state off
+	void (*nlOn)( ostype & );								// turn auto-newline state on
+	void (*nlOff)( ostype & );								// turn auto-newline state off
 
-	void sep( ostype & );								// turn separator state on
-	void nosep( ostype & );								// turn separator state off
-	bool sepOn( ostype & );								// set default state to on, and return previous state
-	bool sepOff( ostype & );							// set default state to off, and return previous state
-	const char * sepGet( ostype & );					// get separator string
-	void sepSet( ostype &, const char [] );				// set separator to string (15 character maximum)
-	const char * sepGetTuple( ostype & );				// get tuple separator string
-	void sepSetTuple( ostype &, const char [] );		// set tuple separator to string (15 character maximum)
+	void (*sep)( ostype & );								// turn separator state on
+	void (*nosep)( ostype & );								// turn separator state off
+	bool (*sepOn)( ostype & );								// set default state to on, and return previous state
+	bool (*sepOff)( ostype & );							// set default state to off, and return previous state
+	const char * (*sepGet)( ostype & );					// get separator string
+	void (*sepSet)( ostype &, const char [] );				// set separator to string (15 character maximum)
+	const char * (*sepGetTuple)( ostype & );				// get tuple separator string
+	void (*sepSetTuple)( ostype &, const char [] );		// set tuple separator to string (15 character maximum)
 
-	void ends( ostype & );								// end of output statement
-	int fmt( ostype &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
+	void (*ends)( ostype & );								// end of output statement
+	int (*fmt)( ostype &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
 }; // basic_ostream
+
+forall( ostype & )
+struct ostream_data {
+	inline basic_ostream_data( ostype );
+	bool (*fail)( ostype & );								// operation failed?
+	void (*clearerr)( ostype & );
+	int (*flush)( ostype & );
+	void (*open)( ostype &, const char name[], const char mode[] );
+	void (*close)( ostype & );
+	ostype & (*write)( ostype &, const char [], size_t );
+}; // ostream
+
+forall( ostype & )
+trait basic_ostream {
+	basic_ostream_data(ostype) const & basic_ostream_table;
+};
 
 forall( ostype & | basic_ostream( ostype ) )
 trait ostream {
-	bool fail( ostype & );								// operation failed?
-	void clear( ostype & );
-	int flush( ostype & );
-	void open( ostype &, const char name[], const char mode[] );
-	void close( ostype & );
-	ostype & write( ostype &, const char [], size_t );
-}; // ostream
+	ostream_data(ostype) const & ostream_table;
+};
 
 // forall( T )
 // trait writeable {
@@ -76,7 +87,8 @@ trait writeable {
 #define OSTYPE_VOID( T ) void ?|?( ostype &, T )
 #define OSTYPE_VOID_IMPL( os, T ) \
 	void ?|?( ostype & os, T t ) { \
-		(ostype &)(os | t); ends( os ); \
+		(ostype &)(os | t); \
+		basic_ostream_table.ends( os ); \
 	} // ?|?
 
 forall( ostype & | basic_ostream( ostype ) ) {
@@ -307,27 +319,38 @@ forall( ostype & | basic_ostream( ostype ) ) {
 // *********************************** istream ***********************************
 
 forall( istype & )
-trait basic_istream {
+struct basic_istream_data {
 	// private
-	bool getANL$( istype & );							// get scan newline (on/off)
-	bool setANL$( istype &, bool );						// set scan newline (on/off)
+	bool (*getANL$)( istype & );							// get scan newline (on/off)
+	bool (*setANL$)( istype &, bool );						// set scan newline (on/off)
 	// public
-	void nlOn( istype & );								// read newline
-	void nlOff( istype & );								// scan newline
-	int fmt( istype &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
-	istype & ungetc( char, istype & );
-	bool eof( istype & );
-	void clear( istype & );
+	void (*nlOn)( istype & );								// read newline
+	void (*nlOff)( istype & );								// scan newline
+	int (*fmt)( istype &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
+	istype & (*ungetc)( char, istype & );
+	bool (*eof)( istype & );
+	void (*clearerr)( istype & );
 }; // basic_istream
+
+forall( istype & )
+struct istream_data {
+	inline basic_istream_data( istype );
+	bool (*fail)( istype & );
+	void (*open)( istype & is, const char name[], const char mode[] );
+	void (*open)( istype & is, const char name[] );
+	void (*close)( istype & is );
+	istype & (*read)( istype &, char [], size_t );
+}; // istream
+
+forall( istype & )
+trait basic_istream {
+	basic_istream_data(istype) const & basic_istream_table;
+};
 
 forall( istype & | basic_istream( istype ) )
 trait istream {
-	bool fail( istype & );
-	void open( istype & is, const char name[], const char mode[] );
-	void open( istype & is, const char name[] );
-	void close( istype & is );
-	istype & read( istype &, char [], size_t );
-}; // istream
+	istream_data(istype) const & istream_table;
+};
 
 forall( T )
 trait readable {
@@ -419,9 +442,9 @@ struct _Istream_Cwidth {
 
 // Restrict nesting of input manipulators to those combinations that make sense.
 
-struct _Istream_Cquoted {
+struct _Istream_Cquote {
 	_Istream_Cwidth cstr;
-}; // _Istream_Cquoted
+}; // _Istream_Cquote
 
 struct _Istream_Cstr {
 	_Istream_Cwidth cstr;
@@ -440,24 +463,24 @@ static inline {
 	_Istream_Cstr & getline( _Istream_Cwidth & f, const char delimiter = '\n' ) {
 		f.delimiters[0] = delimiter; f.delimiters[1] = '\0'; f.flags.delimiter = true; return (_Istream_Cstr &)f;
 	}
-	_Istream_Cquoted quoted( char & ch, const char Ldelimiter = '\'', const char Rdelimiter = '\0' ) {
-		return (_Istream_Cquoted)@{ { .s = &ch, { {.delimiters = { Ldelimiter, Rdelimiter, '\1' }}, .wd = 1, {.flags.rwd = true} } } };
+	_Istream_Cquote quote( char & ch, const char Ldelimiter = '\'', const char Rdelimiter = '\0' ) {
+		return (_Istream_Cquote)@{ { .s = &ch, { {.delimiters = { Ldelimiter, Rdelimiter, '\1' }}, .wd = 1, {.flags.rwd = true} } } };
 	}
-	_Istream_Cquoted & quoted( _Istream_Cwidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
+	_Istream_Cquote & quote( _Istream_Cwidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
 		f.delimiters[0] = Ldelimiter;  f.delimiters[1] = Rdelimiter;  f.delimiters[2] = '\0';
-		return (_Istream_Cquoted &)f;
+		return (_Istream_Cquote &)f;
 	}
 	_Istream_Cstr & incl( const char scanset[], _Istream_Cwidth & f ) { f.scanset = scanset; f.flags.inex = false; return (_Istream_Cstr &)f; }
 	_Istream_Cstr & excl( const char scanset[], _Istream_Cwidth & f ) { f.scanset = scanset; f.flags.inex = true; return (_Istream_Cstr &)f; }
 	_Istream_Cstr ignore( const char s[] ) { return (_Istream_Cstr)@{ { .s = (char *)s, { {.scanset = 0p}, .wd = -1, {.flags.ignore = true} } } }; }
 	_Istream_Cstr & ignore( _Istream_Cwidth & f ) { f.flags.ignore = true; return (_Istream_Cstr &)f; }
-	_Istream_Cquoted & ignore( _Istream_Cquoted & f ) { f.cstr.flags.ignore = true; return (_Istream_Cquoted &)f; }
+	_Istream_Cquote & ignore( _Istream_Cquote & f ) { f.cstr.flags.ignore = true; return (_Istream_Cquote &)f; }
 	_Istream_Cstr & ignore( _Istream_Cstr & f ) { f.cstr.flags.ignore = true; return (_Istream_Cstr &)f; }
 } // distribution
 
 forall( istype & | basic_istream( istype ) ) {
 	istype & ?|?( istype & is, _Istream_Cskip f );
-	istype & ?|?( istype & is, _Istream_Cquoted f );
+	istype & ?|?( istype & is, _Istream_Cquote f );
 	istype & ?|?( istype & is, _Istream_Cstr f );
 	static inline istype & ?|?( istype & is, _Istream_Cwidth f ) { return is | *(_Istream_Cstr *)&f; }
 } // distribution

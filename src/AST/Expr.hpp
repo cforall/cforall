@@ -482,6 +482,7 @@ public:
 	ptr<Type> type;
 
 	SizeofExpr( const CodeLocation & loc, const Type * t );
+	SizeofExpr( const CodeLocation & loc, const Type * t, const Type * r );
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
@@ -495,6 +496,7 @@ public:
 	ptr<Type> type;
 
 	AlignofExpr( const CodeLocation & loc, const Type * t );
+	AlignofExpr( const CodeLocation & loc, const Type * t, const Type * r );
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
@@ -536,7 +538,7 @@ public:
 	ptr<Type> type;
 	readonly<DeclWithType> member;
 
-	OffsetofExpr( const CodeLocation & loc, const Type * ty, const DeclWithType * mem );
+	OffsetofExpr( const CodeLocation & loc, const Type * ty, const DeclWithType * mem, const Type * res );
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:
@@ -779,8 +781,6 @@ private:
 class StmtExpr final : public Expr {
 public:
 	ptr<CompoundStmt> stmts;
-	std::vector<ptr<ObjectDecl>> returnDecls;  ///< return variable(s) for statement expression
-	std::vector<ptr<Expr>> dtors;              ///< destructor(s) for return variable(s)
 
 	readonly<ExprStmt> resultExpr;
 

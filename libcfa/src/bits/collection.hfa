@@ -25,13 +25,13 @@ struct Colable {
 static inline {
 	// PUBLIC
 
-	void ?{}( Colable & co ) with( co ) {
-		next = 0p;
+	void ?{}( Colable & co ) {
+		co.next = 0p;
 	} // post: ! listed()
 
 	// return true iff *this is an element of a collection
-	bool listed( Colable & co ) with( co ) {			// pre: this != 0
-		return next != 0p;
+	bool listed( Colable & co ) {						// pre: this != 0
+		return co.next != 0p;
 	}
 
 	Colable & getNext( Colable & co ) with( co ) {

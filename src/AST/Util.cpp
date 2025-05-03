@@ -259,6 +259,7 @@ struct InScopeCore : public ast::WithShortCircuiting {
 				// We could check non-assertion fields here.
 			}
 		}
+		if ( ! type->assertions.empty() ) visit_children = false;
 	}
 
 	void previsit( TypeInstType const * type ) {
@@ -382,32 +383,5 @@ void checkInvariants( TranslationUnit & transUnit ) {
 	Pass<InvariantCore>::run( transUnit );
 	Pass<InScopeCore>::run( transUnit );
 }
-
-namespace {
-	const TranslationUnit * transUnit = 0;
-}
-
-void TranslationDeps::evolve( TranslationUnit & u ) {
-	transUnit = &u;
-}
-
-const ast::Type * TranslationDeps::getSizeType() {
-	static const ast::Type * zd_abstract = new TypeInstType{ "size_t", TypeDecl::Kind::Dtype };
-	static const ast::Type * ld_concrete = new BasicType( BasicKind::LongUnsignedInt );
-	if ( ! transUnit ) {
-		// early state
-		// as if `size_t` in program text were freshly parsed
-		return zd_abstract;
-	} else if ( transUnit->global.sizeType ) {
-		// late state, normal run
-		// whatever size_t was defined as
-		return transUnit->global.sizeType;
-	} else {
-		// late state, no prelude (-n)
-		// placeholder: cfa-cpp is being used experimentally, stay out of the way
-		return ld_concrete;
-	}
-}
-
 
 } // namespace ast

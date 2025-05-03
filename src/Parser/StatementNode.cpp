@@ -9,9 +9,9 @@
 //
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
-// Last Modified By : Kyoung Seo
-// Last Modified On : Thd Jan 16 13:05:00 2025
-// Update Count     : 433
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Feb  6 11:38:39 2025
+// Update Count     : 434
 //
 
 #include "StatementNode.hpp"
@@ -69,6 +69,12 @@ StatementNode::StatementNode( DeclarationNode * decl ) {
 	CodeLocation declLocation = agg->location;
 	stmt.reset( new ast::DeclStmt( declLocation, maybeMoveBuild( agg ) ) );
 } // StatementNode::StatementNode
+
+StatementNode * StatementNode::addQualifiers( DeclarationNode * attr ) {
+	if ( ! attr ) { return this; }						// empty attribute list
+	attributes.insert( attributes.end(), attr->attributes.begin(), attr->attributes.end() );
+	return this;
+}
 
 StatementNode * StatementNode::add_label(
 		const CodeLocation & location,

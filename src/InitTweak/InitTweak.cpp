@@ -67,7 +67,7 @@ namespace {
 		}
 	};
 
-	struct InitDepthChecker {
+	struct InitDepthChecker : public ast::WithShortCircuiting {
 		bool result = true;
 		const ast::Type * type;
 		int curDepth = 0, maxDepth = 0;
@@ -85,6 +85,10 @@ namespace {
 		}
 		void postvisit( ast::ListInit const * ) {
 			curDepth--;
+		}
+		void previsit( ast::SingleInit const * ) {
+			// We don't want to visit the value field.
+			visit_children = false;
 		}
 	};
 

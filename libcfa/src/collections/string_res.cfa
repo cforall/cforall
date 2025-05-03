@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 17 14:08:01 2024
-// Update Count     : 86
+// Last Modified On : Mon Apr 14 20:45:39 2025
+// Update Count     : 130
 //
 
 #include "string_res.hfa"
@@ -191,23 +191,22 @@ const char * DEBUG_string_heap_start( VbyteHeap * heap ) {
 	return heap->StartVbyte;
 }
 
-// Returns the size of the string in bytes
-size_t size(const string_res & s) with(s) {
-	return Handle.lnth;
-}
-
 // Output operator
-ofstream & ?|?(ofstream & out, const string_res & s) {
+forall( ostype & | basic_ostream( ostype ) )
+ostype & ?|?( ostype & out, const string_res & s ) {
 	// CFA string is NOT null terminated, so print exactly lnth characters in a minimum width of 0.
 	return out | wd( 0, s.Handle.lnth, s.Handle.s ) | nonl;
 }
 
-void ?|?(ofstream & out, const string_res & s) {
-	(ofstream &)(out | s); ends( out );
+forall( ostype & | basic_ostream( ostype ) )
+void ?|?( ostype & out, const string_res & s ) {
+	(ostype &)(out | s);
+	basic_ostream_table.ends( out );
 }
 
 // Input operator
-ifstream & ?|?(ifstream & in, string_res & s) {
+forall( istype & | basic_istream( istype ) )
+istype & ?|?( istype & in, string_res & s ) {
 	// Reading into a temp before assigning to s is near zero overhead in typical cases because of sharing.
 	// If s is a substring of something larger, simple assignment takes care of that case correctly.
 	// But directly reading a variable amount of text into the middle of a larger context is not practical.
@@ -249,14 +248,15 @@ ifstream & ?|?(ifstream & in, string_res & s) {
 	return in;
 }
 
-ifstream & ?|?( ifstream & is, _Istream_Rquoted f ) with( f.rstr ) {
+forall( istype & | basic_istream( istype ) )
+istype & ?|?( istype & is, _Istream_Rquote f ) with( basic_istream_table, f.rstr ) {
 	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 	int args;
   fini: {
 		char rfmt[5] = { ' ', delimiters[0], '%', 'n', '\0' };
-		int len = -1;									// may not be set in fmt
-		args = fmt( is, rfmt, &len );					// remove leading whitespace and quote
-	  if ( eof( is ) || len == -1 ) break fini;
+		int l = -1;										// may not be set in fmt
+		args = fmt( is, rfmt, &l );						// remove leading whitespace and quote
+	  if ( eof( is ) || l == -1 ) break fini;
 
 		// Change the remainder of the read into a getline by reseting the closing delimiter.
 		if ( delimiters[1] != '\0' ) {
@@ -269,12 +269,13 @@ ifstream & ?|?( ifstream & is, _Istream_Rquoted f ) with( f.rstr ) {
 	// read failed => no pattern match => set string to null
 	if ( ! flags.ignore && s != 0p && args == 0 ) s[0] = '\0';
 	if ( args == 1 && eof( is ) ) {						// data but scan ended at EOF
-		clear( is );									// => reset EOF => detect again on next read
+		clearerr( is );									// => reset EOF => detect again on next read
 	} // if
 	return is;
 }
 
-ifstream & ?|?( ifstream & is, _Istream_Rstr f ) {
+forall( istype & | basic_istream( istype ) )
+istype & ?|?( istype & is, _Istream_Rstr f ) {
  	// .---------------,
  	// | | | | |...|0|0| null terminator and guard if missing
  	// `---------------'
@@ -318,31 +319,31 @@ ifstream & ?|?( ifstream & is, _Istream_Rstr f ) {
 void ?{}(string_res & s) with(s) {
 	if( ambient_string_sharectx->activeHeap ) {
 		(Handle){ * ambient_string_sharectx->activeHeap };
-		(shareEditSet_owns_ulink){ false };
+		(shareSet_owns_ulink){ false };
 		verify( Handle.s == 0p && Handle.lnth == 0 );
 	} else {
 		(Handle){ * new( (size_t) 10 ) };  // TODO: can I lazily avoid allocating for empty string
-		(shareEditSet_owns_ulink){ true };
+		(shareSet_owns_ulink){ true };
 		Handle.s = Handle.ulink->StartVbyte;
 		verify( Handle.lnth == 0 );
 	}
-	s.shareEditSet_prev = &s;
-	s.shareEditSet_next = &s;
+	s.shareSet_prev = &s;
+	s.shareSet_next = &s;
 		}
 
 static void eagerCopyCtorHelper(string_res & s, const char * rhs, size_t rhslnth) with(s) {
 	if( ambient_string_sharectx->activeHeap ) {
 		(Handle){ * ambient_string_sharectx->activeHeap };
-		(shareEditSet_owns_ulink){ false };
+		(shareSet_owns_ulink){ false };
 	} else {
 		(Handle){ * new( rhslnth ) };
-		(shareEditSet_owns_ulink){ true };
+		(shareSet_owns_ulink){ true };
 	}
 	Handle.s = VbyteAlloc(*Handle.ulink, rhslnth);
 	Handle.lnth = rhslnth;
 	memmove( Handle.s, rhs, rhslnth );
-	s.shareEditSet_prev = &s;
-	s.shareEditSet_next = &s;
+	s.shareSet_prev = &s;
+	s.shareSet_next = &s;
 }
 
 // Constructor from a raw buffer and size
@@ -352,39 +353,39 @@ void ?{}(string_res & s, const char * rhs, size_t rhslnth) with(s) {
 
 void ?{}( string_res & s, ssize_t rhs ) {
 	char buf[64];
-	int len;
-	snprintf( buf, sizeof(buf)-1, "%zd%n", rhs, &len );
-	( s ){ buf, len };
+	int l;
+	snprintf( buf, sizeof(buf)-1, "%zd%n", rhs, &l );
+	( s ){ buf, l };
 }
 void ?{}( string_res & s, size_t rhs ) {
 	char buf[64];
-	int len;
-	snprintf( buf, sizeof(buf)-1, "%zu%n", rhs, &len );
-	( s ){ buf, len };
+	int l;
+	snprintf( buf, sizeof(buf)-1, "%zu%n", rhs, &l );
+	( s ){ buf, l };
 }
 void ?{}( string_res & s, double rhs ) {
 	char buf[64];
-	int len;
-	snprintf( buf, sizeof(buf)-1, "%g%n", rhs, &len );
-	( s ){ buf, len };
+	int l;
+	snprintf( buf, sizeof(buf)-1, "%g%n", rhs, &l );
+	( s ){ buf, l };
 }
 void ?{}( string_res & s, long double rhs ) {
 	char buf[64];
-	int len;
-	snprintf( buf, sizeof(buf)-1, "%Lg%n", rhs, &len );
-	( s ){ buf, len };
+	int l;
+	snprintf( buf, sizeof(buf)-1, "%Lg%n", rhs, &l );
+	( s ){ buf, l };
 }
 void ?{}( string_res & s, double _Complex rhs ) {
 	char buf[64];
-	int len;
-	snprintf( buf, sizeof(buf)-1, "%g+%gi%n", creal( rhs ), cimag( rhs ), &len );
-	( s ){ buf, len };
+	int l;
+	snprintf( buf, sizeof(buf)-1, "%g+%gi%n", creal( rhs ), cimag( rhs ), &l );
+	( s ){ buf, l };
 }
 void ?{}( string_res & s, long double _Complex rhs ) {
 	char buf[64];
-	int len;
-	snprintf( buf, sizeof(buf)-1, "%Lg+%Lgi%n", creall( rhs ), cimagl( rhs ), &len );
-	( s ){ buf, len };
+	int l;
+	snprintf( buf, sizeof(buf)-1, "%Lg+%Lgi%n", creall( rhs ), cimagl( rhs ), &l );
+	( s ){ buf, l };
 }
 
 // private ctor (not in header): use specified heap (ignore ambient) and copy chars in
@@ -392,10 +393,10 @@ void ?{}( string_res & s, VbyteHeap & heap, const char * rhs, size_t rhslnth ) w
 	(Handle){ heap };
 	Handle.s = VbyteAlloc(*Handle.ulink, rhslnth);
 	Handle.lnth = rhslnth;
-	(s.shareEditSet_owns_ulink){ false };
+	(s.shareSet_owns_ulink){ false };
 	memmove( Handle.s, rhs, rhslnth );
-	s.shareEditSet_prev = &s;
-	s.shareEditSet_next = &s;
+	s.shareSet_prev = &s;
+	s.shareSet_next = &s;
 }
 
 
@@ -407,8 +408,8 @@ void ?{}(string_res & s, const string_res & s2, StrResInitMode mode, size_t star
 	if (s2.Handle.ulink != ambient_string_sharectx->activeHeap && mode == COPY_VALUE) {
 		// crossing heaps (including private): copy eagerly
 		eagerCopyCtorHelper(s, s2.Handle.s + start, end - start);
-		verify(s.shareEditSet_prev == &s);
-		verify(s.shareEditSet_next == &s);
+		verify(s.shareSet_prev == &s);
+		verify(s.shareSet_next == &s);
 	} else {
 		(s.Handle){};
 		s.Handle.s = s2.Handle.s + start;
@@ -422,39 +423,39 @@ void ?{}(string_res & s, const string_res & s2, StrResInitMode mode, size_t star
 			verify(s2.Handle.ulink == ambient_string_sharectx->activeHeap);
 			// requested logical copy in same heap: defer copy until write
 
-			(s.shareEditSet_owns_ulink){ false };
+			(s.shareSet_owns_ulink){ false };
 
-			// make s alone in its shareEditSet
-			s.shareEditSet_prev = &s;
-			s.shareEditSet_next = &s;
+			// make s alone in its shareSet
+			s.shareSet_prev = &s;
+			s.shareSet_next = &s;
 		} else {
 			verify( mode == SHARE_EDITS );
 			// sharing edits with source forces same heap as source (ignore context)
 
-			(s.shareEditSet_owns_ulink){ s2.shareEditSet_owns_ulink };
+			(s.shareSet_owns_ulink){ s2.shareSet_owns_ulink };
 
 			// s2 is logically const but not implementation const
 			string_res & s2mod = (string_res &) s2;
 
-			// insert s after s2 on shareEditSet
-			s.shareEditSet_next = s2mod.shareEditSet_next;
-			s.shareEditSet_prev = &s2mod;
-			s.shareEditSet_next->shareEditSet_prev = &s;
-			s.shareEditSet_prev->shareEditSet_next = &s;
+			// insert s after s2 on shareSet
+			s.shareSet_next = s2mod.shareSet_next;
+			s.shareSet_prev = &s2mod;
+			s.shareSet_next->shareSet_prev = &s;
+			s.shareSet_prev->shareSet_next = &s;
 		}
 	}
 }
 
-static void assignEditSet(string_res & s, string_res * shareEditSetStartPeer, string_res * shareEditSetEndPeer,
+static void assignEditSet(string_res & s, string_res * shareSetStartPeer, string_res * shareSetEndPeer,
 						  char * resultSesStart,
 						  size_t resultSesLnth,
 						  HandleNode * resultPadPosition, size_t bsize ) {
 
-	char * beforeBegin = shareEditSetStartPeer->Handle.s;
+	char * beforeBegin = shareSetStartPeer->Handle.s;
 	size_t beforeLen = s.Handle.s - beforeBegin;
 
 	char * afterBegin = s.Handle.s + s.Handle.lnth;
-	size_t afterLen = shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth - afterBegin;
+	size_t afterLen = shareSetEndPeer->Handle.s + shareSetEndPeer->Handle.lnth - afterBegin;
 
 	size_t oldLnth = s.Handle.lnth;
 
@@ -465,7 +466,7 @@ static void assignEditSet(string_res & s, string_res * shareEditSetStartPeer, st
 
 	// adjust all substring string and handle locations, and check if any substring strings are outside the new base string
 	char *limit = resultSesStart + resultSesLnth;
-	for ( string_res * p = s.shareEditSet_next; p != &s; p = p->shareEditSet_next ) {
+	for ( string_res * p = s.shareSet_next; p != &s; p = p->shareSet_next ) {
 		verify (p->Handle.s >= beforeBegin);
 		if ( p->Handle.s >= afterBegin ) {
 			verify ( p->Handle.s <= afterBegin + afterLen );
@@ -519,34 +520,34 @@ static void assignEditSet(string_res & s, string_res * shareEditSetStartPeer, st
 }
 
 // traverse the share-edit set (SES) to recover the range of a base string to which `s` belongs
-static void locateInShareEditSet( string_res & s, string_res *& shareEditSetStartPeer, string_res *& shareEditSetEndPeer ) {
-	shareEditSetStartPeer = & s;
-	shareEditSetEndPeer = & s;
-	for (string_res * editPeer = s.shareEditSet_next; editPeer != &s; editPeer = editPeer->shareEditSet_next) {
-		if ( editPeer->Handle.s < shareEditSetStartPeer->Handle.s ) {
-			shareEditSetStartPeer = editPeer;
+static void locateInShareSet( string_res & s, string_res *& shareSetStartPeer, string_res *& shareSetEndPeer ) {
+	shareSetStartPeer = & s;
+	shareSetEndPeer = & s;
+	for (string_res * editPeer = s.shareSet_next; editPeer != &s; editPeer = editPeer->shareSet_next) {
+		if ( editPeer->Handle.s < shareSetStartPeer->Handle.s ) {
+			shareSetStartPeer = editPeer;
 		}
-		if ( shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth < editPeer->Handle.s + editPeer->Handle.lnth) {
-			shareEditSetEndPeer = editPeer;
+		if ( shareSetEndPeer->Handle.s + shareSetEndPeer->Handle.lnth < editPeer->Handle.s + editPeer->Handle.lnth) {
+			shareSetEndPeer = editPeer;
 		}
 	}
 }
 
 static string_res & assign_(string_res & s, const char * buffer, size_t bsize, const string_res & valSrc) {
-	string_res * shareEditSetStartPeer;
-	string_res * shareEditSetEndPeer;
-	locateInShareEditSet( s, shareEditSetStartPeer, shareEditSetEndPeer );
+	string_res * shareSetStartPeer;
+	string_res * shareSetEndPeer;
+	locateInShareSet( s, shareSetStartPeer, shareSetEndPeer );
 
-	verify( shareEditSetEndPeer->Handle.s >= shareEditSetStartPeer->Handle.s );
-	size_t origEditSetLength = shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth - shareEditSetStartPeer->Handle.s;
+	verify( shareSetEndPeer->Handle.s >= shareSetStartPeer->Handle.s );
+	size_t origEditSetLength = shareSetEndPeer->Handle.s + shareSetEndPeer->Handle.lnth - shareSetStartPeer->Handle.s;
 	verify( origEditSetLength >= s.Handle.lnth );
 
-	if ( s.shareEditSet_owns_ulink ) {				 // assigning to private context
+	if ( s.shareSet_owns_ulink ) {				 // assigning to private context
 		// ok to overwrite old value within LHS
-		char * prefixStartOrig = shareEditSetStartPeer->Handle.s;
+		char * prefixStartOrig = shareSetStartPeer->Handle.s;
 		int prefixLen = s.Handle.s - prefixStartOrig;
 		char * suffixStartOrig = s.Handle.s + s.Handle.lnth;
-		int suffixLen = shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth - suffixStartOrig;
+		int suffixLen = shareSetEndPeer->Handle.s + shareSetEndPeer->Handle.lnth - suffixStartOrig;
 
 		int delta = bsize - s.Handle.lnth;
 		if ( char * oldBytes = VbyteTryAdjustLast( *s.Handle.ulink, delta ) ) {
@@ -555,7 +556,7 @@ static string_res & assign_(string_res & s, const char * buffer, size_t bsize, c
 			char *destCursor = dest;  memcpy(destCursor, prefixStartOrig, prefixLen);
 			destCursor += prefixLen;  memcpy(destCursor, buffer		 , bsize	);
 			destCursor += bsize;	  memcpy(destCursor, suffixStartOrig, suffixLen);
-			assignEditSet(s, shareEditSetStartPeer, shareEditSetEndPeer, 
+			assignEditSet(s, shareSetStartPeer, shareSetEndPeer, 
 						  dest,
 						  origEditSetLength + delta,
 						  0p, bsize);
@@ -565,8 +566,8 @@ static string_res & assign_(string_res & s, const char * buffer, size_t bsize, c
 			memmove( suffixStartOrig + delta, suffixStartOrig, suffixLen );
 			memcpy( s.Handle.s, buffer, bsize );
 
-			assignEditSet(s, shareEditSetStartPeer, shareEditSetEndPeer, 
-						  shareEditSetStartPeer->Handle.s,
+			assignEditSet(s, shareSetStartPeer, shareSetEndPeer, 
+						  shareSetStartPeer->Handle.s,
 						  origEditSetLength + delta,
 						  0p, bsize);
 		}
@@ -577,7 +578,7 @@ static string_res & assign_(string_res & s, const char * buffer, size_t bsize, c
 		valSrc.Handle.ulink == s.Handle.ulink  ) {	 // sourcing from same heap
 
 		// SES's result will only use characters from the source string => reuse source
-		assignEditSet(s, shareEditSetStartPeer, shareEditSetEndPeer, 
+		assignEditSet(s, shareSetStartPeer, shareSetEndPeer, 
 					  valSrc.Handle.s,
 					  valSrc.Handle.lnth,
 					  &((string_res&)valSrc).Handle, bsize);
@@ -586,27 +587,27 @@ static string_res & assign_(string_res & s, const char * buffer, size_t bsize, c
 		// overwriting a proper substring of some string: mash characters from old and new together (copy on write)
 		// OR we are importing characters: need to copy eagerly (can't refer to source)
 
-		// full string is from start of shareEditSetStartPeer thru end of shareEditSetEndPeer
+		// full string is from start of shareSetStartPeer thru end of shareSetEndPeer
 		// `s` occurs in the middle of it, to be replaced
 		// build up the new text in `pasting`
 
 		string_res pasting = {
 			* s.Handle.ulink,							   // maintain same heap, regardless of context
-			shareEditSetStartPeer->Handle.s,				   // start of SES
-			s.Handle.s - shareEditSetStartPeer->Handle.s }; // length of SES, before s
+			shareSetStartPeer->Handle.s,				   // start of SES
+			s.Handle.s - shareSetStartPeer->Handle.s }; // length of SES, before s
 		append( pasting,
 				buffer,											// start of replacement for s
 				bsize );										   // length of replacement for s
 		append( pasting,
 				s.Handle.s + s.Handle.lnth,				  // start of SES after s
-				shareEditSetEndPeer->Handle.s + shareEditSetEndPeer->Handle.lnth -
+				shareSetEndPeer->Handle.s + shareSetEndPeer->Handle.lnth -
 				(s.Handle.s + s.Handle.lnth) );			  // length of SES, after s
 
 		// The above string building can trigger compaction.
 		// The reference points (that are arguments of the string building) may move during that building.
 		// From s point on, they are stable.
 
-		assignEditSet(s, shareEditSetStartPeer, shareEditSetEndPeer, 
+		assignEditSet(s, shareSetStartPeer, shareSetEndPeer, 
 					  pasting.Handle.s,
 					  pasting.Handle.lnth,
 					  &pasting.Handle, bsize);
@@ -674,12 +675,12 @@ void ^?{}(string_res & s) with(s) {
 	// much delegated to implied ^VbyteSM
 
 	// sever s from its share-edit peers, if any (four no-ops when already solo)
-	s.shareEditSet_prev->shareEditSet_next = s.shareEditSet_next;
-	s.shareEditSet_next->shareEditSet_prev = s.shareEditSet_prev;
-	// s.shareEditSet_next = &s;
-	// s.shareEditSet_prev = &s;
+	s.shareSet_prev->shareSet_next = s.shareSet_next;
+	s.shareSet_next->shareSet_prev = s.shareSet_prev;
+	// s.shareSet_next = &s;
+	// s.shareSet_prev = &s;
 
-	if (shareEditSet_owns_ulink && s.shareEditSet_next == &s) { // last one out
+	if (shareSet_owns_ulink && s.shareSet_next == &s) { // last one out
 		delete( s.Handle.ulink );
 	}
 }
@@ -723,19 +724,8 @@ void append(string_res & str1, const char * buffer, size_t bsize) {
 	str1.Handle.lnth = clnth;
 }
 
-void ?+=?(string_res & str1, const string_res & str2) {
-	append( str1, str2.Handle.s, str2.Handle.lnth );
-}
-
-void append(string_res & str1, const string_res & str2, size_t maxlen) {
-	append( str1, str2.Handle.s, min(str2.Handle.lnth, maxlen) );
-}
-
-void ?+=?(string_res & s, char c) {
-	append( s, & c, 1 );
-}
-void ?+=?(string_res & s, const char * c) {
-	append( s, c, strlen(c) );
+void append( string_res & s, const string_res & s2, size_t maxlen ) {
+	append( s, s2.Handle.s, min( s2.Handle.lnth, maxlen ) );
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -750,60 +740,50 @@ void ?*=?(string_res & s, size_t factor) {
 //////////////////////////////////////////////////////////
 // Comparisons
 
-int strcmp(const string_res & s1, const string_res & s2) {
-	// return 0;
-	int ans1 = memcmp(s1.Handle.s, s2.Handle.s, min(s1.Handle.lnth, s2.Handle.lnth));
-	if (ans1 != 0) return ans1;
-	return s1.Handle.lnth - s2.Handle.lnth;
+int strcmp$( const char * s1, size_t l1, const char * s2, size_t l2 ) {
+	int ret = memcmp( s1, s2, min( l1, l2 ) );
+	if ( ret != 0 ) return ret;
+	return l1 - l2;
 }
-
-bool ?==?(const string_res & s1, const string_res & s2) { return strcmp(s1, s2) == 0; }
-bool ?!=?(const string_res & s1, const string_res & s2) { return strcmp(s1, s2) != 0; }
-bool ?>? (const string_res & s1, const string_res & s2) { return strcmp(s1, s2) >  0; }
-bool ?>=?(const string_res & s1, const string_res & s2) { return strcmp(s1, s2) >= 0; }
-bool ?<=?(const string_res & s1, const string_res & s2) { return strcmp(s1, s2) <= 0; }
-bool ?<? (const string_res & s1, const string_res & s2) { return strcmp(s1, s2) <  0; }
-
-int strcmp (const string_res & s1, const char * s2) {
-	string_res s2x = s2;
-	return strcmp(s1, s2x);
-}
-
-bool ?==?(const string_res & s1, const char * s2) { return strcmp(s1, s2) == 0; }
-bool ?!=?(const string_res & s1, const char * s2) { return strcmp(s1, s2) != 0; }
-bool ?>? (const string_res & s1, const char * s2) { return strcmp(s1, s2) >  0; }
-bool ?>=?(const string_res & s1, const char * s2) { return strcmp(s1, s2) >= 0; }
-bool ?<=?(const string_res & s1, const char * s2) { return strcmp(s1, s2) <= 0; }
-bool ?<? (const string_res & s1, const char * s2) { return strcmp(s1, s2) <  0; }
-
-int strcmp (const char * s1, const string_res & s2) {
-	string_res s1x = s1;
-	return strcmp(s1x, s2);
-}
-
-bool ?==?(const char * s1, const string_res & s2) { return strcmp(s1, s2) == 0; }
-bool ?!=?(const char * s1, const string_res & s2) { return strcmp(s1, s2) != 0; }
-bool ?>? (const char * s1, const string_res & s2) { return strcmp(s1, s2) >  0; }
-bool ?>=?(const char * s1, const string_res & s2) { return strcmp(s1, s2) >= 0; }
-bool ?<=?(const char * s1, const string_res & s2) { return strcmp(s1, s2) <= 0; }
-bool ?<? (const char * s1, const string_res & s2) { return strcmp(s1, s2) <  0; }
-
 
 //////////////////////////////////////////////////////////
 // Search
 
 bool contains(const string_res & s, char ch) {
-	for ( i; size(s) ) {
+	for ( i; len(s) ) {
 		if (s[i] == ch) return true;
 	}
 	return false;
 }
 
-int find(const string_res & s, char search) {
+// int find$( const string_res & s, ssize_t start, ssize_t len, const string_res & k, ssize_t kstart, ssize_t klen ) {
+//     if ( start < 0 ) start = s.Handle.lnth + start;		// adjust negative starting locations
+//     if ( kstart < 0 ) kstart = k.Handle.lnth + kstart;
+
+// 	if ( start + len > s.Handle.lnth ) return start + 1;  // cannot be there
+// 	if ( kstart + len > k.Handle.lnth ) return start + 1;
+// 	if ( klen > len ) return start + 1;
+
+// 	int i, r;
+
+// 	for ( i = max( start, 1 ); ; i += 1 ) {
+// 		if ( i > s.Handle.lnth - k.Handle.lnth + 1 ) {
+// 			r = s.Handle.lnth + 1;
+// 			break;
+// 	    } // exit
+// 		if ( HeapArea->ByteCmp( s.Handle.s, i, k.Handle.lnth, k.Handle.s, 1, k.Handle.lnth ) == 0 ) {
+// 			r = i;
+// 			break;
+// 	    } // exit
+// 	} // for
+// 	return r;
+// }
+
+int find( const string_res & s, char search ) {
 	return findFrom(s, 0, search);
 }
 
-int findFrom(const string_res & s, size_t fromPos, char search) {
+int findFrom( const string_res & s, size_t fromPos, char search ) {
 	// FIXME: This paricular overload (find of single char) is optimized to use memchr.
 	// The general overload (find of string, memchr applying to its first character) and `contains` should be adjusted to match.
 	char * searchFrom = s.Handle.s + fromPos;
@@ -940,17 +920,17 @@ static bool test( const charclass_res & mask, char c ) {
 }
 
 int exclude(const string_res & s, const charclass_res & mask) {
-	for ( i; size(s) ) {
+	for ( i; len(s) ) {
 		if ( test(mask, s[i]) ) return i;
 	}
-	return size(s);
+	return len(s);
 }
 
 int include(const string_res & s, const charclass_res & mask) {
-	for ( i; size(s) ) {
+	for ( i; len(s) ) {
 		if ( ! test(mask, s[i]) ) return i;
 	}
-	return size(s);
+	return len(s);
 }
 
 //######################### VbyteHeap "implementation" #########################

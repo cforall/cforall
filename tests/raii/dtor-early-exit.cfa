@@ -22,10 +22,10 @@ struct A {
 	int * x;
 };
 
-// don't want these called
-void ?{}(A & a) { assert( false ); }
 void ?{}(A & a, const char * name) { a.name = name; sout | "construct " | name; a.x = (int*)malloc(); }
-void ?{}(A & a, const char * name, int * ptr) { assert( false ); }
+// Don't want these called:
+void ?{}(A &) { assert( false ); }
+void ?{}(A &, const char *, int *) { assert( false ); }
 
 A ?=?(A & a, A b) {  sout | "assign " | a.name | " " | b.name; return a; }
 void ?{}(A & a, A b) { sout | "copy construct " | b.name; a.x = (int*)malloc(); }
@@ -109,10 +109,10 @@ void g() {
 				A y = { "y" };
 				if (j == 0) {
 					sout | "continue L2";
-					continue; // destruct y - missing because object that needs to be destructed is not a part of this block, it's a part of the for's block
+					continue L2;  // destruct y - missing because object that needs to be destructed is not a part of this block, it's a part of the for's block
 				} else if (j == 1) {
 					sout | "break L2";
-					break;  // destruct y
+					break L2;  // destruct y
 				} else if (i == 1) {
 					sout | "continue L1";
 					continue L1; // destruct x,y - note: continue takes you to destructors for block, so only generate destructor for y
@@ -221,6 +221,7 @@ void i() {
 	for() {
 		if(true) continue;
 		int t = 0;
+		(void)t;
 	}
 }
 

@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug 30 21:27:51 2023
-// Update Count     : 60
+// Last Modified On : Wed Apr 23 15:27:18 2025
+// Update Count     : 61
 //
 
 // No not use #pragma once was this file is included twice in some places. It has its own guard system.
@@ -258,7 +258,7 @@ extern "C" {
             return __get_stack( &active_thread()->self_cor )->exception_context.current_exception != 0p;
         }
 
-		static inline thread$ * volatile & ?`next ( thread$ * this ) {
+		static inline thread$ * volatile & next( thread$ * this ) {
 			return this->user_link.next;
 		}
 

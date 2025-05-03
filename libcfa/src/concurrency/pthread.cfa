@@ -8,9 +8,9 @@
 //
 // Author           : Zhenyan Zhu
 // Created On       : Sat Aug 6 16:29:18 2022
-// Last Modified By : Kyoung Seo
-// Last Modified On : Mon Jan 27 20:35:00 2025
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Apr 25 07:28:01 2025
+// Update Count     : 4
 //
 
 #define __cforall_thread__
@@ -39,7 +39,7 @@ P9_EMBEDDED( pthread_values, dlink(pthread_values) )
 struct pthread_keys {
 	bool in_use;
 	void (* destructor)( void * );
-    dlist( pthread_values ) threads;
+	dlist( pthread_values ) threads;
 };
 
 static void ?{}(pthread_keys& k) {
@@ -542,11 +542,9 @@ extern "C"{
 		// 	remove(head, p);
 		// 	p.in_use = false;
 		// }
-        pthread_values * p = &try_pop_front( cfa_pthread_keys[key].threads );
-        for ( ; p; ) {            
-            p->in_use = false;
-            p = &try_pop_front( cfa_pthread_keys[key].threads );
-        }
+		for ( pthread_values * p = &remove_first( cfa_pthread_keys[key].threads ); p; p = &remove_first( cfa_pthread_keys[key].threads ) ) {
+			p->in_use = false;
+		}
 		unlock(key_lock);
 		return 0;
 	}   // pthread_key_delete
@@ -602,10 +600,9 @@ extern "C"{
 
 	//######################### Parallelism #########################
 	void pthread_delete_kernel_threads_() __THROW {	// see uMain::~uMain
-		Pthread_kernel_threads * p = &try_pop_front(cfa_pthreads_kernel_threads);
-		for ( ; p; ) {
-            delete(p);
-			p = &try_pop_front(cfa_pthreads_kernel_threads);
+		
+		for ( Pthread_kernel_threads * p = &remove_first(cfa_pthreads_kernel_threads); p; p = &remove_first(cfa_pthreads_kernel_threads) ) {
+			delete(p);
 		} // for
 	} // pthread_delete_kernel_threads_
 
@@ -625,7 +622,7 @@ extern "C"{
 			insert_last(cfa_pthreads_kernel_threads, *new() );
 		} // for
 		for ( ; new_level < cfa_pthreads_no_kernel_threads; cfa_pthreads_no_kernel_threads -= 1 ) { // remove processors ?
-			delete(&try_pop_front(cfa_pthreads_kernel_threads));
+			delete(&remove_first(cfa_pthreads_kernel_threads));
 		} // for
 		unlock( concurrency_lock );
 		return 0;

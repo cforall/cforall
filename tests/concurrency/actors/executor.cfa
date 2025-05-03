@@ -23,7 +23,7 @@ void ?{}( d_actor & this ) with(this) {
 
 struct d_msg { inline message; } shared_msg;
 
-allocation receive( d_actor & this, d_msg & msg ) with( this ) {
+allocation receive( d_actor & this, d_msg & ) with( this ) {
 	if ( recs == rounds ) return Finished;
 	if ( recs % Batch == 0 ) {
 		for ( i; Batch ) {
@@ -42,31 +42,37 @@ int main( int argc, char * argv[] ) {
 			BufSize = ato( argv[6] );
 			if ( BufSize < 0 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 6:
 		if ( strcmp( argv[5], "d" ) != 0 ) {			// default ?
 			Batch = ato( argv[5] );
 			if ( Batch < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 5:
 		if ( strcmp( argv[4], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[4] );
 			if ( Processors < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 4:
 		if ( strcmp( argv[3], "d" ) != 0 ) {			// default ?
 			Rounds = ato( argv[3] );
 			if ( Rounds < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
 			Set = ato( argv[2] );
 			if ( Set < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Actors = ato( argv[1] );
 			if ( Actors < 1 || Actors <= Set || Actors % Set != 0 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 1:											// use defaults
 		break;
 	  default:

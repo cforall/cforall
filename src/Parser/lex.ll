@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Fri Jan 17 14:36:16 2025
- * Update Count     : 878
+ * Last Modified On : Fri Apr 18 15:23:40 2025
+ * Update Count     : 884
  */
 
 %option yylineno
@@ -239,7 +239,7 @@ auto			{ KEYWORD_RETURN(AUTO); }
 __auto_type		{ KEYWORD_RETURN(AUTO_TYPE); }
 basetypeof		{ KEYWORD_RETURN(BASETYPEOF); }			// CFA
 _Bool			{ KEYWORD_RETURN(BOOL); }				// C99
-__SVBool_t		{ KEYWORD_RETURN(SVBOOL); }				// gcc (ARM)
+__SVBool_t		{ KEYWORD_RETURN(BOOL); }				// gcc (ARM)
 break			{ KEYWORD_RETURN(BREAK); }
 case			{ KEYWORD_RETURN(CASE); }
 catch			{ QKEYWORD_RETURN(CATCH); }				// CFA
@@ -286,10 +286,10 @@ _Float64		{ FLOATXX(FLOAT64); }					// GCC
 _Float64x		{ FLOATXX(FLOAT64X); }					// GCC
 _Float128		{ FLOATXX(FLOAT128); }					// GCC
 _Float128x		{ FLOATXX(FLOAT128X); }					// GCC
-__Float32x4_t	{ FLOATXX(FLOAT32X4); }					// GCC (ARM)
-__Float64x2_t	{ FLOATXX(FLOAT64X2); }					// GCC (ARM)
-__SVFloat32_t	{ FLOATXX(SVFLOAT32); }					// GCC (ARM)
-__SVFloat64_t	{ FLOATXX(SVFLOAT64); }					// GCC (ARM)
+__Float32x4_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
+__Float64x2_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
+__SVFloat32_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
+__SVFloat64_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
 for				{ KEYWORD_RETURN(FOR); }
 forall			{ KEYWORD_RETURN(FORALL); }				// CFA
 fortran			{ KEYWORD_RETURN(FORTRAN); }
@@ -473,11 +473,15 @@ zero_t			{ NUMERIC_RETURN(ZERO_T); }				// CFA
 ">>="			{ NAMEDOP_RETURN(RSassign); }
 
 "@="			{ NAMEDOP_RETURN(ATassign); }			// CFA
-"+~"			{ NAMEDOP_RETURN(ErangeUp); }			// CFA
-"~="			{ NAMEDOP_RETURN(ErangeUpEq); }			// CFA
-"+~="			{ NAMEDOP_RETURN(ErangeUpEq); }			// CFA
-"-~"			{ NAMEDOP_RETURN(ErangeDown); }			// CFA
-"-~="			{ NAMEDOP_RETURN(ErangeDownEq); }		// CFA
+"+~"			{ NAMEDOP_RETURN(ErangeUpLt); }			// CFA
+"~="			{ NAMEDOP_RETURN(ErangeUpLe); }			// CFA
+"+~="			{ NAMEDOP_RETURN(ErangeUpLe); }			// CFA
+"-~"			{ NAMEDOP_RETURN(ErangeDownGt); }		// CFA
+"-~="			{ NAMEDOP_RETURN(ErangeDownGe); }		// CFA
+"~=="			{ NAMEDOP_RETURN(ErangeEq); }			// CFA
+"~!="			{ NAMEDOP_RETURN(ErangeNe); }			// CFA
+"-~=="			{ NAMEDOP_RETURN(ErangeDownEq); }		// CFA
+"-~!="			{ NAMEDOP_RETURN(ErangeDownNe); }		// CFA
 
 				/* CFA, operator identifier */
 {op_unary}"?"	{ IDENTIFIER_RETURN(); }				// unary

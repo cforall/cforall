@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:20:59 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 12 05:45:48 2024
-// Update Count     : 56
+// Last Modified On : Mon Apr 14 20:57:15 2025
+// Update Count     : 61
 // 
 
 #pragma once
@@ -38,6 +38,7 @@ struct ostrstream {										// satisfied basic_ostream
 }; // ostrstream
 
 // Satisfies basic_ostream
+extern basic_ostream_data(ostrstream) const & basic_ostream_table;
 
 // private
 bool sepPrt$( ostrstream & );
@@ -77,13 +78,19 @@ void ?{}( ostrstream &, char buf[], size_t size );
 // *********************************** istrstream ***********************************
 
 
+// Currently, this is a placeholder because vsscanf returns number of values read versus buffer position scanned.
+// This issue makes it impossible to know where in the buffer the last read stopped.
+
 struct istrstream {
 	char * buf$;
 	size_t cursor$;
 	bool nlOnOff$;
 }; // istrstream
 
+void ?{}( istrstream &, char buf[] );
+
 // Satisfies basic_istream
+extern basic_istream_data(istrstream) const & basic_istream_table;
 
 // private
 bool getANL$( istrstream & );
@@ -92,13 +99,11 @@ bool setANL$( istrstream &, bool );
 // public
 void nlOn( istrstream & );
 void nlOff( istrstream & );
-void ends( istrstream & );
-
 int fmt( istrstream &, const char format[], ... ) __attribute__(( format(scanf, 2, 3) ));
 istrstream & ungetc( char, istrstream & );
 bool eof( istrstream & );
-
-void ?{}( istrstream &, char buf[] );
+void clearerr( istrstream & );
+void ends( istrstream & );
 
 // Local Variables: //
 // mode: c //

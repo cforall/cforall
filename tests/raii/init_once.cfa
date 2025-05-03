@@ -74,7 +74,7 @@ void ?{}(init_once & x) {
 	x.x = (int *)malloc(sizeof(int));
 }
 
-void ?{}(init_once & x, init_once other) {
+void ?{}(init_once & x, init_once) {
 	x{};  // reuse default ctor
 }
 
@@ -130,7 +130,8 @@ int main() {
 			case 10: {
 				init_once x;
 				init_once y = x;
-			} // fall through
+			}
+				fallthrough;
 			default: {
 				init_once x;
 				init_once y = x;

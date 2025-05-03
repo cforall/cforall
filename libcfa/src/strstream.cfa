@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:24:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 12 05:45:47 2024
-// Update Count     : 113
+// Last Modified On : Mon Apr 14 20:45:00 2025
+// Update Count     : 116
 //
 
 #include "strstream.hfa"
@@ -27,6 +27,33 @@
 
 // *********************************** strstream ***********************************
 
+static basic_ostream_data(ostrstream) ostrstream_basic_data = {
+	sepPrt$,
+	sepReset$,
+	sepReset$,
+	sepGetCur$,
+	sepSetCur$,
+	getNL$,
+	setNL$,
+	getANL$,
+	setANL$,
+	getPrt$,
+	setPrt$,
+	nlOn,
+	nlOff,
+	sep,
+	nosep,
+	sepOn,
+	sepOff,
+	sepGet,
+	sepSet,
+	sepGetTuple,
+	sepSetTuple,
+	ends,
+	fmt,
+};
+
+basic_ostream_data(ostrstream) const & basic_ostream_table = ostrstream_basic_data;
 
 #define IO_MSG "I/O error: "
 
@@ -130,6 +157,19 @@ ostrstream & write( ostrstream & os ) {
 
 // *********************************** istrstream ***********************************
 
+static basic_istream_data(istrstream) istrstream_basic_data = {
+	getANL$,
+	setANL$,
+	nlOn,
+	nlOff,
+	fmt,
+	ungetc,
+	eof,
+	clearerr,
+};
+
+basic_istream_data(istrstream) const & basic_istream_data = istrstream_basic_data;
+
 // private
 bool getANL$( istrstream & is ) { return is.nlOnOff$; }
 bool setANL$( istrstream & is, bool state ) { bool temp = is.nlOnOff$; is.nlOnOff$ = state; return temp;  }
@@ -143,9 +183,6 @@ void ?{}( istrstream & is, char buf[] ) {
 
 void nlOn( istrstream & is ) { is.nlOnOff$ = true; }
 void nlOff( istrstream & is ) { is.nlOnOff$ = false; }
-
-void ends( istrstream & is ) {}
-bool eof( istrstream & is ) { return false; }
 
 int fmt( istrstream & is, const char format[], ... ) with(is) {
 	va_list args;
@@ -171,6 +208,10 @@ istrstream &ungetc( char c, istrstream & is ) {
 	// } // if
 	return is;
 } // ungetc
+
+bool eof( istrstream & is ) { return false; }
+void clearerr( istrstream & ) {}						// no error flags to clear
+void ends( istrstream & is ) {}
 
 // Local Variables: //
 // tab-width: 4 //

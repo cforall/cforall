@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Wed Apr  5 11:42:00 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 23 22:43:05 2024
-// Update Count     : 3
+// Last Modified On : Thu Feb  6 11:39:26 2025
+// Update Count     : 6
 //
 
 #pragma once
@@ -26,6 +26,7 @@ struct StatementNode final : public ParseList<StatementNode> {
 	virtual StatementNode * clone() const final { assert( false ); return nullptr; }
 	ast::Stmt * build() { return stmt.release(); }
 
+	StatementNode * addQualifiers( DeclarationNode * );
 	StatementNode * add_label(
 			const CodeLocation & location,
 			const std::string * name,
@@ -35,6 +36,7 @@ struct StatementNode final : public ParseList<StatementNode> {
 		os << stmt.get() << std::endl;
 	}
 
+	std::vector<ast::ptr<ast::Attribute>> attributes;
 	std::unique_ptr<ast::Stmt> stmt;
 }; // StatementNode
 

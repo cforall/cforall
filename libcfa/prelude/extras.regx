@@ -1,4 +1,6 @@
 typedef.* size_t;
+typedef.* __ssize_t;
+typedef.* ssize_t;
 typedef.* ptrdiff_t;
 typedef.* intptr_t;
 typedef.* uintptr_t;

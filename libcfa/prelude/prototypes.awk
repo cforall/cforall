@@ -9,8 +9,8 @@
 # Author           : Peter A. Buhr
 # Created On       : Sat May 16 07:57:37 2015
 # Last Modified By : Peter A. Buhr
-# Last Modified On : Wed Nov  1 20:44:04 2023
-# Update Count     : 37
+# Last Modified On : Mon Mar 10 17:52:39 2025
+# Update Count     : 73
 #
 
 # http://llvm.org/svn/llvm-project/cfe/trunk/include/clang/Basic/Builtins.def
@@ -29,16 +29,16 @@ BEGIN {
 	types[i+=1] = "INTPTR";						vtypes[i] = "int *"
 	types[i+=1] = "WINT";						vtypes[i] = "unsigned int"
 	types[i+=1] = "INT";						vtypes[i] = "int"
-	types[i+=1] = "ULONGLONG";					vtypes[i] = "unsigned long long"
-	types[i+=1] = "ULONG";						vtypes[i] = "unsigned long"
-	types[i+=1] = "UNSIGNED";					vtypes[i] = "unsigned"
+	types[i+=1] = "ULONGLONG";					vtypes[i] = "unsigned long long int"
+	types[i+=1] = "ULONG";						vtypes[i] = "unsigned long int"
+	types[i+=1] = "UNSIGNED";					vtypes[i] = "unsigned int"
 	types[i+=1] = "COMPLEX_LONGDOUBLE";			vtypes[i] = "_Complex long double"
 	types[i+=1] = "COMPLEX_DOUBLE";				vtypes[i] = "_Complex double"
 	types[i+=1] = "COMPLEX_FLOAT";				vtypes[i] = "_Complex float"
 	types[i+=1] = "LONGDOUBLEPTR";				vtypes[i] = "long double *"
 	types[i+=1] = "LONGDOUBLE";					vtypes[i] = "long double"
-	types[i+=1] = "LONGLONG";					vtypes[i] = "long long"
-	types[i+=1] = "LONG";						vtypes[i] = "long"
+	types[i+=1] = "LONGLONG";					vtypes[i] = "long long int"
+	types[i+=1] = "LONG";						vtypes[i] = "long int"
 	types[i+=1] = "DFLOAT32";					vtypes[i] = "__Unsupported"
 	types[i+=1] = "DFLOAT64";					vtypes[i] = "__Unsupported"
 	types[i+=1] = "DFLOAT128";					vtypes[i] = "__Unsupported"
@@ -66,18 +66,20 @@ BEGIN {
 	types[i+=1] = "VOID";						vtypes[i] = "void"
 	types[i+=1] = "STRING";						vtypes[i] = "char *"
 	types[i+=1] = "FILEPTR";					vtypes[i] = "struct _IO_FILE *"
-	types[i+=1] = "SIZE";						vtypes[i] = "unsigned long"
+	types[i+=1] = "SIZE";						vtypes[i] = "unsigned long int"
+	size_t = i;
 	types[i+=1] = "VAR";						vtypes[i] = "..."
 	types[i+=1] = "VALIST_ARG";					vtypes[i] = "__builtin_va_list"
 	types[i+=1] = "VALIST_REF";					vtypes[i] = "__builtin_va_list"
 	types[i+=1] = "UNWINDWORD";					vtypes[i] = "void *"
 	types[i+=1] = "WORD";						vtypes[i] = ""
 	types[i+=1] = "SSIZE";						vtypes[i] = "long int"
+	ssize_t = i;
 	types[i+=1] = "PID";						vtypes[i] = "int"
 	types[i+=1] = "I16";						vtypes[i] = "__int128"
 	types[i+=1] = "I8";							vtypes[i] = "long long int"
 	types[i+=1] = "I4";							vtypes[i] = "int"
-	types[i+=1] = "I2";							vtypes[i] = "short"
+	types[i+=1] = "I2";							vtypes[i] = "short int"
 	types[i+=1] = "I1";							vtypes[i] = "char"
 	N = i + 1
 } # BEGIN
@@ -91,6 +93,12 @@ BEGIN {
 }
 
 END {
+	# variable wordsize passed from Makefile
+	if ( index( wordsize, "-m32" ) != 0 ) {		# adjust size_t/ssize_t for 32-bit build
+		vtypes[size_t] = "unsigned int"
+		vtypes[ssize_t] = "signed int"
+	} # if
+
 	printf( "#define DEF_BUILTIN(ENUM, NAME, CLASS, TYPE, LIBTYPE, BOTH_P, FALLBACK_P, NONANSI_P, ATTRS, IMPLICIT, COND) TYPE(NAME)\n" );
 	printf( "#define FUNC_SIMPLE(RETURN, NAME, ARGS...) RETURN NAME(ARGS);\n" );
 	printf( "#define BT_LAST(NAME) FUNC_SIMPLE(void, NAME)\n\n" );
@@ -151,6 +159,14 @@ END {
 	printf( "float _Complex __builtin_complex( float, float );\n" );
 	printf( "double _Complex __builtin_complex( double, double );\n" );
 	printf( "long double _Complex __builtin_complex( long double, long double );\n" );
+
+	# assorted gcc builltin types
+	# ARM vector floating-point types, strip off text "__builtin.*__"
+	printf( "struct __builtin__Float32x4_t__ {};\n" );
+	printf( "struct __builtin__Float64x2_t__ {};\n" );
+	printf( "struct __builtin__SVFloat32_t__ {};\n" );
+	printf( "struct __builtin__SVFloat64_t__ {};\n" );
+	printf( "struct __builtin__SVBool_t__ {};\n" );
 } # END
 
 # Local Variables: #

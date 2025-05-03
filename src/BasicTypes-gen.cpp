@@ -52,12 +52,6 @@ enum Kind {
 	Float128x,
 	Float128xComplex,
 	NUMBER_OF_BASIC_TYPES,
-
-	Float32x4,											// ARM, gcc-14
-	Float64x2,
-	Svfloat32,
-	Svfloat64,
-	Svbool,
 };
 
 enum NumSort {											// floating point types act as both signed and unsigned

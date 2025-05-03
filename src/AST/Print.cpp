@@ -1405,14 +1405,6 @@ public:
 		++indent;
 		os << "Statement Expression:" << endl << indent;
 		safe_print( node->stmts );
-		if ( ! node->returnDecls.empty() ) {
-			os << indent << "... with returnDecls: ";
-			printAll( node->returnDecls );
-		}
-		if ( ! node->dtors.empty() ) {
-			os << indent << "... with dtors: ";
-			printAll( node->dtors );
-		}
 		--indent;
 		postprint( node );
 

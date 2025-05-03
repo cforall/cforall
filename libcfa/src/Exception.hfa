@@ -5,3 +5,4 @@
 	__attribute__(( cfa_linkonce )) vtable( name ) name ## _vt
 #define ExceptionArgs( name, args... ) &name ## _vt, args
 #define ExceptionInst( name, args... ) (name){ ExceptionArgs( name, args ) }
+#define ExceptionPtr( E ) (exception_t *) & E

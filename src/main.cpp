@@ -198,8 +198,6 @@ int main( int argc, char * argv[] ) {
 
 		Stats::Time::StopBlock();
 
-		ast::TranslationDeps::evolve( transUnit );
-
 		PASS( "Hoist Type Decls", Validate::hoistTypeDecls, transUnit );
 
 		PASS( "Translate Exception Declarations", ControlStruct::translateExcept, transUnit );

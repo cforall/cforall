@@ -1,0 +1,349 @@
+collections/string-operator.cfa:277:1 error: Cannot choose between 4 alternatives for expression
+Applying untyped:
+  Name: ?|?
+...to:
+  Name: sout
+  Applying untyped:
+    Name: ?+?
+  ...to:
+    Constant Expression ('a': char)
+    ... with resolved type:
+      char
+    Constant Expression ('b': char)
+    ... with resolved type:
+      char
+
+ Alternatives are:
+Cost ( 0, 0, 1, 0, 0, 1, -2, 0 ): Application of
+      Variable Expression: ?|?: forall
+        instance of type ostype (not function type)
+        with assertions
+        Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+        ... with parameters
+          instance of type ostype (not function type)
+
+        ... with resolved type:
+          reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+        function
+      ... with parameters
+        reference to instance of type ostype (not function type)
+        char
+      ... returning
+        reference to instance of type ostype (not function type)
+
+      ... with resolved type:
+        pointer to forall
+          instance of type [unbound] (not function type)
+          with assertions
+          Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+          ... with resolved type:
+            reference to const instance of struct basic_ostream_data with body
+            ... with parameters
+              instance of type [unbound] (not function type)
+
+          function
+        ... with parameters
+          reference to instance of type [unbound] (not function type)
+          char
+        ... returning
+          reference to instance of type [unbound] (not function type)
+
+      ... to arguments
+      Variable Expression: sout: extern reference to instance of struct ofstream with body
+      ... with resolved type:
+        reference to instance of struct ofstream with body
+      Application of
+        Variable Expression: ?+?: function
+        ... with parameters
+          char
+          char
+        ... returning
+          char
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            char
+            char
+          ... returning
+            char
+
+        ... to arguments
+        Constant Expression ('a': char)
+        ... with resolved type:
+          char
+        Constant Expression ('b': char)
+        ... with resolved type:
+          char
+
+      ... with resolved type:
+        char
+    with inferred parameters 0:
+      basic_ostream_table: extern reference to const instance of struct basic_ostream_data with body
+      ... with parameters
+        instance of struct ofstream with body
+
+
+    ... with resolved type:
+      reference to instance of type [unbound] (not function type)
+  (types:
+    reference to instance of type [unbound] (not function type)
+  )
+  Environment:([unbound]ostype) -> instance of struct ofstream with body (no widening)
+
+
+Cost ( 0, 0, 1, 0, 0, 1, -2, 0 ): Application of
+      Variable Expression: ?|?: forall
+        instance of type ostype (not function type)
+        with assertions
+        Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+        ... with parameters
+          instance of type ostype (not function type)
+
+        ... with resolved type:
+          reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+        function
+      ... with parameters
+        reference to instance of type ostype (not function type)
+        char
+      ... returning nothing
+
+      ... with resolved type:
+        pointer to forall
+          instance of type [unbound] (not function type)
+          with assertions
+          Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+          ... with resolved type:
+            reference to const instance of struct basic_ostream_data with body
+            ... with parameters
+              instance of type [unbound] (not function type)
+
+          function
+        ... with parameters
+          reference to instance of type [unbound] (not function type)
+          char
+        ... returning nothing
+
+      ... to arguments
+      Variable Expression: sout: extern reference to instance of struct ofstream with body
+      ... with resolved type:
+        reference to instance of struct ofstream with body
+      Application of
+        Variable Expression: ?+?: function
+        ... with parameters
+          char
+          char
+        ... returning
+          char
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            char
+            char
+          ... returning
+            char
+
+        ... to arguments
+        Constant Expression ('a': char)
+        ... with resolved type:
+          char
+        Constant Expression ('b': char)
+        ... with resolved type:
+          char
+
+      ... with resolved type:
+        char
+    with inferred parameters 0:
+      basic_ostream_table: extern reference to const instance of struct basic_ostream_data with body
+      ... with parameters
+        instance of struct ofstream with body
+
+
+    ... with resolved type:
+      void
+  (types:
+    void
+  )
+  Environment:([unbound]ostype) -> instance of struct ofstream with body (no widening)
+
+
+Cost ( 0, 0, 1, 0, 0, 1, -2, 0 ): Application of
+      Variable Expression: ?|?: forall
+        instance of type ostype (not function type)
+        with assertions
+        Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+        ... with parameters
+          instance of type ostype (not function type)
+
+        ... with resolved type:
+          reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+        function
+      ... with parameters
+        reference to instance of type ostype (not function type)
+        instance of struct string with body
+      ... returning
+        reference to instance of type ostype (not function type)
+
+      ... with resolved type:
+        pointer to forall
+          instance of type [unbound] (not function type)
+          with assertions
+          Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+          ... with resolved type:
+            reference to const instance of struct basic_ostream_data with body
+            ... with parameters
+              instance of type [unbound] (not function type)
+
+          function
+        ... with parameters
+          reference to instance of type [unbound] (not function type)
+          instance of struct string with body
+        ... returning
+          reference to instance of type [unbound] (not function type)
+
+      ... to arguments
+      Variable Expression: sout: extern reference to instance of struct ofstream with body
+      ... with resolved type:
+        reference to instance of struct ofstream with body
+      Application of
+        Variable Expression: ?+?: function
+        ... with parameters
+          char
+          char
+        ... returning
+          instance of struct string with body
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            char
+            char
+          ... returning
+            instance of struct string with body
+
+        ... to arguments
+        Constant Expression ('a': char)
+        ... with resolved type:
+          char
+        Constant Expression ('b': char)
+        ... with resolved type:
+          char
+
+      ... with resolved type:
+        instance of struct string with body
+    with inferred parameters 0:
+      basic_ostream_table: extern reference to const instance of struct basic_ostream_data with body
+      ... with parameters
+        instance of struct ofstream with body
+
+
+    ... with resolved type:
+      reference to instance of type [unbound] (not function type)
+  (types:
+    reference to instance of type [unbound] (not function type)
+  )
+  Environment:([unbound]ostype) -> instance of struct ofstream with body (no widening)
+
+
+Cost ( 0, 0, 1, 0, 0, 1, -2, 0 ): Application of
+      Variable Expression: ?|?: forall
+        instance of type ostype (not function type)
+        with assertions
+        Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+        ... with parameters
+          instance of type ostype (not function type)
+
+        ... with resolved type:
+          reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+        function
+      ... with parameters
+        reference to instance of type ostype (not function type)
+        instance of struct string with body
+      ... returning nothing
+
+      ... with resolved type:
+        pointer to forall
+          instance of type [unbound] (not function type)
+          with assertions
+          Variable Expression: basic_ostream_table: reference to const instance of struct basic_ostream_data with body
+          ... with parameters
+            instance of type ostype (not function type)
+
+          ... with resolved type:
+            reference to const instance of struct basic_ostream_data with body
+            ... with parameters
+              instance of type [unbound] (not function type)
+
+          function
+        ... with parameters
+          reference to instance of type [unbound] (not function type)
+          instance of struct string with body
+        ... returning nothing
+
+      ... to arguments
+      Variable Expression: sout: extern reference to instance of struct ofstream with body
+      ... with resolved type:
+        reference to instance of struct ofstream with body
+      Application of
+        Variable Expression: ?+?: function
+        ... with parameters
+          char
+          char
+        ... returning
+          instance of struct string with body
+
+        ... with resolved type:
+          pointer to function
+          ... with parameters
+            char
+            char
+          ... returning
+            instance of struct string with body
+
+        ... to arguments
+        Constant Expression ('a': char)
+        ... with resolved type:
+          char
+        Constant Expression ('b': char)
+        ... with resolved type:
+          char
+
+      ... with resolved type:
+        instance of struct string with body
+    with inferred parameters 0:
+      basic_ostream_table: extern reference to const instance of struct basic_ostream_data with body
+      ... with parameters
+        instance of struct ofstream with body
+
+
+    ... with resolved type:
+      void
+  (types:
+    void
+  )
+  Environment:([unbound]ostype) -> instance of struct ofstream with body (no widening)
+
+
+

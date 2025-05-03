@@ -5,15 +5,15 @@
 #include <stdio.h>
 
 int main() {
-    waituntil( sleep( 1`ms ) ) { printf("timeout\n"); }
-    waituntil( timeout( 1`s ) ) { printf("timeout\n"); } or waituntil( timeout( 2`s ) ) { printf("timeout\n"); }
-    waituntil( timeout( 100`s ) ) { printf("timeout 1\n"); } or else { printf("else\n"); }
-    waituntil( timeout( 1`ns ) ) { printf("timeout\n"); } and waituntil( timeout( 2`s ) ) { printf("timeout\n"); }
+    waituntil( _timeout( 1`ms ) ) { printf("timeout\n"); }
+    waituntil( _timeout( 1`s ) ) { printf("timeout\n"); } or waituntil( _timeout( 2`s ) ) { printf("timeout\n"); }
+    waituntil( _timeout( 100`s ) ) { printf("timeout 1\n"); } or else { printf("else\n"); }
+    waituntil( _timeout( 1`ns ) ) { printf("timeout\n"); } and waituntil( _timeout( 2`s ) ) { printf("timeout\n"); }
     int count = 0;
     for ( i; 1000 )
-        waituntil( timeout( 1`ns ) ) { count++; } or else { count++; }
+        waituntil( _timeout( 1`ns ) ) { count++; } or else { count++; }
 
     assert( count == 1000 );
-    sleep( 1`ms );
+    _timeout( 1`ms );
     printf("done\n");
 }

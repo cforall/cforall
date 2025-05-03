@@ -1,6 +1,6 @@
 // TODO: add error cases (e.g., use of field constructors for managed types, etc.)
 
-enum Color { R, G, B };
+enum Colour { R, G, B };
 
 // empty struct/union should have generated ctor/dtors
 union U {};
@@ -20,13 +20,13 @@ struct SimpleStruct {
 
 // struct/union with members with generated ctor/dtors should themselves have generated ctor/dtors
 union PopulatedUnion {
-	Color c;
+	Colour c;
 	U u;
 	S s;
 };
 
 struct PopulatedStruct {
-	Color c;
+	Colour c;
 	U u;
 	S s;
 };
@@ -108,10 +108,10 @@ InheritManaged z = { y };  // error?
 int main() {
 	S s;
 	U u;
-	Color e;
+	Colour e = R;
 
-	// identity(R);  Color constant should be Color which is otype
-	identity(e);  // Color should be an otype
+	// identity(R);  Colour constant should be Colour which is otype
+	identity(e);  // Colour should be an otype
 	identity(u);  // U should be an otype
 	identity(s);  // S should be an otype
 
@@ -138,8 +138,8 @@ int main() {
 
 	identity(dsi);
 	identity(dsd);
-	// identity(dui); // xxx - codegen errors in generated thunk _temp3 (Box-pass-generated assignment return-temporary)
-	// identity(dud);
+	identity(dui);
+	identity(dud);
 	identity(dssi);
 	identity(dssf);
 	identity(dsui);

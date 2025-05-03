@@ -202,12 +202,16 @@ extern int yydebug;
     ANDassign = 408,
     ERassign = 409,
     ORassign = 410,
-    ErangeUp = 411,
-    ErangeUpEq = 412,
-    ErangeDown = 413,
-    ErangeDownEq = 414,
-    ATassign = 415,
-    THEN = 416
+    ErangeUpLt = 411,
+    ErangeUpLe = 412,
+    ErangeEq = 413,
+    ErangeNe = 414,
+    ErangeDownGt = 415,
+    ErangeDownGe = 416,
+    ErangeDownEq = 417,
+    ErangeDownNe = 418,
+    ATassign = 419,
+    THEN = 420
   };
 #endif
 /* Tokens.  */
@@ -364,18 +368,22 @@ extern int yydebug;
 #define ANDassign 408
 #define ERassign 409
 #define ORassign 410
-#define ErangeUp 411
-#define ErangeUpEq 412
-#define ErangeDown 413
-#define ErangeDownEq 414
-#define ATassign 415
-#define THEN 416
+#define ErangeUpLt 411
+#define ErangeUpLe 412
+#define ErangeEq 413
+#define ErangeNe 414
+#define ErangeDownGt 415
+#define ErangeDownGe 416
+#define ErangeDownEq 417
+#define ErangeDownNe 418
+#define ATassign 419
+#define THEN 420
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 316 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
+#line 328 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
 
 	// A raw token can be used.
 	Token tok;
@@ -408,7 +416,7 @@ union YYSTYPE
 	ast::WaitUntilStmt::ClauseNode * wucn;
 	ast::GenericExpr * genexpr;
 
-#line 412 "Parser/parser.hh"
+#line 420 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

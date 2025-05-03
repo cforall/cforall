@@ -1,5 +1,6 @@
-#include <collections/string.hfa>
+#include <string.hfa>
 #include <string_sharectx.hfa>
+#include <fstream.hfa>
 
 /*
 
@@ -77,11 +78,11 @@ void showOneReplacement(string & s, int ms, int ml, int ws, int wl, const char* 
     int me = ms + ml;
     int we = ws + wl;
 
-    assert( ms >= 0 && ms <= me && me <= size(s) );
-    assert( ws >= 0 && ws <= we && we <= size(s) );
+    assert( ms >= 0 && ms <= me && me <= len(s) );
+    assert( ws >= 0 && ws <= we && we <= len(s) );
 
-    string mod = s(ms, ml)`shareEdits;
-    string wit = s(ws, wl)`shareEdits;
+    string mod = s(ms, ml)`share;
+    string wit = s(ws, wl)`share;
 
     string modOld = mod;
     string witOld = wit;
@@ -91,7 +92,7 @@ void showOneReplacement(string & s, int ms, int ml, int ws, int wl, const char* 
 
     // visualize the pair of ranges
     sout | nlOff;
-    for ( i; size(s) ) {
+    for ( i; len(s) ) {
         if( i < ms || i > me ) {
             sout | ' ';
         } else if ( i < me ) {
@@ -101,7 +102,7 @@ void showOneReplacement(string & s, int ms, int ml, int ws, int wl, const char* 
             sout | '!';
         }
     } sout | nl;
-    for ( i; size(s) ) {
+    for ( i; len(s) ) {
         if( i < ws || i > we ) {
             sout | ' ';
         } else if ( i < we ) {
@@ -115,7 +116,7 @@ void showOneReplacement(string & s, int ms, int ml, int ws, int wl, const char* 
     sout | nlOn;
 
     mod = replaceWith;    // main replacement
-    sout | s | "( wit = " | wit | "witlen = " | size(wit) | " )";
+    sout | s | "( wit = " | wit | "witlen = " | len(wit) | " )";
     wit = "?";            // witness-revelaing replacement
     sout | s;
 }

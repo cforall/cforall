@@ -696,9 +696,6 @@ const ast::StmtExpr * ResolveCopyCtors::previsit( const ast::StmtExpr * _stmtExp
 
 	assert( stmtExpr->result );
 	if ( stmtExpr->result->isVoid() ) {
-		assert( stmtExpr->returnDecls.empty() );
-		assert( stmtExpr->dtors.empty() );
-
 		return stmtExpr;
 	}
 
@@ -746,9 +743,6 @@ const ast::StmtExpr * ResolveCopyCtors::previsit( const ast::StmtExpr * _stmtExp
 
 	// if there is a return decl, add a use as the last statement; will not have return decl on non-constructable returns
 	stmts.push_back( new ast::ExprStmt(loc, new ast::VariableExpr(loc, ret ) ) );
-
-	assert( stmtExpr->returnDecls.empty() );
-	assert( stmtExpr->dtors.empty() );
 
 	return stmtExpr;
 }

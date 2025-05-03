@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Dec 16 20:50:27 2024
-// Update Count     : 1110
+// Last Modified On : Tue Apr  1 08:13:17 2025
+// Update Count     : 1122
 //
 
 #include "ExpressionNode.hpp"
@@ -442,27 +442,30 @@ static void sepString( string & str, string & units, char delimit ) {
 	} // if
 } // sepString
 
-ast::Expr * build_constantChar( const CodeLocation & location, string & str ) {
-	string units;										// units
-	sepString( str, units, '\'' );						// separate constant from units
-
-	ast::Expr * ret = new ast::ConstantExpr( location,
-		new ast::BasicType( ast::BasicKind::Char ),
-		str,
-		(unsigned long long int)(unsigned char)str[1] );
-	if ( units.length() != 0 ) {
-		ret = new ast::UntypedExpr( location,
-			new ast::NameExpr( location, units ),
-			{ ret } );
-	} // if
-
-	delete &str;										// created by lex
-	return ret;
-} // build_constantChar
+static ast::Type * charstrKind( string & str ) {
+	ast::Type * kind;
+	switch ( str[0] ) {									// str has >= 2 characters, i.e, null string "" => safe to look at subscripts 0/1
+	case 'u':
+		if ( str[1] == '8' ) goto Default;				// utf-8 characters => array of char (save check for char as no 8 allowed)
+		// lookup type of associated typedef
+		kind = new ast::TypeInstType( "char16_t", ast::TypeDecl::Dtype );
+		break;
+	case 'U':
+		kind = new ast::TypeInstType( "char32_t", ast::TypeDecl::Dtype );
+		break;
+	case 'L':
+		kind = new ast::TypeInstType( "wchar_t", ast::TypeDecl::Dtype );
+		break;
+	Default:											// char default string type
+	default:
+		kind = new ast::BasicType( ast::BasicKind::Char );
+	} // switch
+	return kind;
+} // charstrKind
 
 static bool isoctal( char ch ) {
 	return ('0' <= ch && ch <= '7');
-}
+} // isoctal
 
 // A "sequence" is the series of characters in a character/string literal that becomes a single
 // character value in the runtime value.
@@ -494,33 +497,28 @@ static size_t sequenceLength( const std::string & str, size_t pos ) {
 	  case 'U':
 		return 10;
 	  default:
-		assertf( false, "Unknown escape sequence (start %c).", str[pos] );
+		SemanticError( yylloc, "Unknown escape sequence \"\\%c\"", str[pos + 1] );
 		return 1;
 	} // switch
-}
+} // sequenceLength
+
+ast::Expr * build_constantChar( const CodeLocation & location, string & str ) {
+	string units;										// units
+	sepString( str, units, '\'' );						// separate constant from units
+
+	ast::Expr * ret = new ast::ConstantExpr( location, charstrKind( str ), str, (unsigned long long int)(unsigned char)str[1] );
+	if ( units.length() != 0 ) {
+		ret = new ast::UntypedExpr( location, new ast::NameExpr( location, units ),	{ ret } );
+	} // if
+
+	delete &str;										// created by lex
+	return ret;
+} // build_constantChar
 
 ast::Expr * build_constantStr( const CodeLocation & location, string & str ) {
 	assert( str.length() > 0 );
 	string units;										// units
 	sepString( str, units, '"' );						// separate constant from units
-
-	ast::Type * strtype;
-	switch ( str[0] ) {									// str has >= 2 characters, i.e, null string "" => safe to look at subscripts 0/1
-	case 'u':
-		if ( str[1] == '8' ) goto Default;				// utf-8 characters => array of char
-		// lookup type of associated typedef
-		strtype = new ast::TypeInstType( "char16_t", ast::TypeDecl::Dtype );
-		break;
-	case 'U':
-		strtype = new ast::TypeInstType( "char32_t", ast::TypeDecl::Dtype );
-		break;
-	case 'L':
-		strtype = new ast::TypeInstType( "wchar_t", ast::TypeDecl::Dtype );
-		break;
-	Default:											// char default string type
-	default:
-		strtype = new ast::BasicType( ast::BasicKind::Char );
-	} // switch
 
 	// The length value of the type is equal to the number of "sequences" not including the openning
 	// and closing quotes in the literal plus 1 for the implicit null terminator.
@@ -535,11 +533,7 @@ ast::Expr * build_constantStr( const CodeLocation & location, string & str ) {
 		length += 1;
 	} // for
 
-	ast::ArrayType * at = new ast::ArrayType(
-		strtype,
-		ast::ConstantExpr::from_ulong( location, length ),
-		ast::FixedLen,
-		ast::DynamicDim );
+	ast::ArrayType * at = new ast::ArrayType( charstrKind( str ), ast::ConstantExpr::from_ulong( location, length ), ast::FixedLen, ast::DynamicDim );
 	ast::Expr * ret = new ast::ConstantExpr( location, at, str, std::nullopt );
 	if ( units.length() != 0 ) {
 		ret = new ast::UntypedExpr( location, new ast::NameExpr( location, units ),	{ ret } );

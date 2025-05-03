@@ -65,12 +65,12 @@ exception unhandled_exception {};
 vtable(unhandled_exception) unhandled_vt;
 
 void unhandled_test(void) {
+	void defaultTerminationHandler(unhandled_exception &) {
+		abort();
+	}
 	forall(T &, V & | is_exception(T, V))
 	void defaultTerminationHandler(T &) {
 		throw (unhandled_exception){&unhandled_vt};
-	}
-	void defaultTerminationHandler(unhandled_exception &) {
-		abort();
 	}
 	try {
 		throw (first){&first_vt};

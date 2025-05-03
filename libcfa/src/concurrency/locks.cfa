@@ -78,19 +78,19 @@ void lock( blocking_lock & this ) with( this ) {
 
 	// lock is held by some other thread
 	if ( owner != 0p && owner != thrd ) {
-        select_node node;
+		select_node node;
 		insert_last( blocked_threads, node );
 		wait_count++;
 		unlock( lock );
 		park( );
-        return;
+		return;
 	} else if ( owner == thrd && multi_acquisition ) { // multi acquisition lock is held by current thread
 		recursion_count++;
 	} else {  // lock isn't held
 		owner = thrd;
 		recursion_count = 1;
 	}
-    unlock( lock );
+	unlock( lock );
 }
 
 bool try_lock( blocking_lock & this ) with( this ) {
@@ -114,18 +114,18 @@ bool try_lock( blocking_lock & this ) with( this ) {
 }
 
 static inline void pop_node( blocking_lock & this ) with( this ) {
-    __handle_waituntil_OR( blocked_threads );
-    select_node * node = &try_pop_front( blocked_threads );
-    if ( node ) {
-        wait_count--;
-        owner = node->blocked_thread;
-        recursion_count = 1;
-        // if ( !node->clause_status || __make_select_node_available( *node ) ) unpark( node->blocked_thread );
-        wake_one( blocked_threads, *node );
-    } else {
-        owner = 0p;
-        recursion_count = 0;
-    }
+	__handle_waituntil_OR( blocked_threads );
+	select_node * node = &remove_first( blocked_threads );
+	if ( node ) {
+		wait_count--;
+		owner = node->blocked_thread;
+		recursion_count = 1;
+		// if ( !node->clause_status || __make_select_node_available( *node ) ) unpark( node->blocked_thread );
+		wake_one( blocked_threads, *node );
+	} else {
+		owner = 0p;
+		recursion_count = 0;
+	}
 }
 
 void unlock( blocking_lock & this ) with( this ) {
@@ -159,7 +159,7 @@ void on_notify( blocking_lock & this, thread$ * t ) with( this ) {
 		recursion_count = 1;
 		unpark( t );
 	}
-    unlock( lock );
+	unlock( lock );
 }
 
 size_t on_wait( blocking_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) with( this ) {
@@ -171,11 +171,11 @@ size_t on_wait( blocking_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) wi
 
 	pop_node( this );
 
-    select_node node;
-    active_thread()->link_node = (void *)&node;
+	select_node node;
+	active_thread()->link_node = (void *)&node;
 	unlock( lock );
 
-    pre_park_then_park( pp_fn, pp_datum );
+	pre_park_then_park( pp_fn, pp_datum );
 
 	return ret;
 }
@@ -186,25 +186,25 @@ void on_wakeup( blocking_lock & this, size_t recursion ) with( this ) {
 
 // waituntil() support
 bool register_select( blocking_lock & this, select_node & node ) with(this) {
-    lock( lock __cfaabi_dbg_ctx2 );
+	lock( lock __cfaabi_dbg_ctx2 );
 	thread$ * thrd = active_thread();
 
 	// single acquisition lock is held by current thread
 	/* paranoid */ verifyf( owner != thrd || multi_acquisition, "Single acquisition lock holder (%p) attempted to reacquire the lock %p resulting in a deadlock.", owner, &this );
 
-    if ( !node.park_counter && ( (owner == thrd && multi_acquisition) || owner == 0p ) ) { // OR special case
-        if ( !__make_select_node_available( node ) ) { // we didn't win the race so give up on registering
-           unlock( lock );
-           return false;
-        }
-    }
+	if ( !node.park_counter && ( (owner == thrd && multi_acquisition) || owner == 0p ) ) { // OR special case
+		if ( !__make_select_node_available( node ) ) { // we didn't win the race so give up on registering
+			unlock( lock );
+			return false;
+		}
+	}
 
 	// lock is held by some other thread
 	if ( owner != 0p && owner != thrd ) {
 		insert_last( blocked_threads, node );
 		wait_count++;
 		unlock( lock );
-        return false;
+		return false;
 	} else if ( owner == thrd && multi_acquisition ) { // multi acquisition lock is held by current thread
 		recursion_count++;
 	} else {  // lock isn't held
@@ -212,30 +212,30 @@ bool register_select( blocking_lock & this, select_node & node ) with(this) {
 		recursion_count = 1;
 	}
 
-    if ( node.park_counter ) __make_select_node_available( node );
-    unlock( lock );
-    return true;
+	if ( node.park_counter ) __make_select_node_available( node );
+	unlock( lock );
+	return true;
 }
 
 bool unregister_select( blocking_lock & this, select_node & node ) with(this) {
-    lock( lock __cfaabi_dbg_ctx2 );
-    if ( node`isListed ) {
-        remove( node );
-        wait_count--;
-        unlock( lock );
-        return false;
-    }
-    
-    if ( owner == active_thread() ) {
-        /* paranoid */ verifyf( recursion_count == 1 || multi_acquisition, "Thread %p attempted to unlock owner lock %p in waituntil unregister, which is not recursive but has a recursive count of %zu", active_thread(), &this, recursion_count );
-        // if recursion count is zero release lock and set new owner if one is waiting
-        recursion_count--;
-        if ( recursion_count == 0 ) {
-            pop_node( this );
-        }
-    }
+	lock( lock __cfaabi_dbg_ctx2 );
+	if ( isListed( node ) ) {
+		remove( node );
+		wait_count--;
+		unlock( lock );
+		return false;
+	}
+	
+	if ( owner == active_thread() ) {
+		/* paranoid */ verifyf( recursion_count == 1 || multi_acquisition, "Thread %p attempted to unlock owner lock %p in waituntil unregister, which is not recursive but has a recursive count of %zu", active_thread(), &this, recursion_count );
+		// if recursion count is zero release lock and set new owner if one is waiting
+		recursion_count--;
+		if ( recursion_count == 0 ) {
+			pop_node( this );
+		}
+	}
 	unlock( lock );
-    return false;
+	return false;
 }
 
 bool on_selected( blocking_lock & this, select_node & node ) { return true; }
@@ -264,12 +264,12 @@ forall(L & | is_blocking_lock(L)) {
 		// this check is necessary to avoid a race condition since this timeout handler
 		// 	may still be called after a thread has been removed from the queue but
 		// 	before the alarm is unregistered
-		if ( (*info_thd)`isListed ) {	// is thread on queue
+		if ( isListed( *info_thd ) ) {					// is thread on queue
 			info_thd->signalled = false;
 			// remove this thread O(1)
 			remove( *info_thd );
 			cond->count--;
-			if( info_thd->lock ) {
+			if ( info_thd->lock ) {
 				// call lock's on_notify if a lock was passed
 				on_notify(*info_thd->lock, info_thd->t);
 			} else {
@@ -303,7 +303,7 @@ forall(L & | is_blocking_lock(L)) {
 		// this check is necessary to avoid a race condition since this timeout handler
 		// 	may still be called after a thread has been removed from the queue but
 		// 	before the alarm is unregistered
-		if ( (*info_thd)`isListed ) {	// is thread on queue
+		if ( isListed( *info_thd ) ) {					// is thread on queue
 			info_thd->signalled = false;
 			// remove this thread O(1)
 			remove( *info_thd );
@@ -331,7 +331,7 @@ forall(L & | is_blocking_lock(L)) {
 	void ^?{}( condition_variable(L) & this ){ }
 
 	static void process_popped( condition_variable(L) & this, info_thread(L) & popped ) with( this ) {
-		if(&popped != 0p) {
+		if (&popped != 0p) {
 			popped.signalled = true;
 			count--;
 			if (popped.lock) {
@@ -346,29 +346,29 @@ forall(L & | is_blocking_lock(L)) {
 
 	bool notify_one( condition_variable(L) & this ) with( this ) {
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! blocked_threads`isEmpty;
-		process_popped(this, try_pop_front( blocked_threads ));
+		bool ret = ! isEmpty( blocked_threads );
+		process_popped(this, remove_first( blocked_threads ));
 		unlock( lock );
 		return ret;
 	}
 
 	bool notify_all( condition_variable(L) & this ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! blocked_threads`isEmpty;
-		while( ! blocked_threads`isEmpty ) {
-			process_popped(this, try_pop_front( blocked_threads ));
+		bool ret = ! isEmpty( blocked_threads );
+		while( ! isEmpty( blocked_threads ) ) {
+			process_popped(this, remove_first( blocked_threads ));
 		}
 		unlock( lock );
 		return ret;
 	}
 
 	uintptr_t front( condition_variable(L) & this ) with(this) {
-		return blocked_threads`isEmpty ? NULL : blocked_threads`first.info;
+		return isEmpty( blocked_threads ) ? NULL : first( blocked_threads ).info;
 	}
 
 	bool empty( condition_variable(L) & this ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = blocked_threads`isEmpty;
+		bool ret = isEmpty( blocked_threads );
 		unlock( lock );
 		return ret;
 	}
@@ -381,24 +381,24 @@ forall(L & | is_blocking_lock(L)) {
 		count++;
 	}
 
-    static size_t block_and_get_recursion( info_thread(L) & i, __cfa_pre_park pp_fn, void * pp_datum ) {
-        size_t recursion_count = 0;
+	static size_t block_and_get_recursion( info_thread(L) & i, __cfa_pre_park pp_fn, void * pp_datum ) {
+		size_t recursion_count = 0;
 		if ( i.lock ) // if lock was passed get recursion count to reset to after waking thread
 			recursion_count = on_wait( *i.lock, pp_fn, pp_datum ); // this call blocks
 		else
-            pre_park_then_park( pp_fn, pp_datum );
-        return recursion_count;
-    }
-    static size_t block_and_get_recursion( info_thread(L) & i ) { return block_and_get_recursion( i, pre_park_noop, 0p ); }
+			pre_park_then_park( pp_fn, pp_datum );
+		return recursion_count;
+	}
+	static size_t block_and_get_recursion( info_thread(L) & i ) { return block_and_get_recursion( i, pre_park_noop, 0p ); }
 
 	// helper for wait()'s' with no timeout
 	static void queue_info_thread( condition_variable(L) & this, info_thread(L) & i ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-        enqueue_thread( this, &i );
+		enqueue_thread( this, &i );
 		unlock( lock );
 
 		// blocks here
-        size_t recursion_count = block_and_get_recursion( i );
+		size_t recursion_count = block_and_get_recursion( i );
 
 		// resets recursion count here after waking
 		if ( i.lock ) on_wakeup( *i.lock, recursion_count );
@@ -408,17 +408,17 @@ forall(L & | is_blocking_lock(L)) {
 		info_thread( L ) i = { active_thread(), u, l }; \
 		queue_info_thread( this, i );
 
-    static void cond_alarm_register( void * node_ptr ) { register_self( (alarm_node_t *)node_ptr ); }
+	static void cond_alarm_register( void * node_ptr ) { register_self( (alarm_node_t *)node_ptr ); }
 
 	// helper for wait()'s' with a timeout
 	static void queue_info_thread_timeout( condition_variable(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-        enqueue_thread( this, &info );
+		enqueue_thread( this, &info );
 		alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
 		unlock( lock );
 
 		// blocks here and registers alarm node before blocking after releasing locks to avoid deadlock
-        size_t recursion_count = block_and_get_recursion( info, cond_alarm_register, (void *)(&node_wrap.alarm_node) );
+		size_t recursion_count = block_and_get_recursion( info, cond_alarm_register, (void *)(&node_wrap.alarm_node) );
 		// park();
 
 		// unregisters alarm so it doesn't go off if this happens first
@@ -433,19 +433,19 @@ forall(L & | is_blocking_lock(L)) {
 		queue_info_thread_timeout(this, i, t, alarm_node_wrap_cast ); \
 		return i.signalled;
 
-	void wait( condition_variable(L) & this                        ) with(this) { WAIT( 0, 0p    ) }
-	void wait( condition_variable(L) & this, uintptr_t info        ) with(this) { WAIT( info, 0p ) }
-	void wait( condition_variable(L) & this, L & l                 ) with(this) { WAIT( 0, &l    ) }
+	void wait( condition_variable(L) & this ) with(this) { WAIT( 0, 0p ) }
+	void wait( condition_variable(L) & this, uintptr_t info ) with(this) { WAIT( info, 0p ) }
+	void wait( condition_variable(L) & this, L & l  ) with(this) { WAIT( 0, &l ) }
 	void wait( condition_variable(L) & this, L & l, uintptr_t info ) with(this) { WAIT( info, &l ) }
 
-	bool wait( condition_variable(L) & this, Duration duration                        ) with(this) { WAIT_TIME( 0   , 0p , duration ) }
-	bool wait( condition_variable(L) & this, uintptr_t info, Duration duration        ) with(this) { WAIT_TIME( info, 0p , duration ) }
-	bool wait( condition_variable(L) & this, L & l, Duration duration                 ) with(this) { WAIT_TIME( 0   , &l , duration ) }
+	bool wait( condition_variable(L) & this, Duration duration ) with(this) { WAIT_TIME( 0 , 0p , duration ) }
+	bool wait( condition_variable(L) & this, uintptr_t info, Duration duration ) with(this) { WAIT_TIME( info, 0p , duration ) }
+	bool wait( condition_variable(L) & this, L & l, Duration duration  ) with(this) { WAIT_TIME( 0 , &l , duration ) }
 	bool wait( condition_variable(L) & this, L & l, uintptr_t info, Duration duration ) with(this) { WAIT_TIME( info, &l , duration ) }
 
 	//-----------------------------------------------------------------------------
 	// fast_cond_var
-	void  ?{}( fast_cond_var(L) & this ){
+	void ?{}( fast_cond_var(L) & this ){
 		this.blocked_threads{};
 		#ifdef __CFA_DEBUG__
 		this.lock_used = 0p;
@@ -454,24 +454,24 @@ forall(L & | is_blocking_lock(L)) {
 	void ^?{}( fast_cond_var(L) & this ){ }
 
 	bool notify_one( fast_cond_var(L) & this ) with(this) {
-		bool ret = ! blocked_threads`isEmpty;
+		bool ret = ! isEmpty( blocked_threads );
 		if ( ret ) {
-			info_thread(L) & popped = try_pop_front( blocked_threads );
+			info_thread(L) & popped = remove_first( blocked_threads );
 			on_notify(*popped.lock, popped.t);
 		}
 		return ret;
 	}
 	bool notify_all( fast_cond_var(L) & this ) with(this) {
-		bool ret = ! blocked_threads`isEmpty;
-		while( ! blocked_threads`isEmpty ) {
-			info_thread(L) & popped = try_pop_front( blocked_threads );
+		bool ret = ! isEmpty( blocked_threads );
+		while( ! isEmpty( blocked_threads ) ) {
+			info_thread(L) & popped = remove_first( blocked_threads );
 			on_notify(*popped.lock, popped.t);
 		}
 		return ret;
 	}
 
-	uintptr_t front( fast_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty ? NULL : blocked_threads`first.info; }
-	bool empty ( fast_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty; }
+	uintptr_t front( fast_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ) ? NULL : first( blocked_threads ).info; }
+	bool empty ( fast_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ); }
 
 	void wait( fast_cond_var(L) & this, L & l ) {
 		wait( this, l, 0 );
@@ -493,7 +493,7 @@ forall(L & | is_blocking_lock(L)) {
 	//-----------------------------------------------------------------------------
 	// pthread_cond_var
 
-	void  ?{}( pthread_cond_var(L) & this ) with(this) {
+	void ?{}( pthread_cond_var(L) & this ) with(this) {
 		blocked_threads{};
 		lock{};
 	}
@@ -502,9 +502,9 @@ forall(L & | is_blocking_lock(L)) {
 
 	bool notify_one( pthread_cond_var(L) & this ) with(this) { 
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! blocked_threads`isEmpty;
+		bool ret = ! isEmpty( blocked_threads );
 		if ( ret ) {
-			info_thread(L) & popped = try_pop_front( blocked_threads );
+			info_thread(L) & popped = remove_first( blocked_threads );
 			popped.signalled = true;
 			on_notify(*popped.lock, popped.t);
 		}
@@ -514,9 +514,9 @@ forall(L & | is_blocking_lock(L)) {
 
 	bool notify_all( pthread_cond_var(L) & this ) with(this) { 
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! blocked_threads`isEmpty;
-		while( ! blocked_threads`isEmpty ) {
-			info_thread(L) & popped = try_pop_front( blocked_threads );
+		bool ret = ! isEmpty( blocked_threads );
+		while( ! isEmpty( blocked_threads ) ) {
+			info_thread(L) & popped = remove_first( blocked_threads );
 			popped.signalled = true;
 			on_notify(*popped.lock, popped.t);
 		}
@@ -524,17 +524,17 @@ forall(L & | is_blocking_lock(L)) {
 		return ret;
 	}
 
-	uintptr_t front( pthread_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty ? NULL : blocked_threads`first.info; }
-	bool empty ( pthread_cond_var(L) & this ) with(this) { return blocked_threads`isEmpty; }
+	uintptr_t front( pthread_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ) ? NULL : first( blocked_threads ).info; }
+	bool empty ( pthread_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ); }
 
 	static void queue_info_thread_timeout( pthread_cond_var(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-        insert_last( blocked_threads, info );
+		insert_last( blocked_threads, info );
 		pthread_alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
 		unlock( lock );
 
 		// blocks here and registers alarm node before blocking after releasing locks to avoid deadlock
-        size_t recursion_count = block_and_get_recursion( info, cond_alarm_register, (void *)(&node_wrap.alarm_node) );
+		size_t recursion_count = block_and_get_recursion( info, cond_alarm_register, (void *)(&node_wrap.alarm_node) );
 
 		// unregisters alarm so it doesn't go off if signal happens first
 		unregister_self( &node_wrap.alarm_node );
@@ -550,10 +550,10 @@ forall(L & | is_blocking_lock(L)) {
 	void wait( pthread_cond_var(L) & this, L & l, uintptr_t info ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		info_thread( L ) i = { active_thread(), info, &l };
-        insert_last( blocked_threads, i );
+		insert_last( blocked_threads, i );
 		unlock( lock );
 
-        // blocks here
+		// blocks here
 		size_t recursion_count = block_and_get_recursion( i );
 
 		on_wakeup( *i.lock, recursion_count );
@@ -578,13 +578,13 @@ forall(L & | is_blocking_lock(L)) {
 		PTHREAD_WAIT_TIME( 0, &l , getDuration( t ) )
 	}
 	
-	bool wait( pthread_cond_var(L) & this, L & l, uintptr_t info, timespec t  ) {
+	bool wait( pthread_cond_var(L) & this, L & l, uintptr_t info, timespec t ) {
 		PTHREAD_WAIT_TIME( info, &l , getDuration( t ) )
 	}
 }
 //-----------------------------------------------------------------------------
 // Semaphore
-void  ?{}( semaphore & this, int count = 1 ) {
+void ?{}( semaphore & this, int count = 1 ) {
 	(this.lock){};
 	this.count = count;
 	(this.waiting){};
@@ -602,10 +602,9 @@ bool P(semaphore & this) with( this ){
 		unlock( lock );
 		park();
 		return true;
-	}
-	else {
-	    unlock( lock );
-	    return false;
+	} else {
+		unlock( lock );
+		return false;
 	}
 }
 
@@ -621,7 +620,7 @@ thread$ * V (semaphore & this, const bool doUnpark ) with( this ) {
 	unlock( lock );
 
 	// make new owner
-	if( doUnpark ) unpark( thrd );
+	if ( doUnpark ) unpark( thrd );
 
 	return thrd;
 }

@@ -1,0 +1,354 @@
+#include <fstream.hfa>
+#include <string.hfa>
+
+// "May Reject" (MR) handling
+// This test traces how several SUT revisions treat a common set of cases.
+// Sometimes the handling is a compiler rejection.
+// When it is, that case has to be skipped from the main run, and run individually to show the rejection.
+// Just because some SUT revision will reject / once rejected, doesn't mean it rejects currently.
+
+// These MR points do reject in the current revision, so they have satellite "-ERR" cases:
+// MR09
+// MR11
+// MR13
+// MR15
+// MR16
+
+// These MR points do not reject in the current revision, so they join the "happy run":
+#define TRY_MR01
+#define TRY_MR02
+#define TRY_MR03
+#define TRY_MR04
+#define TRY_MR05
+#define TRY_MR06
+#define TRY_MR07
+#define TRY_MR08
+#define TRY_MR10
+#define TRY_MR12
+#define TRY_MR14
+
+
+#ifdef TRY_MR01
+#define MR01(...) __VA_ARGS__
+#else
+#define MR01(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR02
+#define MR02(...) __VA_ARGS__
+#else
+#define MR02(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR03
+#define MR03(...) __VA_ARGS__
+#else
+#define MR03(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR04
+#define MR04(...) __VA_ARGS__
+#else
+#define MR04(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR05
+#define MR05(...) __VA_ARGS__
+#else
+#define MR05(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR06
+#define MR06(...) __VA_ARGS__
+#else
+#define MR06(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR07
+#define MR07(...) __VA_ARGS__
+#else
+#define MR07(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR08
+#define MR08(...) __VA_ARGS__
+#else
+#define MR08(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR09
+#define MR09(...) __VA_ARGS__
+#else
+#define MR09(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR10
+#define MR10(...) __VA_ARGS__
+#else
+#define MR10(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR11
+#define MR11(...) __VA_ARGS__
+#else
+#define MR11(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR12
+#define MR12(...) __VA_ARGS__
+#else
+#define MR12(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR13
+#define MR13(...) __VA_ARGS__
+#else
+#define MR13(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR14
+#define MR14(...) __VA_ARGS__
+#else
+#define MR14(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR15
+#define MR15(...) __VA_ARGS__
+#else
+#define MR15(...) sout | "(skip)";
+#endif
+
+#ifdef TRY_MR16
+#define MR16(...) __VA_ARGS__
+#else
+#define MR16(...) sout | "(skip)";
+#endif
+
+
+int main() {
+        sout | "------------- Explicit char arithmetic";
+        {
+            char ch;
+            ch = 'a' + 'b';
+            sout | ch;                  // Ã
+            sout | nl;
+        }
+
+
+        sout | "------------- Initialization";
+MR01(  {string s = 'a' + 'b';           // ab
+        sout | s;}              )
+       {string s = 'a' + "b";           // ab
+        sout | s;}
+       {string s = "a" + 'b';           // ab
+        sout | s;}
+       {string s = "a" + "b";           // ab
+        sout | s;}
+        sout | nl;                      //
+
+        string s0 = "x";
+
+MR02(  {string s = 'a' + 'b' + s0;      // abx
+        sout | s;}              )
+       {string s = 'a' + "b" + s0;      // abx
+        sout | s;}
+       {string s = "a" + 'b' + s0;      // abx
+        sout | s;}
+       {string s = "a" + "b" + s0;      // abx
+        sout | s;}
+        sout | nl;                      //
+
+       {string s = s0 + 'a' + 'b';      // xab
+        sout | s;}
+       {string s = s0 + 'a' + "b";      // xab
+        sout | s;}
+       {string s = s0 + "a" + 'b';      // xab
+        sout | s;}
+       {string s = s0 + "a" + "b";      // xab
+        sout | s;}
+        sout | nl;                      //
+
+       {string s = 'a' + s0 + 'b';      // axb
+        sout | s;}
+       {string s = 'a' + s0 + "b";      // axb
+        sout | s;}
+       {string s = "a" + s0 + 'b';      // axb
+        sout | s;}
+       {string s = "a" + s0 + "b";      // axb
+        sout | s;}
+        sout | nl;                      //
+
+MR03(  {string s = 'a' * 3;             // aaa
+        sout | s;}              )
+       {string s = "b" * 3;             // bbb
+        sout | s;}
+       {string s = ('a' + 'b') * 3;     // ababab
+        sout | s;}
+       {string s = ('c' + "d") * 3;     // cdcdcd
+        sout | s;}
+        sout | nl;                      //
+
+MR04(  {string s = 3 * 'a';             // aaa
+        sout | s;}              )
+       {string s = 3 * "b";             // bbb
+        sout | s;}
+       {string s = 3 * ('a' + 'b');     // ababab
+        sout | s;}
+       {string s = 3 * ('c' + "d");     // cdcdcd
+        sout | s;}
+        sout | nl;                      //
+
+
+        sout | "------------- Assignment";
+
+        string s;
+
+        s = "";
+MR05(   s = 'a' + 'b';          // ab
+        sout | s;              )
+        s = 'a' + "b";          // ab
+        sout | s;
+        s = "a" + 'b';          // ab
+        sout | s;
+        s = "a" + "b";          // ab
+        sout | s;
+        sout | nl;              //
+
+        s = "";
+MR06(   s = 'a' + 'b' + s;      // ab
+        sout | s;              )
+        s = 'a' + "b" + s;      // abab
+        sout | s;
+        s = "a" + 'b' + s;      // ababab
+        sout | s;
+        s = "a" + "b" + s;      // abababab
+        sout | s;
+        sout | nl;              //
+
+        s = "";
+        s = s + 'a' + 'b';      // ab
+        sout | s;
+        s = s + 'a' + "b";      // abab
+        sout | s;
+        s = s + "a" + 'b';      // ababab
+        sout | s;
+        s = s + "a" + "b";      // abababab
+        sout | s;
+        sout | nl;              //
+
+        s = "";
+        s = 'a' + s + 'b';      // ab
+        sout | s;
+        s = 'a' + s + "b";      // aabb
+        sout | s;
+        s = "a" + s + 'b';      // aaabbb
+        sout | s;
+        s = "a" + s + "b";      // aaaabbbb
+        sout | s;
+        sout | nl;              //
+
+        s = "";
+MR07(   s = 'a' * 3;            // aaa
+        sout | s;              )
+        s = "b" * 3;            // bbb
+        sout | s;
+        s = ('a' + 'b') * 3;    // ababab
+        sout | s;
+        s = ('c' + "d") * 3;    // cdcdcd
+        sout | s;
+        sout | nl;              //
+
+        s = "";
+MR08(   s = 3 * 'a';            // aaa
+        sout | s;              )
+        s = 3 * "b";            // bbb
+        sout | s;
+        s = 3 * ('a' + 'b');    // ababab
+        sout | s;
+        s = 3 * ('c' + "d");    // cdcdcd
+        sout | s;
+        sout | nl;              //
+
+
+        sout | "------------- Bare (sout-direct)";
+
+        s = "x";
+
+MR09(   sout | 'a' + 'b';      )    // (ambiguous)
+        sout | 'a' + "b";           // ab
+        sout | "a" + 'b';           // ab
+        sout | "a" + "b";           // ab
+        sout | nl;                  //
+
+MR10(   sout | 'a' + 'b' + s;  )    // abx
+        sout | 'a' + "b" + s;       // abx
+        sout | "a" + 'b' + s;       // abx
+        sout | "a" + "b" + s;       // abx
+        sout | nl;                  //
+
+        sout | s + 'a' + 'b';       // xab
+        sout | s + 'a' + "b";       // xab
+        sout | s + "a" + 'b';       // xab
+        sout | s + "a" + "b";       // xab
+        sout | nl;                  //
+
+        sout | 'a' + s + 'b';       // axb
+        sout | 'a' + s + "b";       // axb
+        sout | "a" + s + 'b';       // axb
+        sout | "a" + s + "b";       // axb
+        sout | nl;                  //
+
+MR11(   sout | 'a' * 3;          )  // (ambiguous)
+        sout | "b" * 3;             // bbb
+MR12(   sout | ('a' + 'b') * 3;  )  // ababab (ideally ambiguous, known approximation flaw)
+        sout | ('c' + "d") * 3;     // cdcdcd
+        sout | nl;                  //
+
+MR13(   sout | 3 * 'a';          )  // (ambiguous)
+        sout | 3 * "b";             // bbb
+MR14(   sout | 3 * ('a' + 'b');  )  // ababab (ideally ambiguous, known approximation flaw)
+        sout | 3 * ('c' + "d");     // cdcdcd
+        sout | nl;                  //
+
+        sout | "------------- Miscellany";
+
+        // random examples that have been discussed
+
+MR15(   printf( "%c\n", 'a' + 'b'); )    // (ambiguous)
+MR16(   printf( "%d\n", 'a' * 3 );  )    // (ambiguous)
+
+        {   // (picks arithmetic; there is no interpretation of `_ + 3` that's string)
+            char ch = 42;
+            printf( "0x%x 0x%x\n", ch, ch + 3 );  // 0x3 0x6 
+        }
+        sout | nl;
+
+        s = "";
+        s += 'a';               sout | s;   // a
+        s += "a";               sout | s;   // aa
+        s += s;                 sout | s;   // aaaa
+                                sout | nl;
+
+        s = "";
+        s += 'a' + 'b';         sout | s;   // ab
+        s += "a" + "b";         sout | s;   // abab
+        s += s + 'a' + 'b';     sout | s;   // ababababab
+                                sout | nl;
+
+        {
+            char ch = 42;       sout | (unsigned char) ch; // 42
+            ch += 'a';          sout | (unsigned char) ch; // 139
+                                sout | nl;
+        }
+
+        {
+            char retc = 'a';
+            string rets = "a";
+            char & weird() { return retc; }
+            string & weird() { return rets; }
+            (return char &) weird();
+            (return string &) weird();
+            weird() += 'b';                 // (ideally ambiguous)
+            sout | retc | ' ' | rets;       // a ab (known approximation flaw)
+        }
+}

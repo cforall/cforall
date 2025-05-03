@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Mar 14 23:18:57 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 18 12:07:21 2024
-// Update Count     : 670
+// Last Modified On : Thu Feb 13 09:01:58 2025
+// Update Count     : 671
 //
 
 #pragma once
@@ -146,13 +146,13 @@ static inline __attribute__((always_inline)) {
 
 static inline __attribute__((always_inline)) {
 	void ?{}( itimerval & itv, Duration alarm ) with( itv ) {
-		// itimerval contains durations but but uses time data-structure timeval.
+		// itimerval contains durations but uses time data-structure timeval.
 		it_value{ alarm`s, (alarm % 1`s)`us };			// seconds, microseconds
 		it_interval{ 0 };								// 0 seconds, 0 microseconds
 	} // itimerval
 
 	void ?{}( itimerval & itv, Duration alarm, Duration interval ) with( itv ) {
-		// itimerval contains durations but but uses time data-structure timeval.
+		// itimerval contains durations but uses time data-structure timeval.
 		it_value{ alarm`s, (alarm % 1`s)`us };			// seconds, microseconds
 		it_interval{ interval`s, interval`us };			// seconds, microseconds
 	} // itimerval

@@ -15,7 +15,8 @@ extern "C"{
     #define THREADS 5
     #define BUFFSZ  48
     pthread_key_t   key;
-    volatile int total_value,total_value_getspec;
+    volatile size_t total_value;
+    volatile size_t total_value_getspec;
     pthread_mutex_t value_mutex;
 
     void            *threadfunc(void *parm)
@@ -25,13 +26,12 @@ extern "C"{
         int        threadnum;
         int       *tnum;
         void      *getvalue;
-        char       Buffer[BUFFSZ];
 
         tnum = (int*)parm;
         threadnum = *tnum;
 
         //printf("Thread %d executing\n", threadnum);
-        value = (void *)(rand()%100);
+        value = (void *)(size_t)(rand()%100);
         status = pthread_setspecific(key, (void *) value);
         if ( status !=  0) {
             printf("pthread_setspecific failed, thread %d, errno %d",
@@ -39,12 +39,12 @@ extern "C"{
             return (void*)12;
         }
         pthread_mutex_lock(&value_mutex);
-        total_value_getspec += (int)value;
-        total_value += (int)pthread_getspecific(key);
+        total_value_getspec += (size_t)value;
+        total_value += (size_t)pthread_getspecific(key);
         pthread_mutex_unlock(&value_mutex);
 
 
-        if (!(value = malloc(sizeof(Buffer))))
+        if (!(value = malloc(BUFFSZ)))
             printf("Thread %d could not allocate storage, errno = %d\n",
                                                         threadnum, errno);
         status = pthread_setspecific(key, (void *) value);
@@ -59,7 +59,7 @@ extern "C"{
         getvalue = pthread_getspecific(key);
 
         if (getvalue != value) {
-        printf("getvalue not valid, getvalue=%d", (u_int64_t)getvalue);
+            printf("getvalue not valid, getvalue=%p", getvalue);
             return (void*)68;
         }
 
@@ -75,7 +75,6 @@ extern "C"{
 
 
     int main() {
-        int          getvalue;
         int          status;
         int          i;
         int          threadparm[THREADS];
@@ -115,11 +114,11 @@ extern "C"{
             }
 
             if (thread_stat[i] != 0)   {
-                printf("bad thread status, thread %d, status=%d\n", i+1,
-                                                        (u_int64_t)thread_stat[i]);
+                printf("bad thread status, thread %d, status=%zd\n", i+1,
+                                                        (size_t)thread_stat[i]);
             }
         }
-        printf("total value is %d, total value by pthread_getspecific is %d\n", total_value, total_value_getspec);
+        printf("total value is %zd, total value by pthread_getspecific is %zd\n", total_value, total_value_getspec);
         exit(0);
     }   // main
 }

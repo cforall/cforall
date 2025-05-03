@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Wed Nov  1 21:09:25 2023
-## Update Count     : 221
+## Last Modified On : Sat Feb 15 12:17:19 2025
+## Update Count     : 233
 ###############################################################################
 
 # create object files in directory with source files
@@ -46,7 +46,7 @@ gcc-builtins.cfa : gcc-builtins.c ${srcdir}/prototypes.sed
 	${AM_V_GEN}gcc -I${srcdir} -E -P $< | sed -r -f ${srcdir}/prototypes.sed >> ${@}
 
 gcc-builtins.c : ${srcdir}/builtins.def ${srcdir}/prototypes.awk ${srcdir}/sync-builtins.cfa ${srcdir}/prototypes.c
-	${AM_V_GEN}gcc -I${srcdir} -E ${srcdir}/prototypes.c | awk -f ${srcdir}/prototypes.awk > ${@}
+	${AM_V_GEN}gcc -I${srcdir} -E ${srcdir}/prototypes.c | awk -v wordsize="${AM_CFLAGS}" -f ${srcdir}/prototypes.awk > ${@}
 
 prelude.cfa : prelude-gen.cc
 	${AM_V_GEN}${CXX} ${AM_CXXFLAGS} ${CXXFLAGS} ${AM_CFLAGS} ${<} -o prelude-gen -Wall -Wextra -O2 -g -std=c++17

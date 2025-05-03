@@ -789,6 +789,18 @@ void CodeGenerator::postvisit( ast::AlignofExpr const * expr ) {
 	output << ")";
 }
 
+void CodeGenerator::postvisit( ast::CountofExpr const * expr ) {
+	assertf( !options.genC, "CountofExpr should not reach code generation." );
+	extension( expr );
+	output << "countof(";
+	if ( auto type = expr->type.as<ast::TypeofType>() ) {
+		type->expr->accept( *visitor );
+	} else {
+		output << genType( expr->type, "", options );
+	}
+	output << ")";
+}
+
 void CodeGenerator::postvisit( ast::UntypedOffsetofExpr const * expr ) {
 	assertf( !options.genC, "UntypedOffsetofExpr should not reach code generation." );
 	output << "offsetof(";
@@ -1104,17 +1116,18 @@ void CodeGenerator::postvisit( ast::BranchStmt const * stmt ) {
 	case ast::BranchStmt::FallThroughDefault:
 		assertf( !options.genC, "fallthrough should not reach code generation." );
 		output << "fallthrough";
+		if ( ast::BranchStmt::FallThroughDefault == stmt->kind ) {
+			assertf( stmt->target.empty(), "fallthough default should not have a target." );
+			output << " default";
+		}
 		break;
 	default:
 		assertf( false, "Bad BranchStmt value." );
 	}
-	// Print branch target for labelled break/continue/fallthrough in debug mode.
-	if ( !options.genC && stmt->kind != ast::BranchStmt::Goto ) {
-		if ( !stmt->target.empty() ) {
-			output << " " << stmt->target;
-		} else if ( stmt->kind == ast::BranchStmt::FallThrough ) {
-			output << " default";
-		}
+	// Print branch target for labelled break/continue/fallthrough.
+	if ( ast::BranchStmt::Goto != stmt->kind && !stmt->target.empty() ) {
+		assertf( !options.genC, "labelled branch should not reach code generation. %s", stmt->target.name.c_str() );
+		output << " " << stmt->target;
 	}
 	output << ";";
 }

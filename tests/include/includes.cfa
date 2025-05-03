@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb 22 10:16:58 2023
-// Update Count     : 811
+// Last Modified On : Thu Mar 13 11:56:08 2025
+// Update Count     : 831
 //
 
 #ifdef __CFA__
@@ -62,7 +62,6 @@ extern "C" {
 #include <fts.h>
 #include <ftw.h>
 #include <sys/types.h>
-//#include <gawkapi.h>									// CFA bug #240 nested anonymous enum fails
 #include <gconv.h>
 #include <getopt.h>
 #include <glob.h>
@@ -71,14 +70,14 @@ extern "C" {
 #include <grp.h>
 #include <gshadow.h>
 #include <iconv.h>
-//#include <ifaddrs.h>									// causes warning messages that break the build
+#include <ifaddrs.h>
 #include <inttypes.h>
 #include <langinfo.h>
 #include <lastlog.h>
 #include <libgen.h>
 #include <libintl.h>
 #include <limits.h>
-//#include <link.h>										// CFA bug #240 nested anonymous enum fails
+#include <link.h>
 #include <locale.h>
 #if __has_include( "ltdl.h" )
 #include <ltdl.h>										// may not be installed
@@ -96,7 +95,7 @@ extern "C" {
 #if __has_include( "ncurses_dll.h" )
 #include <ncurses_dll.h>								// may not be installed, comes with ncurses
 #endif
-//#include <netdb.h>
+#include <netdb.h>
 #include <nl_types.h>
 #include <nss.h>
 #include <obstack.h>
@@ -110,7 +109,7 @@ extern "C" {
 #include <pty.h>
 #include <pwd.h>
 #include <regex.h>
-//#include <resolv.h>
+#include <resolv.h>
 #include <re_comp.h>
 #include <sched.h>
 #include <search.h>
@@ -124,6 +123,9 @@ extern "C" {
 #include <stdc-predef.h>
 #include <stdint.h>
 #include <stdio.h>
+#if __has_include( "gawkapi.h" )
+#include <gawkapi.h>									// requires stdio.h, so appears after it
+#endif
 #include <stdio_ext.h>
 #include <stdlib.h>
 #include <string.h>
@@ -139,9 +141,11 @@ extern "C" {
 #endif
 #include <termio.h>
 #include <termios.h>
-// #include <term_entry.h>								// conflicts with search.h on some machines
+#if __has_include( "term_entry.h" )
+#include <term_entry.h>
+#endif
 #include <tgmath.h>
-//#include <threads.h>									// does not exist
+#include <threads.h>									// does not exist
 #include <thread_db.h>
 #include <time.h>
 #include <ttyent.h>

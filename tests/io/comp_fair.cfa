@@ -94,7 +94,7 @@ void main(Reader & this) {
 // Writes to the pipe so the Reader can unblock
 // takes its sweet time so the Reader has to block
 thread Writer {};
-void main(Writer & this) {
+void main(Writer &) {
 	for(TIMES) {
 		block( globals.bar );
 

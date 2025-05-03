@@ -702,30 +702,26 @@ const ast::ObjectDecl * Resolver::previsit( const ast::ObjectDecl * objectDecl )
 		}
 	} else {
 		if ( !objectDecl->isTypeFixed ) {
-			auto newDecl = fixObjectType(objectDecl, context);
-			auto mutDecl = mutate(newDecl);
+			objectDecl = fixObjectType(objectDecl, context);
 
 			// generate CtorInit wrapper when necessary.
 			// in certain cases, fixObjectType is called before reaching
 			// this object in visitor pass, thus disabling CtorInit codegen.
 			// this happens on aggregate members and function parameters.
-			if ( shouldGenCtorInit( mutDecl ) ) {
+			if ( shouldGenCtorInit( objectDecl ) ) {
 				// constructed objects cannot be designated
-				if ( InitTweak::isDesignated( mutDecl->init ) ) {
-					ast::Pass<ResolveDesignators> res( context );
-					maybe_accept( mutDecl->init.get(), res );
-					if ( !res.core.result ) {
-						SemanticError( mutDecl, "Cannot include designations in the initializer for a managed Object.\n"
-									   "If this is really what you want, initialize with @=." );
-					}
+				if ( InitTweak::isDesignated( objectDecl->init )
+						&& !ast::Pass<ResolveDesignators>::read(
+							objectDecl->init.get(), context ) ) {
+					SemanticError( objectDecl, "Cannot include designations in the initializer for a managed Object.\n"
+							"If this is really what you want, initialize with @=." );
 				}
 				// constructed objects should not have initializers nested too deeply
-				if ( ! InitTweak::checkInitDepth( mutDecl ) ) SemanticError( mutDecl, "Managed object's initializer is too deep " );
+				if ( !InitTweak::checkInitDepth( objectDecl ) ) SemanticError( objectDecl, "Managed object's initializer is too deep " );
 
-				mutDecl->init = InitTweak::genCtorInit( mutDecl->location, mutDecl );
+				objectDecl = ast::mutate_field( objectDecl, &ast::ObjectDecl::init,
+					InitTweak::genCtorInit( objectDecl->location, objectDecl ) );
 			}
-
-			objectDecl = mutDecl;
 		}
 		currentObject = ast::CurrentObject{ objectDecl->location, objectDecl->get_type() };
 	}

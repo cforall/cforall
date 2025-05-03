@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Fri Jun 2 11:31:25 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jun 17 16:11:35 2020
-// Update Count     : 75
+// Last Modified On : Thu Apr 24 22:22:25 2025
+// Update Count     : 88
 //
 
 #define __cforall_thread__
@@ -83,22 +83,15 @@ void ^?{}( alarm_node_t & this ) {
 }
 
 void insert( alarm_list_t * this, alarm_node_t * n ) {
-	alarm_node_t * it = & (*this)`first;
-	while( it && (n->deadline > it->deadline) ) {
-		it = & (*it)`next;
-	}
-	if ( it ) {
-		insert_before( *it, *n );
-	} else {
-		insert_last(*this, *n);
-	}
-
+	alarm_node_t & it = iter( *this );
+	while ( advance( it ) && it.deadline <= n->deadline );
+	insert_before( it, *n );
 	verify( validate( *this ) );
 }
 
 alarm_node_t * pop( alarm_list_t * this ) {
 	verify( validate( *this ) );
-	alarm_node_t * head = & (*this)`first;
+	alarm_node_t * head = &first( *this );
 	if( head ) {
 		remove(*head);
 	}
@@ -146,9 +139,9 @@ void sleep( Duration duration ) libcfa_public {
 	register_self( &node );
 	park();
 
-	/* paranoid */ verify( !node.set );
-	/* paranoid */ verify( & node`next == 0p );
-	/* paranoid */ verify( & node`prev == 0p );
+	/* paranoid */ verify( ! node.set );
+	/* paranoid */ verify( & next( node ) == 0p );
+	/* paranoid */ verify( & prev( node ) == 0p );
 }
 
 // Local Variables: //

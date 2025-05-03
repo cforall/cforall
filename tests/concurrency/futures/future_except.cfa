@@ -1,0 +1,50 @@
+#include <fstream.hfa>
+#include <thread.hfa>
+#include <locks.hfa>
+#include <future.hfa>
+
+ExceptionDecl(E);
+
+semaphore L;
+
+thread A{ future( int ) & F; };
+void ?{}( A & this, future( int ) & F) {
+	&this.F = &F;
+}
+thread B{ future( int ) & F; };
+void ?{}( B & this, future( int ) & F) {
+	&this.F = &F;
+}
+
+void main( A & this ) {
+	sout | "A: loading F with E";
+	this.F( ExceptionPtr( ExceptionInst( E ) ) );
+	P( L );
+	reset( this.F );
+}
+
+void main( B & this ) {
+	try {
+		waituntil( this.F ) {
+			enable_ehm();
+			int f = this.F();
+			checked_poll();
+			sout|"B: should not be printed! " | f;
+			disable_ehm();
+		}
+	} catch( E * ) {
+		sout | "B: caught E";
+		V( L );
+	}
+}
+
+int main(){
+	future( int ) F;
+	processor p;
+	for( 10 ) {
+		L{0};
+		B b={ F };
+		A a={ F };
+	}
+	return 0;
+}

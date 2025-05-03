@@ -93,12 +93,8 @@ build_triplet = @build@
 host_triplet = @host@
 subdir = prelude
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/automake/libtool.m4 \
-	$(top_srcdir)/automake/ltoptions.m4 \
-	$(top_srcdir)/automake/ltsugar.m4 \
-	$(top_srcdir)/automake/ltversion.m4 \
-	$(top_srcdir)/automake/lt~obsolete.m4 \
-	$(top_srcdir)/../tools/build/cfa.m4 $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/../tools/build/cfa.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
@@ -639,7 +635,7 @@ gcc-builtins.cfa : gcc-builtins.c ${srcdir}/prototypes.sed
 	${AM_V_GEN}gcc -I${srcdir} -E -P $< | sed -r -f ${srcdir}/prototypes.sed >> ${@}
 
 gcc-builtins.c : ${srcdir}/builtins.def ${srcdir}/prototypes.awk ${srcdir}/sync-builtins.cfa ${srcdir}/prototypes.c
-	${AM_V_GEN}gcc -I${srcdir} -E ${srcdir}/prototypes.c | awk -f ${srcdir}/prototypes.awk > ${@}
+	${AM_V_GEN}gcc -I${srcdir} -E ${srcdir}/prototypes.c | awk -v wordsize="${AM_CFLAGS}" -f ${srcdir}/prototypes.awk > ${@}
 
 prelude.cfa : prelude-gen.cc
 	${AM_V_GEN}${CXX} ${AM_CXXFLAGS} ${CXXFLAGS} ${AM_CFLAGS} ${<} -o prelude-gen -Wall -Wextra -O2 -g -std=c++17

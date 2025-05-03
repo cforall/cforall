@@ -233,7 +233,7 @@ static inline void fix(__intrusive_lane_t & ll) {
 }
 
 static void assign_list(unsigned & valrq, unsigned & valio, dlist(struct processor) & list, unsigned count) {
-	struct processor * it = &list`first;
+	struct processor * it = &first( list );
 	for(unsigned i = 0; i < count; i++) {
 		/* paranoid */ verifyf( it, "Unexpected null iterator, at index %u of %u\n", i, count);
 		it->rdq.id = valrq;
@@ -244,7 +244,7 @@ static void assign_list(unsigned & valrq, unsigned & valio, dlist(struct process
 			it->io.target = UINT_MAX;
 			valio += __shard_factor.io;
 		#endif
-		it = &(*it)`next;
+		it = &next( *it );
 	}
 }
 
@@ -257,12 +257,12 @@ static void reassign_cltr_id(struct cluster * cltr) {
 
 #if defined(CFA_HAVE_LINUX_IO_URING_H)
 	static void assign_io(io_context$ ** data, size_t count, dlist(struct processor) & list) {
-		struct processor * it = &list`first;
+		struct processor * it = &first( list );
 		while(it) {
 			/* paranoid */ verifyf( it, "Unexpected null iterator\n");
 			/* paranoid */ verifyf( it->io.ctx->cq.id < count, "Processor %p has id %u above count %zu\n", it, it->rdq.id, count);
 			data[it->io.ctx->cq.id] = it->io.ctx;
-			it = &(*it)`next;
+			it = &next( *it );
 		}
 	}
 

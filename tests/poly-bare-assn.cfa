@@ -1,0 +1,125 @@
+// A bare assertion is one that occurs without any here-bound type variables.
+// The test shows that bare assertions can occur on a function or on a type,
+// without introducing any "fake" type variables.
+
+// Related to Trac #185.
+// Present state, the test (in a test.py run) shows a fix of the #185
+// sub-case where there two overloads, already differentiated by other factors,
+// and one of them gets a bare assertion, without being charged a polymorphism
+// cost.  The two "still required" points following do not run under test.py.
+
+// Still required to fix 185: parse bare assertions on traits
+#ifdef TRY_MISSING_SYNTAX
+#define MAYBE_SYNTAX(...) __VA_ARGS__
+#else
+#define MAYBE_SYNTAX(...)
+#endif
+
+// Still required to fix 185: support bare assertions on types (orig 185 repro)
+#ifdef TRY_BROKEN_TYPE
+#define MAYBE_TYPE(...) __VA_ARGS__
+#else
+#define MAYBE_TYPE(...)
+#endif
+
+MAYBE_TYPE (
+    forall ( | {void fun();} ) {
+
+        struct thing {};
+
+        void ?{}( thing & this ) {
+            fun();
+        }
+    }
+)
+
+void greet() {
+    printf("the world is boring\n");
+}
+
+forall ( | {void fun();} )
+void greet() {
+    printf("this is the world; ");
+    fun();
+}
+
+MAYBE_SYNTAX(
+    trait world_is_fun() { void fun(); }
+
+    MAYBE_TYPE(
+        forall ( | world_is_fun() ) {
+
+            struct thing2 {};
+
+            void ?{}( thing2 & this ) {
+                fun();
+            }
+        }
+    )
+
+    void greet2() {
+        printf("the galaxy is boring\n");
+    }
+
+    forall ( | {void fun();} )
+    void greet2() {
+        printf("this is the galaxy; ");
+        fun();
+    }
+)
+
+void greetworld_nofun() {
+    greet();
+}
+
+MAYBE_SYNTAX(
+    void greetgalaxy_nofun() {
+        greet2();
+    }
+)
+
+void fun() {
+    printf("this is fun\n");
+}
+
+void greetworld_withfun() {
+    greet();
+}
+
+MAYBE_SYNTAX(
+    void greetgalaxy_withfun() {
+        greet2();
+    }
+)
+
+MAYBE_TYPE(
+    // A type declared with a bare assertion can be used ("instantiated") without
+    // adding type arguments.  You shouldn't have to provide any type arguments
+    // when you use it because it was decalred with no type parameters.
+    void test_type() {
+        thing x;   (void) x;
+    #ifdef TRY_MISSING_SYNTAX
+        thing2 y;  (void) y;
+    #endif
+    }
+)
+
+// A function overload declared with a bare assertion is called when the
+// assertion is satisfied.  Your cost calculation should not have the asserting
+// overload incur the penalty of a type variable because it was decalred with
+// no type parameters.
+void test_costs() {
+    greetworld_nofun();
+    greetworld_withfun();
+  MAYBE_SYNTAX(
+    greetgalaxy_nofun();
+    greetgalaxy_withfun();
+  )
+}
+
+int main() {
+  MAYBE_TYPE(
+    test_type();
+  )
+    test_costs();
+}

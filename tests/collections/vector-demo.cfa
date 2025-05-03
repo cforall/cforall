@@ -6,7 +6,7 @@ void raiiTests() {
     vector( float ) v = { 25 };
 
     push_last( v, 1 );
-    printf( "Having pushed, length is %ld\n", v`length );
+    printf( "Having pushed, length is %zu\n", v`length );
 
     float y = v[0]`val;
     printf( "by transit, got pos0 = %f\n", y );
@@ -20,12 +20,12 @@ void raiiTests() {
         // forbid modification while locked
       #ifdef TRY_MOD_WHILE_LOCKED_1
         push_last( v, 1 );   // runtime assertion failure
-        printf( "Having pushed, length is %ld\n", v`length );
+        printf( "Having pushed, length is %zu\n", v`length );
       #endif
     }
 
     push_last( v, 2 );
-    printf( "Having pushed, length is %ld\n", v`length );
+    printf( "Having pushed, length is %zu\n", v`length );
 
     // deletion scope for some exits
     // point is the function decls and calls, though
@@ -85,7 +85,7 @@ void raiiTests() {
 
         // allow modification while permits exist
         push_last( v, 1 );
-        printf( "Having pushed, length is %ld\n", v`length );
+        printf( "Having pushed, length is %zu\n", v`length );
 
         // forbid passing permit by value
       #ifdef TRY_PASS_PERMIT_BYVAL_1
@@ -137,12 +137,12 @@ void stayValidTests() {
     // we had filled it to the brim
     assert( v`capacity == 4 && v`length == 4 );
 
-    push_last(v, -100); // v is [0.0, 98.6, 0.1, 0.2, 0.3]; iter at 0.1, but RTP it's not looking at the old memory's 0.1
+    push_last(v, -100); // v is [0.0, 98.6, 0.1, 0.2, -100]; iter at 0.1, but RTP it's not looking at the old memory's 0.1
 
     // that made it bigger
     assert( v`capacity >  5 && v`length == 5 );
 
-    v[2] = -0.1f;  // v is [0.0, 98.6, -0.1, 0.2, 0.3]; iter at -0.1, where only the new memory had that change
+    v[2] = -0.1f;  // v is [0.0, 98.6, -0.1, 0.2, -100]; iter at -0.1, where only the new memory had that change
 
     float val3 = iter`val;
     printf("after, physical: %f\n", val3);
@@ -157,9 +157,11 @@ void loopTests() {
     float toPrint;
 
     while( vector_exit(float) it = v`origin; it`moveNext ) {
-        toPrint *= it;
+        toPrint *= it;  // wish for ?=?, but it's not working
         printf("loop sees %f\n", toPrint);
     }
+
+    // missing: loop a permit
 }
 
 int main() {

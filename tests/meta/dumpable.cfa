@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Wed Jan 05 13:53:22 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 19 07:58:45 2024
-// Update Count     : 10
+// Last Modified On : Sun Mar  2 20:56:32 2025
+// Update Count     : 18
 //
 
 #include <errno.h>
@@ -43,9 +43,11 @@ void check_ulimit() {
 
 void check_permission() {
 	char myExe[PATH_MAX];
-	ssize_t n = readlink( "/proc/self/exe", myExe, sizeof(myExe));
+
+	#define exe "/proc/self/exe"
+	ssize_t n = readlink( exe, myExe, sizeof(myExe));
 	if ( n < 0 ) {
-		perror( "readlink(/proc/self/exe ) error" );
+		perror( "readlink( " exe " ) error" );
 		return 1;
 	} // if
 	myExe[n] = '\0';
@@ -102,11 +104,12 @@ void check_dumpflag() {
 }
 
 void check_core_pattern() {
+	#define core_pattern "/proc/sys/kernel/core_pattern"
 	int ret;
-	int cp = open( "/proc/sys/kernel/core_pattern", 0, O_RDONLY );
+	int cp = open( core_pattern, 0, O_RDONLY );
 
 	if ( cp < 0 ) {
-		perror( "open(/proc/sys/kernel/core_pattern, O_RDONLY ) error" );
+		perror( "open( " core_pattern ", 0, O_RDONLY ) error" );
 		return;
 	} // if
 
@@ -127,7 +130,7 @@ void check_core_pattern() {
 		} // if
 	} finally {
 		ret = close( cp );
-		if ( ret < 0 ) perror( "close( /proc/sys/kernel/core_pattern ) error" );
+		if ( ret < 0 ) perror( "close( " core_pattern " ) error" );
 	} // try
 }
 

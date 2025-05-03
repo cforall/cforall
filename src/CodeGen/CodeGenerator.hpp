@@ -41,10 +41,10 @@ struct CodeGenerator final :
 	// Print type for all expressions.
 	void previsit( ast::Expr const * );
 
-	void postvisit( ast::StructDecl const * );
 	void postvisit( ast::FunctionDecl const * );
 	// Yes, there is one visit that does modify the ast.
 	ast::ObjectDecl const * postvisit( ast::ObjectDecl const * );
+	void postvisit( ast::StructDecl const * );
 	void postvisit( ast::UnionDecl const * );
 	void postvisit( ast::EnumDecl const * );
 	void postvisit( ast::TraitDecl const * );
@@ -72,6 +72,7 @@ struct CodeGenerator final :
 	void postvisit( ast::ConstantExpr const * );
 	void postvisit( ast::SizeofExpr const * );
 	void postvisit( ast::AlignofExpr const * );
+	void postvisit( ast::CountofExpr const * );
 	void postvisit( ast::UntypedOffsetofExpr const * );
 	void postvisit( ast::OffsetofExpr const * );
 	void postvisit( ast::OffsetPackExpr const * );

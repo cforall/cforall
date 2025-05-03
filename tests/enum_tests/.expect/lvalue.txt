@@ -1,0 +1,6 @@
+enum_tests/lvalue.cfa:17:1 error: Invalid application of existing declaration(s) in expression Address of:
+  Name: C
+enum_tests/lvalue.cfa:18:1 error: Invalid application of existing declaration(s) in expression Address of:
+  Name: O
+enum_tests/lvalue.cfa:19:1 error: Invalid application of existing declaration(s) in expression Address of:
+  Name: T

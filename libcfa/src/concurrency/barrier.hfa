@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Nov 10 08:07:35 2024
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 13 12:37:04 2024
-// Update Count     : 9
+// Last Modified On : Thu Apr 24 22:41:11 2025
+// Update Count     : 12
 // 
 
 #pragma once
@@ -30,14 +30,14 @@ static inline void ?{}( barrier & b, unsigned int group ) {
 }
 
 // Returns a value indicating the reverse order the threads arrived, i.e. last thread returns 0 (and does not block)
-// last is an optional hook that is called by the Gth thread before unblocking the other threads.
-static inline unsigned int block( barrier & mutex b, fptr_t last = (fptr_t)0 ) with( b ) {
+// hook is an optional hook that is called by the Gth thread before unblocking the other threads.
+static inline unsigned int block( barrier & mutex b, fptr_t hook = (fptr_t)0 ) with( b ) {
 	arrivals -= 1;										// prefix decrement so last is 0 not 1
 	unsigned arrived = b.arrivals;						// note arrival order
 	if ( arrivals != 0 ) {								// wait for group to form
 		wait( b.c );
 	} else {											// group formed
-		if ( last ) last();								// safe to call
+		if ( hook ) hook();								// safe to call
 		signal_all( c );								// unblock group
 		arrivals = group;								// reset
 	} // if

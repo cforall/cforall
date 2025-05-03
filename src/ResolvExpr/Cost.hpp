@@ -168,6 +168,10 @@ inline bool operator<( const Cost lhs, const Cost rhs ) {
 	return lhs.all < rhs.all;
 }
 
+inline bool operator<=( const Cost lhs, const Cost rhs ) {
+	return !(rhs < lhs);
+}
+
 inline Cost operator+( const Cost lhs, const Cost rhs ) {
 	if ( lhs.all == Cost::infinity || rhs.all == Cost::infinity ) return Cost{ Cost::infinity };
 	return Cost{ lhs.all + rhs.all - Cost::correctw }; // correct for negative spec cost

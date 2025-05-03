@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Dec 15 21:04:32 2024
-// Update Count     : 77
+// Last Modified On : Tue Apr  1 11:11:33 2025
+// Update Count     : 79
 //
 
 #pragma once
@@ -64,7 +64,7 @@ constexpr WarningData WarningFormats[] = {
 	{"superfluous-else"         , Severity::Warn, "else clause never executed for empty loop conditional." },
 	{"gcc-attributes"           , Severity::Warn, "invalid attribute: %s." },
 	{"c++-like-copy"            , Severity::Warn, "Constructor from reference is not a valid copy constructor." },
-	{"depreciated-trait-syntax" , Severity::Warn, "trait type-parameters are now specified using the forall clause." },
+	{"depreciated-trait-syntax" , Severity::Warn, "trait type-parameters, trait name(T,U), now specified using forall clause, forall(T,U) trait name." },
 };
 
 enum class Warning {

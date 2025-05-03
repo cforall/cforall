@@ -9,83 +9,85 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct 13 10:50:30 2024
-// Update Count     : 131
+// Last Modified On : Sun Apr 13 21:03:35 2025
+// Update Count     : 284
 //
 
 #pragma once
 
-#include <fstream.hfa>
+#include <iostream.hfa>
+#include <string_res.hfa>
 
-
-// in string_res.hfa
-struct string_res;
-struct charclass_res;
+static struct __cfa_string_preference_boost_t {} __cfa_string_preference_boost;
+#define PBOOST forall ( | { __cfa_string_preference_boost_t __cfa_string_preference_boost; } )
 
 struct string {
-    string_res * inner;
+	string_res * inner;
 };
 
-// Getters
-size_t size( const string & s );
-static inline size_t strlen( const string & s ) { return size( s ); }
-
 // RAII, assignment
-void ?{}( string & s ); // empty string
-void ?{}( string & s, const string & s2 );
-void ?{}( string & s, const string & s2, size_t maxlen );
-void ?{}( string & s, string & s2 );
+void ^?{}( string & s );
 
+void ?{}( string & s );									// empty string
+void ?{}( string & s, string s2, size_t maxlen );
+PBOOST void ?{}( string & s, string s2 );
 void ?{}( string & s, char );
 void ?{}( string & s, const char * c );					// copy from string literal (NULL-terminated)
 void ?{}( string & s, const char * c, size_t size );	// copy specific length from buffer
 
-void ?{}( string & s, ssize_t rhs );
+void ?{}( string & s, signed long int rhs );
 void ?{}( string & s, size_t rhs );
 void ?{}( string & s, double rhs );
 void ?{}( string & s, long double rhs );
 void ?{}( string & s, double _Complex rhs );
 void ?{}( string & s, long double _Complex rhs );
+static inline void ?{}( string & s, int rhs ) { (s){(signed long int) rhs}; }
 
-string str( ssize_t rhs );
-string str( size_t rhs );
-string str( double rhs );
-string str( long double rhs );
-string str( double _Complex rhs );
-string str( long double _Complex rhs );
+// string str( ssize_t rhs );
+// string str( size_t rhs );
+// string str( double rhs );
+// string str( long double rhs );
+// string str( double _Complex rhs );
+// string str( long double _Complex rhs );
 
-string & ?=?( string & s, const string & c );
-string & ?=?( string & s, string & c );
+PBOOST string & ?=?( string & s, string c );
 string & ?=?( string & s, const char * c );				// copy from "literal"
 string & ?=?( string & s, char c );						// copy from 'l'
 string & assign( string & s, const string & c, size_t n );
 string & assign( string & s, const char * c, size_t n );
+string & ?=?( string & s, signed long int rhs );
+string & ?=?( string & s, size_t rhs );
+string & ?=?( string & s, double rhs );
+string & ?=?( string & s, long double rhs );
+string & ?=?( string & s, double _Complex rhs );
+string & ?=?( string & s, long double _Complex rhs );
+static inline string & ?=?( string & s, int rhs ) { return s = ((signed long int) rhs); } // to match cost of (char * int): int
 
 static inline string & strcpy( string & s, const char * c ) { s = c; return s; }
 static inline string & strncpy( string & s, const char * c, size_t n ) { assign( s, c, n ); return s; }
 static inline string & strcpy( string & s, const string & c ) { s = c; return s; }
 static inline string & strncpy( string & s, const string & c, size_t n ) { assign( s, c, n ); return s; }
 
-string & ?=?( string & s, ssize_t rhs );
-string & ?=?( string & s, size_t rhs );
-string & ?=?( string & s, double rhs );
-string & ?=?( string & s, long double rhs );
-string & ?=?( string & s, double _Complex rhs );
-string & ?=?( string & s, long double _Complex rhs );
-
-void ^?{}( string & s );
-
 // Alternate construction: request shared edits
-struct string_WithSharedEdits {
-    string * s;
+struct string_Share {
+	string * s;
 };
-string_WithSharedEdits ?`shareEdits( string & s );
-void ?{}( string & s, string_WithSharedEdits src );
+string_Share ?`share( string & s );
+void ?{}( string & s, string_Share src );
+
+// Getters
+static inline size_t len( const string & s ) { return len( *s.inner ); }
+static inline size_t len( const char * cs ) { return strlen( cs ); };
+static inline size_t strlen( const string & s ) { return len( s ); }
+size_t strnlen( const string & s, size_t maxlen );
 
 // IO Operator
-ofstream & ?|?( ofstream & out, const string & s );
-void ?|?( ofstream & out, const string & s );
-ifstream & ?|?( ifstream & in, string & s );
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype & out, string s );
+	void ?|?( ostype & out, string s );
+}
+forall( istype & | basic_istream( istype ) )
+istype & ?|?( istype & in, string & s );
 
 static inline {
 	_Ostream_Manip(string) bin( string s ) { return (_Ostream_Manip(string))@{ s, 1, 0, 'b', { .all = 0 } }; }
@@ -98,17 +100,20 @@ static inline {
 	_Ostream_Manip(string) & left( _Ostream_Manip(string) & fmt ) { fmt.flags.left = true; return fmt; }
 	_Ostream_Manip(string) & nobase( _Ostream_Manip(string) & fmt ) { fmt.flags.nobsdp = true; return fmt; }
 } // distribution
-ofstream & ?|?( ofstream & os, _Ostream_Manip(string) f );
-void ?|?( ofstream & os, _Ostream_Manip(string) );
+
+forall( ostype & | basic_ostream( ostype ) ) {
+	ostype & ?|?( ostype & os, _Ostream_Manip(string) f );
+	void ?|?( ostype & os, _Ostream_Manip(string) );
+}
 
 struct _Istream_Swidth {
 	string & s;
 	inline _Istream_str_base;
 }; // _Istream_Swidth
 
-struct _Istream_Squoted {
+struct _Istream_Squote {
 	_Istream_Swidth sstr;
-}; // _Istream_Squoted
+}; // _Istream_Squote
 
 struct _Istream_Sstr {
 	string & s;
@@ -120,51 +125,50 @@ static inline {
 	// read width does not include null terminator
 	_Istream_Swidth wdi( unsigned int rwd, string & s ) { return (_Istream_Swidth)@{ .s = s, { {.scanset = 0p}, .wd = rwd, {.flags.rwd = true} } }; }
 	_Istream_Sstr getline( string & s, const char delimiter = '\n' ) {
-//		return (_Istream_Sstr)@{ { .s = s, { {.delimiters = { delimiter, '\0' } }, .wd = -1, {.flags.delimiter = true} } } };
 		return (_Istream_Sstr)@{ .s = s, { {.delimiters = { delimiter, '\0' } }, .wd = -1, {.flags.delimiter = true} } };
 	}
 	_Istream_Sstr & getline( _Istream_Swidth & f, const char delimiter = '\n' ) {
 		f.delimiters[0] = delimiter; f.delimiters[1] = '\0'; f.flags.delimiter = true; return (_Istream_Sstr &)f;
 	}
-	_Istream_Squoted quoted( string & s, const char Ldelimiter = '\"', const char Rdelimiter = '\0' ) {
-		return (_Istream_Squoted)@{ { .s = s, { {.delimiters = { Ldelimiter, Rdelimiter, '\0' }}, .wd = -1, {.flags.rwd = true} } } };
+	_Istream_Squote quote( string & s, const char Ldelimiter = '\"', const char Rdelimiter = '\0' ) {
+		return (_Istream_Squote)@{ { .s = s, { {.delimiters = { Ldelimiter, Rdelimiter, '\0' }}, .wd = -1, {.flags.rwd = true} } } };
 	}
-	_Istream_Squoted & quoted( _Istream_Swidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
+	_Istream_Squote & quote( _Istream_Swidth & f, const char Ldelimiter = '"', const char Rdelimiter = '\0' ) {
 		f.delimiters[0] = Ldelimiter;  f.delimiters[1] = Rdelimiter;  f.delimiters[2] = '\0';
-		return (_Istream_Squoted &)f;
+		return (_Istream_Squote &)f;
 	}
-//	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = false} } } }; }
 	_Istream_Sstr incl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = false} } }; }
 	_Istream_Sstr & incl( const char scanset[], _Istream_Swidth & f ) { f.scanset = scanset; f.flags.inex = false; return (_Istream_Sstr &)f; }
-//	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ { .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = true} } } }; }
 	_Istream_Sstr excl( const char scanset[], string & s ) { return (_Istream_Sstr)@{ .s = s, { {.scanset = scanset}, .wd = -1, {.flags.inex = true} } }; }
 	_Istream_Sstr & excl( const char scanset[], _Istream_Swidth & f ) { f.scanset = scanset; f.flags.inex = true; return (_Istream_Sstr &)f; }
-//	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ { .s = s, { {.scanset = 0p}, .wd = -1, {.flags.ignore = true} } } }; }
 	_Istream_Sstr ignore( string & s ) { return (_Istream_Sstr)@{ .s = s, { {.scanset = 0p}, .wd = -1, {.flags.ignore = true} } }; }
 	_Istream_Sstr & ignore( _Istream_Swidth & f ) { f.flags.ignore = true; return (_Istream_Sstr &)f; }
-	_Istream_Squoted & ignore( _Istream_Squoted & f ) { f.sstr.flags.ignore = true; return (_Istream_Squoted &)f; }
-//	_Istream_Sstr & ignore( _Istream_Sstr & f ) { f.sstr.flags.ignore = true; return (_Istream_Sstr &)f; }
+	_Istream_Squote & ignore( _Istream_Squote & f ) { f.sstr.flags.ignore = true; return (_Istream_Squote &)f; }
 	_Istream_Sstr & ignore( _Istream_Sstr & f ) { f.flags.ignore = true; return (_Istream_Sstr &)f; }
 } // distribution
-ifstream & ?|?( ifstream & is, _Istream_Squoted f );
-ifstream & ?|?( ifstream & is, _Istream_Sstr f );
-static inline ifstream & ?|?( ifstream & is, _Istream_Swidth f ) { return is | *(_Istream_Sstr *)&f; }
+
+forall( istype & | basic_istream( istype ) ) {
+	istype & ?|?( istype & is, _Istream_Squote f );
+	istype & ?|?( istype & is, _Istream_Sstr f );
+	static inline istype & ?|?( istype & is, _Istream_Swidth f ) { return is | *(_Istream_Sstr *)&f; }
+}
 
 // Concatenation
-void ?+=?( string & s, char c );						// append a character
-void ?+=?( string & s, const string & s2 );				// append-concatenate to first string
-void append( string & s, const string & s2, size_t maxlen );  // append-concatenate to first string, up to maxlen
-void ?+=?( string & s, const char * s2 );				// append-concatenate NULL-terminated string to first string
-void append( string & s, const char * buffer, size_t bsize ); // append-concatenate given range to first string
+void ?+=?( string & s, char c );
+PBOOST void ?+=?( string & s, string );
+void append( string & s, const string & s2, size_t maxlen );
+void ?+=?( string & s, const char * s2 );
+void append( string & s, const char * buffer, size_t bsize );
 
-string ?+?( const string & s, char c );					// add a character to a copy of the string
-string ?+?( char c, const string & s );					// add a character to a copy of the string
-string ?+?( const string & s, const string & s2 );		// copy and concatenate both strings
-string ?+?( const char * s, char c );					// add a character to a copy of the string
-string ?+?( char c, const char * s );					// add a character to a copy of the string
-string ?+?( const char * c, const char * s );			// copy and add with two NULL-terminated string
-string ?+?( const char * c, string & s );				// copy and add with NULL-terminated string
-string ?+?( const string & s, const char * c );			// copy and add with NULL-terminated string
+string ?+?( string s, char c );
+string ?+?( char c, string s );
+PBOOST string ?+?( string s, string s2 );
+string ?+?( const char * s, char c );					// not backwards compatible
+string ?+?( char c, const char * s );
+string ?+?( const char * c, const char * s );
+string ?+?( const char * c, string s );
+string ?+?( string s, const char * c );
+string ?+?( char, char );								// not being called 8-(
 
 static inline string & strcat( string & s, const string & s2 ) { s += s2; return s; }
 static inline string & strcat( string & s, const char * c ) { s += c; return s; }
@@ -172,10 +176,19 @@ static inline string & strncat( string & s, const string & s2, size_t maxlen ) {
 static inline string & strncat( string & s, const char * buffer, size_t bsize ) { append( s, buffer, bsize ); return s; }
 
 // Repetition
-string ?*?( const string & s, size_t factor );
-void ?*=?( string & s, size_t factor );
-string ?*?( char c, size_t factor );
-string ?*?( const char *s, size_t factor );
+
+// Type `signed long long int` chosen for `factor` argument to achieve cost detente.
+// This way, the call `'a' * 3` gets the same safe conversion cost calling here as for
+// the built-in definition `int * int`.
+typedef signed long long int strmul_factor_t;
+
+void ?*=?( string & s, strmul_factor_t factor );
+string ?*?( char c, strmul_factor_t factor );					// not backwards compatible
+PBOOST string ?*?( string s, strmul_factor_t factor );
+string ?*?( const char * s, strmul_factor_t factor );
+static inline string ?*?( strmul_factor_t factor, char s ) { return s * factor; }
+PBOOST static inline string ?*?( strmul_factor_t factor, string s ) { return s * factor; }
+static inline string ?*?( strmul_factor_t factor, const char * s ) { return s * factor; }
 
 // Character access
 char ?[?]( const string & s, size_t index );
@@ -183,51 +196,52 @@ string ?[?]( string & s, size_t index );				// mutable length-1 slice of origina
 //char codePointAt(const string & s, size_t index );		// to revisit under Unicode
 
 // Comparisons
-int strcmp ( const string &, const string & );
-bool ?==?( const string &, const string & );
-bool ?!=?( const string &, const string & );
-bool ?>? ( const string &, const string & );
-bool ?>=?( const string &, const string & );
-bool ?<=?( const string &, const string & );
-bool ?<? ( const string &, const string & );
+static inline int strcmp( const string & s1, const string & s2 ) { return strcmp( *s1.inner, *s2.inner ); }
+int strncmp( const string & s1, const string & s2, size_t maxlen );
+static inline bool ?==?( const string & s1, const string & s2 ) { return *s1.inner == *s2.inner; }
+static inline bool ?!=?( const string & s1, const string & s2 ) { return *s1.inner != *s2.inner; }
+static inline bool ?>? ( const string & s1, const string & s2 ) { return *s1.inner >  *s2.inner; }
+static inline bool ?>=?( const string & s1, const string & s2 ) { return *s1.inner >= *s2.inner; }
+static inline bool ?<=?( const string & s1, const string & s2 ) { return *s1.inner <= *s2.inner; }
+static inline bool ?<? ( const string & s1, const string & s2 ) { return *s1.inner <  *s2.inner; }
 
-int strcmp( const string &, const char * );
-bool ?==?( const string &, const char * );
-bool ?!=?( const string &, const char * );
-bool ?>? ( const string &, const char * );
-bool ?>=?( const string &, const char * );
-bool ?<=?( const string &, const char * );
-bool ?<? ( const string &, const char * );
+static inline int strcmp( const string & s1, const char * s2 ) { return strcmp( *s1.inner, s2 ); }
+int strncmp( const string & s1, const char * s2, size_t maxlen );
+static inline bool ?==?( const string & s1, const char * s2 ) { return *s1.inner == s2; }
+static inline bool ?!=?( const string & s1, const char * s2 ) { return *s1.inner != s2; }
+static inline bool ?>? ( const string & s1, const char * s2 ) { return *s1.inner >  s2; }
+static inline bool ?>=?( const string & s1, const char * s2 ) { return *s1.inner >= s2; }
+static inline bool ?<=?( const string & s1, const char * s2 ) { return *s1.inner <= s2; }
+static inline bool ?<? ( const string & s1, const char * s2 ) { return *s1.inner <  s2; }
 
-int strcmp( const char *, const string & );
-bool ?==?( const char *, const string & );
-bool ?!=?( const char *, const string & );
-bool ?>? ( const char *, const string & );
-bool ?>=?( const char *, const string & );
-bool ?<=?( const char *, const string & );
-bool ?<? ( const char *, const string & );
-
-
-// Slicing
-string ?()( string & s, size_t start, size_t len );		// TODO const?
-string ?()( string & s, size_t start );
+static inline int strcmp( const char * s1, const string & s2 ) { return strcmp( s1, *s2.inner ); }
+int strncmp( const char * s1, const string & s2, size_t maxlen );
+static inline bool ?==?( const char * s1, const string & s2 ) { return s1 == *s2.inner; }
+static inline bool ?!=?( const char * s1, const string & s2 ) { return s1 != *s2.inner; }
+static inline bool ?>? ( const char * s1, const string & s2 ) { return s1 >  *s2.inner; }
+static inline bool ?>=?( const char * s1, const string & s2 ) { return s1 >= *s2.inner; }
+static inline bool ?<=?( const char * s1, const string & s2 ) { return s1 <= *s2.inner; }
+static inline bool ?<? ( const char * s1, const string & s2 ) { return s1 <  *s2.inner; }
 
 // String search
 bool contains( const string & s, char ch );				// single character
 
-int find( const string & s, char search );
-int find( const string & s, const string & search );
-int find( const string & s, const char * search );
-int find( const string & s, const char * search, size_t searchsize );
+//int find( const string & s, size_t start, size_t len, const string & key, size_t kstart, size_t klen );
+size_t find$( const string_res & s, size_t start, size_t len, const string & key_res, size_t kstart, size_t klen );
 
-int findFrom( const string & s, size_t fromPos, char search );
-int findFrom( const string & s, size_t fromPos, const string & search );
-int findFrom( const string & s, size_t fromPos, const char * search );
-int findFrom( const string & s, size_t fromPos, const char * search, size_t searchsize );
+size_t find( const string & s, char key );
+size_t find( const string & s, const char * key );
+size_t find( const string & s, const string & key );
+size_t find( const string & s, const char * key, size_t keysize );
 
-bool includes( const string & s, const string & search );
-bool includes( const string & s, const char * search );
-bool includes( const string & s, const char * search, size_t searchsize );
+size_t find( const string & s, size_t start, char key );
+size_t find( const string & s, size_t start, const string & key );
+size_t find( const string & s, size_t start, const char * key );
+size_t find( const string & s, size_t start, const char * key, size_t keysize );
+
+bool includes( const string & s, const string & mask );
+bool includes( const string & s, const char * mask );
+bool includes( const string & s, const char * mask, size_t masksize );
 
 bool startsWith( const string & s, const string & prefix );
 bool startsWith( const string & s, const char * prefix );
@@ -237,15 +251,20 @@ bool endsWith( const string & s, const string & suffix );
 bool endsWith( const string & s, const char * suffix );
 bool endsWith( const string & s, const char * suffix, size_t suffixsize );
 
-// Modifiers
-void padStart( string & s, size_t n );
-void padStart( string & s, size_t n, char padding );
-void padEnd( string & s, size_t n );
-void padEnd( string & s, size_t n, char padding );
-
+// Slicing
+string ?()( string & s, ssize_t start, ssize_t len );
+static inline string ?()( const string & s, ssize_t start, ssize_t len ) { string & w = (string &)s; return w( start, len ); } // FIX ME
+string ?()( string & s, ssize_t start );
+static inline string ?()( const string & s, ssize_t start ) { string & w = (string &)s; return w( start ); } // FIX ME
+static inline string ?()( string & s, char m ) { return s( find( s, m ), 1 )`share; }
+static inline string ?()( const string & s, char m ) { string & w = (string &)s; return w( find( s, m ), 1 )`share; } // FIX ME
+static inline string ?()( string & s, const char * m ) { return s( find( s, m ), len( m ) )`share; }
+static inline string ?()( const string & s, const char * m ) { string & w = (string &)s; return w( find( s, m ), len( m ) )`share; } // FIX ME
+static inline string ?()( string & s, const string & m ) { return s( find( s, m ), len( m ) )`share; }
+static inline string ?()( const string & s, const string & m ) { string & w = (string &)s; return w( find( s, m ), len( m ) )`share; } // FIX ME
 
 struct charclass {
-    charclass_res * inner;
+	charclass_res * inner;
 };
 
 void ?{}( charclass & ) = void;
@@ -257,12 +276,35 @@ void ?{}( charclass &, const char * chars );
 void ?{}( charclass &, const char * chars, size_t charssize );
 void ^?{}( charclass & );
 
-int include( const string & s, const charclass & mask );
+size_t include( const string & s, const charclass & mask );
+static inline size_t include( const char * cs, const charclass & mask ) { const string s = cs; return include( s, mask ); }
+static inline string include( const string & s, const charclass & mask ) { return s( 0, include( s, mask ) ); }
+static inline string include( const char * cs, const charclass & mask ) { const string s = cs; return s( 0, include( s, mask ) ); }
 
-int exclude( const string & s, const charclass & mask );
+size_t exclude( const string & s, const charclass & mask );
+static inline size_t exclude( const char * cs, const charclass & mask ) { const string s = cs; return exclude( s, mask ); }
+static inline string exclude( const string & s, const charclass & mask ) { return s( 0, exclude( s, mask ) ); }
+static inline string exclude( const char * cs, const charclass & mask ) { const string s = cs; return s( 0, exclude( s, mask ) ); }
 
-/*
-What to do with?
-StrRet include( string & s, const charclass & mask );
-StrRet exclude( string & s, const charclass & mask );
-*/
+size_t include( const string & s, int (*f)( int ) );
+static inline size_t include( const char * cs, int (*f)( int ) ) { const string S = cs; return include( S, f ); }
+static inline string include( const string & s, int (*f)( int ) ) { return s( 0, include( s, f ) ); }
+static inline string include( const char * cs, int (*f)( int ) ) { const string s = cs; return s( 0, include( s, f ) ); }
+
+size_t exclude( const string & s, int (*f)( int ) );
+static inline size_t exclude( const char * cs, int (*f)( int ) ) { const string s = cs; return exclude( s, f ); }
+static inline string exclude( const string & s, int (*f)( int ) ) { return s( 0, exclude( s, f ) ); }
+static inline string exclude( const char * cs, int (*f)( int ) ) { const string s = cs; return s( 0, exclude( s, f ) ); }
+
+string replace( const string & s, const string & from, const string & to );
+static inline string replace( const char * s, const char * from, const char * to ) { string S = s, From = from, To = to; return replace( S, From, To ); }
+static inline string replace( const string & s, const char * from, const char * to ) { const string From = from, To = to; return replace( s, From, To ); }
+static inline string replace( const string & s, const char * from, const string & to ) { const string From = from; return replace( s, From, to ); }
+static inline string replace( const string & s, string & from, const char * to ) { const string To = to; return replace( s, from, To ); }
+
+string translate( const string & s, int (*f)( int ) );
+static inline string translate( const char * c, int (*f)( int ) ) { const string S = c; return translate( S, f ); }
+
+#ifndef _COMPILING_STRING_CFA_
+#undef PBOOST
+#endif

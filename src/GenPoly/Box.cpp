@@ -2001,7 +2001,8 @@ ast::Expr const * PolyGenericCalculator::postvisit(
 		inits.push_back( new ast::SingleInit( expr->location,
 			new ast::OffsetofExpr( expr->location,
 				deepCopy( type ),
-				memberDecl
+				memberDecl,
+				getLayoutType( transUnit() )
 			)
 		) );
 	}

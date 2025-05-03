@@ -9,9 +9,9 @@
 //
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Apr 21 19:46:50 2023
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Last Modified By : Kyoung Seo
+// Last Modified On : Wed Mar 19 12:00:00 2025
+// Update Count     : 1
 //
 
 #define __cforall_thread__
@@ -49,11 +49,4 @@ bool unregister_select( select_timeout_node & this, select_node & node ) {
     return false;
 }
 bool on_selected( select_timeout_node & this, select_node & node ) { return true; }
-
-// Gateway routine to wait on duration
-select_timeout_node timeout( Duration duration ) {
-	select_timeout_node node{ duration, timeout_handler_select_cast };
-    return node;
-}
-select_timeout_node sleep( Duration duration ) { return timeout( duration ); }
 

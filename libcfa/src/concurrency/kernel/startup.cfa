@@ -68,8 +68,8 @@ extern "C" {
 
 //-----------------------------------------------------------------------------
 // Start and stop routine for the kernel, declared first to make sure they run first
-static void __kernel_startup (void) __attribute__(( constructor( STARTUP_PRIORITY_KERNEL ) ));
-static void __kernel_shutdown(void) __attribute__(( destructor ( STARTUP_PRIORITY_KERNEL ) ));
+static void __kernel_startup(void) __attribute__(( constructor( STARTUP_PRIORITY_KERNEL ) ));
+static void __kernel_shutdown(void) __attribute__(( destructor( STARTUP_PRIORITY_KERNEL ) ));
 
 //-----------------------------------------------------------------------------
 // Static Forward Declarations
@@ -77,7 +77,7 @@ struct current_stack_info_t;
 
 static void * __invoke_processor(void * arg);
 static void __kernel_first_resume( processor * this );
-static void __kernel_last_resume ( processor * this );
+static void __kernel_last_resume( processor * this );
 static void init(processor & this, const char name[], cluster & _cltr, thread$ * initT);
 static void deinit(processor & this);
 static void doregister( struct cluster & cltr );
@@ -98,7 +98,7 @@ static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * 
 extern void __kernel_alarm_startup(void);
 extern void __kernel_alarm_shutdown(void);
 extern void __cfa_io_start( processor * );
-extern void __cfa_io_stop ( processor * );
+extern void __cfa_io_stop( processor * );
 
 //-----------------------------------------------------------------------------
 // Other Forward Declarations
@@ -109,17 +109,17 @@ bool __global_random_mask = false;
 
 //-----------------------------------------------------------------------------
 // Kernel storage
-KERNEL_STORAGE(cluster,	             mainCluster);
-KERNEL_STORAGE(processor,            mainProcessor);
-KERNEL_STORAGE(thread$,	             mainThread);
-KERNEL_STORAGE(__stack_t,            mainThreadCtx);
+KERNEL_STORAGE(cluster, mainCluster);
+KERNEL_STORAGE(processor, mainProcessor);
+KERNEL_STORAGE(thread$, mainThread);
+KERNEL_STORAGE(__stack_t, mainThreadCtx);
 #if !defined(__CFA_NO_STATISTICS__)
 KERNEL_STORAGE(__stats_t, mainProcStats);
 #endif
 
-cluster              * mainCluster libcfa_public;
-processor            * mainProcessor;
-thread$              * mainThread;
+cluster * mainCluster libcfa_public;
+processor * mainProcessor;
+thread$ * mainThread;
 
 extern "C" {
 	struct { __dllist_t(cluster) list; __spinlock_t lock; } __cfa_dbg_global_clusters;
@@ -149,10 +149,10 @@ __scheduler_RWLock_t __scheduler_lock @= { 0 };
 //-----------------------------------------------------------------------------
 // Struct to steal stack
 struct current_stack_info_t {
-	__stack_t * storage;  // pointer to stack object
-	void * base;          // base of stack
-	void * limit;         // stack grows towards stack limit
-	void * context;       // address of cfa_context_t
+	__stack_t * storage;								// pointer to stack object
+	void * base;										// base of stack
+	void * limit;										// stack grows towards stack limit
+	void * context;										// address of cfa_context_t
 };
 
 static void ?{}( current_stack_info_t & this ) {
@@ -233,7 +233,7 @@ static void __kernel_startup(void) {
 
 	//initialize the global state variables
 	__cfaabi_tls.this_processor = mainProcessor;
-	__cfaabi_tls.this_thread    = mainThread;
+	__cfaabi_tls.this_thread = mainThread;
 
 	#if !defined( __CFA_NO_STATISTICS__ )
 		__cfaabi_tls.this_stats = (__stats_t *)& storage_mainProcStats;
@@ -354,7 +354,7 @@ static void * __invoke_processor(void * arg) {
 
 	processor * proc = (processor *) arg;
 	__cfaabi_tls.this_processor = proc;
-	__cfaabi_tls.this_thread    = 0p;
+	__cfaabi_tls.this_thread = 0p;
 	__cfaabi_tls.preemption_state.[enabled, disable_count] = [false, 1];
 	proc->local_data = &__cfaabi_tls;
 
@@ -476,19 +476,19 @@ static void __kernel_last_resume( processor * this ) {
 static void ?{}( coroutine$ & this, current_stack_info_t * info) with( this ) {
 	stack.storage = info->storage;
 	with(*stack.storage) {
-		limit     = info->limit;
-		base      = info->base;
+		limit = info->limit;
+		base = info->base;
 	}
 	__attribute__((may_alias)) intptr_t * istorage = (intptr_t*) &stack.storage;
 	*istorage |= 0x1;
 	name = "Main Thread";
 	state = Start;
 	starter = 0p;
-	last = 0p;
+	this.last = 0p;
 	cancellation = 0p;
-    ehm_state.ehm_buffer{};
-    ehm_state.buffer_lock{};
-    ehm_state.ehm_enabled = false;
+	ehm_state.ehm_buffer{};
+	ehm_state.buffer_lock{};
+	ehm_state.ehm_enabled = false;
 }
 
 static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
@@ -501,14 +501,14 @@ static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
 	self_mon.recursion = 1;
 	self_mon_p = &self_mon;
 	rdy_link.next = 0p;
-	rdy_link.ts   = MAX;
+	rdy_link.ts = MAX;
 	user_link.next = 0p;
 	user_link.prev = 0p;
 	cltr_link.next = 0p;
 	cltr_link.prev = 0p;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
-	PRNG_SET_SEED( random_state,  __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl() );
+	PRNG_SET_SEED( random_state, __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl() );
 	#if defined( __CFA_WITH_VERIFY__ )
 		executing = 0p;
 		canary = 0x0D15EA5E0D15EA5Ep;
@@ -530,10 +530,10 @@ static void ?{}(processorCtx_t & this, processor * proc, current_stack_info_t * 
 static void init(processor & this, const char name[], cluster & _cltr, thread$ * initT) with( this ) {
 	this.name = name;
 	this.cltr = &_cltr;
-    __atomic_add_fetch( &_cltr.procs.constructed, 1u, __ATOMIC_RELAXED );
+	__atomic_add_fetch( &_cltr.procs.constructed, 1u, __ATOMIC_RELAXED );
 	this.rdq.its = 0;
 	this.rdq.itr = 0;
-	this.rdq.id  = 0;
+	this.rdq.id = 0;
 	this.rdq.target = MAX;
 	this.rdq.last = MAX;
 	this.rdq.cpu = 0;
@@ -544,7 +544,7 @@ static void init(processor & this, const char name[], cluster & _cltr, thread$ *
 
 	this.io.ctx = 0p;
 	this.io.pending = false;
-	this.io.dirty   = false;
+	this.io.dirty = false;
 
 	this.init.thrd = initT;
 
@@ -598,7 +598,7 @@ void ^?{}(processor & this) libcfa_public with( this ) {
 	/* paranoid */ verify( !__atomic_load_n(&do_terminate, __ATOMIC_ACQUIRE) );
 	__cfadbg_print_safe(runtime_core, "Kernel : core %p signaling termination\n", &this);
 
-    __atomic_sub_fetch( &this.cltr->procs.constructed, 1u, __ATOMIC_RELAXED );
+	__atomic_sub_fetch( &this.cltr->procs.constructed, 1u, __ATOMIC_RELAXED );
 
 	__atomic_store_n(&do_terminate, true, __ATOMIC_RELAXED);
 	__disable_interrupts_checked();
@@ -618,9 +618,9 @@ void ^?{}(processor & this) libcfa_public with( this ) {
 //-----------------------------------------------------------------------------
 // Cluster
 static void ?{}(__cluster_proc_list & this) {
-	this.fdw   = 0p;
-	this.idle  = 0;
-    this.constructed = 0;
+	this.fdw = 0p;
+	this.idle = 0;
+	this.constructed = 0;
 	this.total = 0;
 }
 
@@ -705,27 +705,27 @@ void ^?{}(cluster & this) libcfa_public {
 //=============================================================================================
 //-----------------------------------------------------------------------------
 // Global Queues
-static void doregister( cluster     & cltr ) {
-	lock      ( __cfa_dbg_global_clusters.lock __cfaabi_dbg_ctx2);
+static void doregister( cluster & cltr ) {
+	lock( __cfa_dbg_global_clusters.lock __cfaabi_dbg_ctx2);
 	push_front( __cfa_dbg_global_clusters.list, cltr );
-	unlock    ( __cfa_dbg_global_clusters.lock );
+	unlock( __cfa_dbg_global_clusters.lock );
 }
 
-static void unregister( cluster     & cltr ) {
-	lock  ( __cfa_dbg_global_clusters.lock __cfaabi_dbg_ctx2);
+static void unregister( cluster & cltr ) {
+	lock( __cfa_dbg_global_clusters.lock __cfaabi_dbg_ctx2);
 	remove( __cfa_dbg_global_clusters.list, cltr );
 	unlock( __cfa_dbg_global_clusters.lock );
 }
 
 void doregister( cluster * cltr, thread$ & thrd ) {
-	lock      (cltr->thread_list_lock __cfaabi_dbg_ctx2);
+	lock(cltr->thread_list_lock __cfaabi_dbg_ctx2);
 	cltr->nthreads += 1;
 	insert_first(cltr->threads, thrd);
-	unlock    (cltr->thread_list_lock);
+	unlock(cltr->thread_list_lock);
 }
 
 void unregister( cluster * cltr, thread$ & thrd ) {
-	lock  (cltr->thread_list_lock __cfaabi_dbg_ctx2);
+	lock(cltr->thread_list_lock __cfaabi_dbg_ctx2);
 	{
 		tytagref( dlink(thread$), dlink(thread$) ) ?`inner( thread$ & this ) = void;
 		with( DLINK_VIA( thread$, struct __thread_user_link ) )

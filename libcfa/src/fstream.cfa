@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Oct  1 20:59:45 2024
-// Update Count     : 582
+// Last Modified On : Mon Apr 14 20:41:51 2025
+// Update Count     : 583
 //
 
 #include "fstream.hfa"									// also includes iostream.hfa
@@ -108,7 +108,7 @@ void ends( ofstream & os ) {
 } // ends
 
 bool fail( ofstream & os ) { return os.file$ == 0 || ferror( (FILE *)(os.file$) ); }
-void clear( ofstream & os ) { clearerr( (FILE *)(os.file$) ); }
+void clearerr( ofstream & os ) { clearerr( (FILE *)(os.file$) ); }
 int flush( ofstream & os ) { return fflush( (FILE *)(os.file$) ); }
 
 void open( ofstream & os, const char name[], const char mode[] ) {
@@ -201,6 +201,73 @@ ofstream & nl( ofstream & os ) {
 	return os;
 } // nl
 
+static basic_ostream_data(ofstream) ofstream_basic_data = {
+	sepPrt$,
+	sepReset$,
+	sepReset$,
+	sepGetCur$,
+	sepSetCur$,
+	getNL$,
+	setNL$,
+	getANL$,
+	setANL$,
+	getPrt$,
+	setPrt$,
+	nlOn,
+	nlOff,
+	sep,
+	nosep,
+	sepOn,
+	sepOff,
+	sepGet,
+	sepSet,
+	sepGetTuple,
+	sepSetTuple,
+	ends,
+	fmt,
+};
+
+basic_ostream_data(ofstream) const & basic_ostream_table = ofstream_basic_data;
+
+static ostream_data(ofstream) ofstream_data;
+
+// This should be an initializer like for the basic table.
+// But, initialization of a structure with an inline structure doesn't work.
+__attribute__((constructor(200)))
+static void __ofstream_data_init__() {
+	basic_ostream_data(ofstream) & basic = ofstream_data;
+	basic.sepPrt$ = sepPrt$;
+	basic.sepReset$ = (void(*)(ofstream&))sepReset$;
+	basic.sepReset$ = (void(*)(ofstream&, bool))sepReset$;
+	basic.sepGetCur$ = sepGetCur$;
+	basic.sepSetCur$ = sepSetCur$;
+	basic.getNL$ = getNL$;
+	basic.setNL$ = setNL$;
+	basic.getANL$ = getANL$;
+	basic.setANL$ = setANL$;
+	basic.getPrt$ = getPrt$;
+	basic.setPrt$ = setPrt$;
+	basic.nlOn = nlOn;
+	basic.nlOff = nlOff;
+	basic.sep = sep;
+	basic.nosep = nosep;
+	basic.sepOn = sepOn;
+	basic.sepOff = sepOff;
+	basic.sepGet = sepGet;
+	basic.sepSet = sepSet;
+	basic.sepGetTuple = sepGetTuple;
+	basic.sepSetTuple = sepSetTuple;
+	basic.ends = ends;
+	basic.fmt = fmt;
+	ofstream_data.fail = fail;
+	ofstream_data.clearerr = clearerr;
+	ofstream_data.flush = flush;
+	ofstream_data.open = open;
+	ofstream_data.close = close;
+	ofstream_data.write = write;
+}
+
+ostream_data(ofstream) const & ostream_table = ofstream_data;
 
 // *********************************** ifstream ***********************************
 
@@ -210,6 +277,43 @@ void ?{}( ifstream & is, void * file ) with( is ) {
 	file$ = file;
 	nlOnOff$ = false;									// => skip newlines when reading single characters
 } // ?{}
+
+static basic_istream_data(ifstream) ifstream_basic_data = {
+	getANL$,
+	setANL$,
+	nlOn,
+	nlOff,
+	fmt,
+	ungetc,
+	eof,
+	clearerr,
+};
+
+basic_istream_data(ifstream) const & basic_istream_table = ifstream_basic_data;
+
+static istream_data(ifstream) ifstream_data;
+
+// This should be an initializer like for the basic table.
+// But, initialization of a structure with an inline structure doesn't work.
+__attribute__((constructor(200)))
+static void __ifstream_data_init__() {
+	basic_istream_data(ifstream) & basic = ifstream_data;
+	basic.getANL$ = getANL$;
+	basic.setANL$ = setANL$;
+	basic.nlOn = nlOn;
+	basic.nlOff = nlOff;
+	basic.fmt = fmt;
+	basic.ungetc = ungetc;
+	basic.eof = eof;
+	basic.clearerr = clearerr;
+	ifstream_data.fail = fail;
+	ifstream_data.open = (void(*)(ifstream &, const char *, const char *))open;
+	ifstream_data.open = (void(*)(ifstream &, const char *))open;
+	ifstream_data.close = close;
+	ifstream_data.read = read;
+}
+
+istream_data(ifstream) const & istream_table = ifstream_data;
 
 bool getANL$( ifstream & os ) { return os.nlOnOff$; }
 bool setANL$( ifstream & os, bool state ) { bool temp = os.nlOnOff$; os.nlOnOff$ = state; return temp; }
@@ -224,7 +328,7 @@ void ?{}( ifstream & is, const char name[] ) { open( is, name, "r" ); }
 void ^?{}( ifstream & is ) { close( is ); }
 
 bool fail( ifstream & is ) { return is.file$ == 0p || ferror( (FILE *)(is.file$) ); }
-void clear( ifstream & is ) { clearerr( (FILE *)(is.file$) ); }
+void clearerr( ifstream & is ) { clearerr( (FILE *)(is.file$) ); }
 
 void nlOn( ifstream & os ) { os.nlOnOff$ = true; }
 void nlOff( ifstream & os ) { os.nlOnOff$ = false; }

@@ -94,7 +94,7 @@ int main() {
 	}
 #endif
 
-void main(reader & this) {
+void main(reader &) {
 	for(50) {
 		char data[size];
 		char * it = data;

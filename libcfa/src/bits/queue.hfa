@@ -23,13 +23,13 @@ forall( T & | { T *& Next ( T * ); } ) {
 		void ?{}( Queue(T) &, const Queue(T) & ) = void; // no copy
 		Queue(T) & ?=?( const Queue(T) & ) = void;		// no assignment
 
-		void ?{}( Queue(T) & q ) with( q ) {
+		void ?{}( Queue(T) & q ) {
 			((Collection &)q){};
-			last = 0p;
+			q.last = 0p;
 		} // post: empty()
 
-		T & tail( Queue(T) & q ) with( q ) {
-			return *last;
+		T & tail( Queue(T) & q ) {
+			return *q.last;
 		}
 
 		T * succ( Queue(T) & q, T * n ) {					// pre: *n in *q
@@ -45,7 +45,7 @@ forall( T & | { T *& Next ( T * ); } ) {
 			#ifdef __CFA_DEBUG__
 			if ( listed( &n ) ) abort( "(Queue &)%p.addHead( %p ) : Node is already on another list.", &q, &n );
 			#endif // __CFA_DEBUG__
-			if ( last ) {
+			if ( q.last ) {
 				Next( &n ) = &head( q );
 				q.root = &n;
 			} else {
@@ -59,7 +59,7 @@ forall( T & | { T *& Next ( T * ); } ) {
 			#ifdef __CFA_DEBUG__
 			if ( listed( &n ) ) abort( "(Queue &)%p.addTail( %p ) : Node is already on another list.", &q, &n );
 			#endif // __CFA_DEBUG__
-			if ( last ) Next( last ) = &n;
+			if ( q.last ) Next( last ) = &n;
 			else root = &n;
 			last = &n;
 			Next( &n ) = &n;							// last node points to itself

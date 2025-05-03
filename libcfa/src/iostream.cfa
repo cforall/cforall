@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 22 07:31:19 2025
-// Update Count     : 2079
+// Last Modified On : Mon Apr 14 20:43:14 2025
+// Update Count     : 2081
 //
 
 #include "iostream.hfa"
@@ -41,84 +41,84 @@ extern char *strchr(const char *str, int ch);
 
 
 forall( ostype & | basic_ostream( ostype ) ) {
-	ostype & ?|?( ostype & os, bool b ) {
+	ostype & ?|?( ostype & os, bool b ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%s", b ? "true" : "false" );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, bool )
 
-	ostype & ?|?( ostype & os, char c ) {
+	ostype & ?|?( ostype & os, char c ) with ( basic_ostream_table ) {
 		fmt( os, "%c", c );
 		if ( c == '\n' ) setNL$( os, true );
 		return nosep( os );
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, char )
 
-	ostype & ?|?( ostype & os, signed char sc ) {
+	ostype & ?|?( ostype & os, signed char sc ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hhd", sc );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, signed char )
 
-	ostype & ?|?( ostype & os, unsigned char usc ) {
+	ostype & ?|?( ostype & os, unsigned char usc ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hhu", usc );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, unsigned char )
 
-	ostype & ?|?( ostype & os, short int si ) {
+	ostype & ?|?( ostype & os, short int si ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hd", si );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, short int )
 
-	ostype & ?|?( ostype & os, unsigned short int usi ) {
+	ostype & ?|?( ostype & os, unsigned short int usi ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'hu", usi );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, unsigned short int )
 
-	ostype & ?|?( ostype & os, int i ) {
+	ostype & ?|?( ostype & os, int i ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'d", i );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, int )
 
-	ostype & ?|?( ostype & os, unsigned int ui ) {
+	ostype & ?|?( ostype & os, unsigned int ui ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'u", ui );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, unsigned int )
 
-	ostype & ?|?( ostype & os, long int li ) {
+	ostype & ?|?( ostype & os, long int li ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'ld", li );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, long int )
 
-	ostype & ?|?( ostype & os, unsigned long int uli ) {
+	ostype & ?|?( ostype & os, unsigned long int uli ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'lu", uli );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, unsigned long int )
 
-	ostype & ?|?( ostype & os, long long int lli ) {
+	ostype & ?|?( ostype & os, long long int lli ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'lld", lli );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, long long int )
 
-	ostype & ?|?( ostype & os, unsigned long long int ulli ) {
+	ostype & ?|?( ostype & os, unsigned long long int ulli ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%'llu", ulli );
 		return os;
@@ -129,7 +129,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	//      UINT64_MAX 18_446_744_073_709_551_615_ULL
 	#define P10_UINT64 10_000_000_000_000_000_000_ULL	// 19 zeroes
 
-	static inline void base10_128( ostype & os, unsigned int128 val ) {
+	static inline void base10_128( ostype & os, unsigned int128 val ) with ( basic_ostream_table ) {
 		#if defined(__GNUC__) && __GNUC_PREREQ(7,0)		// gcc version >= 7
 		if ( val > P10_UINT64 ) {
 		#else
@@ -142,7 +142,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		} // if
 	} // base10_128
 
-	static inline void base10_128( ostype & os, int128 val ) {
+	static inline void base10_128( ostype & os, int128 val ) with ( basic_ostream_table ) {
 		if ( val < 0 ) {
 			fmt( os, "-" );								// leading negative sign
 			val = -val;
@@ -150,14 +150,14 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		base10_128( os, (unsigned int128)val );			// print zero/positive value
 	} // base10_128
 
-	ostype & ?|?( ostype & os, int128 llli ) {
+	ostype & ?|?( ostype & os, int128 llli ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		base10_128( os, llli );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, int128 )
 
-	ostype & ?|?( ostype & os, unsigned int128 ullli ) {
+	ostype & ?|?( ostype & os, unsigned int128 ullli ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		base10_128( os, ullli );
 		return os;
@@ -180,28 +180,28 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			} /* if */ \
 		}
 
-	ostype & ?|?( ostype & os, float f ) {
+	ostype & ?|?( ostype & os, float f ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		PRINT_WITH_DP( os, "%'g", f );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, float )
 
-	ostype & ?|?( ostype & os, double d ) {
+	ostype & ?|?( ostype & os, double d ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		PRINT_WITH_DP( os, "%'.*lg", d, DBL_DIG );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, double )
 
-	ostype & ?|?( ostype & os, long double ld ) {
+	ostype & ?|?( ostype & os, long double ld ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		PRINT_WITH_DP( os, "%'.*Lg", ld, LDBL_DIG );
 		return os;
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, long double )
 
-	ostype & ?|?( ostype & os, float _Complex fc ) {
+	ostype & ?|?( ostype & os, float _Complex fc ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 //		os | crealf( fc ) | nonl;
 		PRINT_WITH_DP( os, "%'g", crealf( fc ) );
@@ -211,7 +211,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, float _Complex )
 
-	ostype & ?|?( ostype & os, double _Complex dc ) {
+	ostype & ?|?( ostype & os, double _Complex dc ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 //		os | creal( dc ) | nonl;
 		PRINT_WITH_DP( os, "%'.*lg", creal( dc ), DBL_DIG );
@@ -221,7 +221,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, double _Complex )
 
-	ostype & ?|?( ostype & os, long double _Complex ldc ) {
+	ostype & ?|?( ostype & os, long double _Complex ldc ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 //		os | creall( ldc ) || nonl;
 		PRINT_WITH_DP( os, "%'.*Lg", creall( ldc ), LDBL_DIG );
@@ -231,7 +231,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, long double _Complex )
 
-	ostype & ?|?( ostype & os, const char s[] ) {
+	ostype & ?|?( ostype & os, const char s[] ) with ( basic_ostream_table ) {
 		enum { Open = 1, Close, OpenClose };
 		static const unsigned char mask[256] @= {		// 256 covers all Latin-1 characters
 			// opening delimiters, no space after
@@ -294,7 +294,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 // 		return os;
 // 	} // ?|?
 
-	ostype & ?|?( ostype & os, const void * p ) {
+	ostype & ?|?( ostype & os, const void * p ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 		fmt( os, "%p", p );
 		return os;
@@ -305,58 +305,58 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, ostype & (* manip)( ostype & ) ) {
 		return manip( os );
 	} // ?|?
-	void ?|?( ostype & os, ostype & (* manip)( ostype & ) ) {
+	void ?|?( ostype & os, ostype & (* manip)( ostype & ) ) with ( basic_ostream_table ) {
 		manip( os );
 		if ( getPrt$( os ) ) ends( os );				// something printed ?
 		setPrt$( os, false );							// turn off
 	} // ?|?
 
-	ostype & nl( ostype & os ) {
+	ostype & nl( ostype & os ) with ( basic_ostream_table ) {
 		(ostype &)(os | '\n');
 		setPrt$( os, false );							// turn off
 		setNL$( os, true );
 		return nosep( os );								// prepare for next line
 	} // nl
 
-	ostype & nonl( ostype & os ) {
+	ostype & nonl( ostype & os ) with ( basic_ostream_table ) {
 		setPrt$( os, false );							// turn off
 		return os;
 	} // nonl
 
-	ostype & nlOn( ostype & os ) {
+	ostype & nlOn( ostype & os ) with ( basic_ostream_table ) {
 		nlOn( os );										// call void returning
 		return os;
 	} // nlOn
 
-	ostype & nlOff( ostype & os ) {
+	ostype & nlOff( ostype & os ) with ( basic_ostream_table ) {
 		nlOff( os );									// call void returning
 		return os;
 	} // nlOff
 
-	ostype & sepVal( ostype & os ) {
+	ostype & sepVal( ostype & os ) with ( basic_ostream_table ) {
 		return (ostype &)(os | sepGet( os ));
 	} // sepVal
 
-	ostype & sepTupleVal( ostype & os ) {
+	ostype & sepTupleVal( ostype & os ) with ( basic_ostream_table ) {
 		return os | sepGetTuple( os );
 	} // sepTupleVal
 
-	ostype & sep( ostype & os ) {
+	ostype & sep( ostype & os ) with ( basic_ostream_table ) {
 		sep( os );										// call void returning
 		return os;
 	} // sep
 
-	ostype & nosep( ostype & os ) {
+	ostype & nosep( ostype & os ) with ( basic_ostream_table ) {
 		nosep( os );									// call void returning
 		return os;
 	} // nosep
 
-	ostype & sepOn( ostype & os ) {
+	ostype & sepOn( ostype & os ) with ( basic_ostream_table ) {
 		sepOn( os );									// call void returning
 		return os;
 	} // sepOn
 
-	ostype & sepOff( ostype & os ) {
+	ostype & sepOff( ostype & os ) with ( basic_ostream_table ) {
 		sepOff( os );									// call void returning
 		return os;
 	} // sepOff
@@ -364,14 +364,14 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 // tuples
 forall( ostype &, T, Params... | writeable( T, ostype ) | { ostype & ?|?( ostype &, Params ); } ) {
-	ostype & ?|?( ostype & os, T arg, Params rest ) {
+	ostype & ?|?( ostype & os, T arg, Params rest ) with ( basic_ostream_table ) {
 		(ostype &)(os | arg);							// print first argument
 		sepSetCur$( os, sepGetTuple( os ) );			// switch to tuple separator
 		(ostype &)(os | rest);							// print remaining arguments
 		sepSetCur$( os, sepGet( os ) );					// switch to regular separator
 		return os;
 	} // ?|?
-	void ?|?( ostype & os, T arg, Params rest ) {
+	void ?|?( ostype & os, T arg, Params rest ) with ( basic_ostream_table ) {
 		// (ostype &)(?|?( os, arg, rest )); ends( os );
 		(ostype &)(os | arg);							// print first argument
 		sepSetCur$( os, sepGetTuple( os ) );			// switch to tuple separator
@@ -404,7 +404,7 @@ static const char * longbin[]  = { "0000", "0001", "0010", "0011", "0100", "0101
 // Default prefix for non-decimal prints is 0b, 0, 0x.
 #define INTEGRAL_FMT_IMPL( T, IFMTNP, IFMTP ) \
 forall( ostype & | basic_ostream( ostype ) ) { \
-	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) { \
+	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) with ( basic_ostream_table ) { \
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) ); \
 \
 		if ( f.base == 'b' || f.base == 'B' ) {			/* bespoke binary format */ \
@@ -652,7 +652,7 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		if ( pc < 0 ) pc = 3; \
 	} /* eng */ \
 \
-	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) { \
+	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ) with ( basic_ostream_table ) { \
 		enum { size = 48 }; \
 		char buf[size]; \
 		int bufbeg = 0, i, len; \
@@ -691,7 +691,7 @@ FLOATING_POINT_FMT_IMPL( long double, "      *L ", "      *.*L " )
 // *********************************** character ***********************************
 
 forall( ostype & | basic_ostream( ostype ) ) {
-	ostype & ?|?( ostype & os, _Ostream_Manip(char) f ) {
+	ostype & ?|?( ostype & os, _Ostream_Manip(char) f ) with ( basic_ostream_table ) {
 		if ( f.base != 'c' ) {							// bespoke binary/octal/hex format
 			_Ostream_Manip(unsigned char) fmtuc @= { f.val, f.wd, f.pc, f.base, {'\0'} };
 			fmtuc.flags.pc = f.flags.pc;
@@ -723,7 +723,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 // *********************************** C string ***********************************
 
 forall( ostype & | basic_ostream( ostype ) ) {
-	ostype & ?|?( ostype & os, _Ostream_Manip(const char *) f ) {
+	ostype & ?|?( ostype & os, _Ostream_Manip(const char *) f ) with ( basic_ostream_table ) {
 		if ( ! f.val ) return os;						// null pointer ?
 
 		if ( f.base != 's' ) {							// bespoke binary/octal/hex format
@@ -775,7 +775,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 #define TRUE "true"
 
 forall( istype & | basic_istream( istype ) ) {
-	istype & ?|?( istype & is, bool & b ) {
+	istype & ?|?( istype & is, bool & b ) with ( basic_istream_table ) {
 		int len = -1;									// len not set if no match
 		fmt( is, " " );									// remove leading whitespace
 		fmt( is, FALSE "%n", &len );					// try false, returns 0
@@ -791,7 +791,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, char & c ) {
+	istype & ?|?( istype & is, char & c ) with ( basic_istream_table ) {
 		char temp;
 		for () {
 			int args = fmt( is, "%c", &temp );			// can be called with EOF on
@@ -803,70 +803,70 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, signed char & sc ) {
+	istype & ?|?( istype & is, signed char & sc ) with ( basic_istream_table ) {
 		int args = fmt( is, "%hhi", &sc );				// can be multiple characters (100)
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, unsigned char & usc ) {
+	istype & ?|?( istype & is, unsigned char & usc ) with ( basic_istream_table ) {
 		int args = fmt( is, "%hhi", &usc );				// can be multiple characters (-100)
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, short int & si ) {
+	istype & ?|?( istype & is, short int & si ) with ( basic_istream_table ) {
 		int args = fmt( is, "%hi", &si );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, unsigned short int & usi ) {
+	istype & ?|?( istype & is, unsigned short int & usi ) with ( basic_istream_table ) {
 		int args = fmt( is, "%hi", &usi );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, int & i ) {
+	istype & ?|?( istype & is, int & i ) with ( basic_istream_table ) {
 		int args = fmt( is, "%i", &i );					// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, unsigned int & ui ) {
+	istype & ?|?( istype & is, unsigned int & ui ) with ( basic_istream_table ) {
 		int args = fmt( is, "%i", &ui );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, long int & li ) {
+	istype & ?|?( istype & is, long int & li ) with ( basic_istream_table ) {
 		int args = fmt( is, "%li", &li );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, unsigned long int & ulli ) {
+	istype & ?|?( istype & is, unsigned long int & ulli ) with ( basic_istream_table ) {
 		int args = fmt( is, "%li", &ulli );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, long long int & lli ) {
+	istype & ?|?( istype & is, long long int & lli ) with ( basic_istream_table ) {
 		int args = fmt( is, "%lli", &lli );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, unsigned long long int & ulli ) {
+	istype & ?|?( istype & is, unsigned long long int & ulli ) with ( basic_istream_table ) {
 		int args = fmt( is, "%lli", &ulli );			// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
@@ -878,7 +878,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return (istype &)(is | (unsigned int128 &)llli);
 	} // ?|?
 
-	istype & ?|?( istype & is, unsigned int128 & ullli ) {
+	istype & ?|?( istype & is, unsigned int128 & ullli ) with ( basic_istream_table ) {
 		char s[40];
 		bool sign = false;
 
@@ -895,28 +895,28 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 	#endif // __SIZEOF_INT128__
 
-	istype & ?|?( istype & is, float & f ) {
+	istype & ?|?( istype & is, float & f ) with ( basic_istream_table ) {
 		int args = fmt( is, "%f", &f );					// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, double & d ) {
+	istype & ?|?( istype & is, double & d ) with ( basic_istream_table ) {
 		int args = fmt( is, "%lf", &d );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, long double & ld ) {
+	istype & ?|?( istype & is, long double & ld ) with ( basic_istream_table ) {
 		int args = fmt( is, "%Lf", &ld );				// can be called with EOF on
 		if ( ! eof( is ) && args != 1 ) throwResume ExceptionInst( missing_data );
 		if ( eof( is ) && args != 1 ) throwResume ExceptionInst( end_of_file );
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, float _Complex & fc ) {
+	istype & ?|?( istype & is, float _Complex & fc ) with ( basic_istream_table ) {
 		float re, im;
 		int args = fmt( is, "%f%fi", &re, &im );		// can be called with EOF on
 		if ( ! eof( is ) && args != 2 ) throwResume ExceptionInst( missing_data );
@@ -925,7 +925,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, double _Complex & dc ) {
+	istype & ?|?( istype & is, double _Complex & dc ) with ( basic_istream_table ) {
 		double re, im;
 		int args = fmt( is, "%lf%lfi", &re, &im );		// can be called with EOF on
 		if ( ! eof( is ) && args != 2 ) throwResume ExceptionInst( missing_data );
@@ -934,7 +934,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, long double _Complex & ldc ) {
+	istype & ?|?( istype & is, long double _Complex & ldc ) with ( basic_istream_table ) {
 		long double re, im;
 		int args = fmt( is, "%Lf%Lfi", &re, &im );		// can be called with EOF on
 		if ( ! eof( is ) && args != 2 ) throwResume ExceptionInst( missing_data );
@@ -943,7 +943,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, const char fmt[] ) {		// match text
+	istype & ?|?( istype & is, const char fmt[] ) with ( basic_istream_table ) {		// match text
 		size_t len = strlen( fmt );
 		char fmtstr[len + 16];
 		strcpy( fmtstr, fmt );							// copy format and add %n
@@ -965,18 +965,18 @@ forall( istype & | basic_istream( istype ) ) {
 		manip( is );
 	} // ?|?
 
-	istype & nl( istype & is ) {
+	istype & nl( istype & is ) with ( basic_istream_table ) {
 		fmt( is, "%*[^\n]" );							// ignore characters to newline
 		if ( ! eof( is ) ) fmt( is, "%*c" );			// read newline
 		return is;
 	} // nl
 
-	istype & nlOn( istype & is ) {
+	istype & nlOn( istype & is ) with ( basic_istream_table ) {
 		nlOn( is );										// call void returning
 		return is;
 	} // nlOn
 
-	istype & nlOff( istype & is ) {
+	istype & nlOff( istype & is ) with ( basic_istream_table ) {
 		nlOff( is );									// call void returning
 		return is;
 	} // nlOff
@@ -985,7 +985,7 @@ forall( istype & | basic_istream( istype ) ) {
 // *********************************** manipulators ***********************************
 
 forall( istype & | basic_istream( istype ) ) {
-	istype & ?|?( istype & is, _Istream_Cskip f ) {
+	istype & ?|?( istype & is, _Istream_Cskip f ) with ( basic_istream_table ) {
 		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		if ( f.scanset ) {
 			int nscanset = strlen(f.scanset);
@@ -1005,7 +1005,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	}
 
-	istype & ?|?( istype & is, _Istream_Cquoted f ) with( f.cstr ) {
+	istype & ?|?( istype & is, _Istream_Cquote f ) with( basic_istream_table, f.cstr ) {
 		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		int args;
 	  fini: {
@@ -1025,12 +1025,13 @@ forall( istype & | basic_istream( istype ) ) {
 		// read failed => no pattern match => set string to null
 		if ( ! flags.ignore && s != 0p && args == 0 ) s[0] = '\0';
 		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
-			clear( is );								// => reset EOF => detect again on next read
+			clearerr( is );								// => reset EOF => detect again on next read
 		} // if
 		return is;
 	}
 
-	istype & ?|?( istype & is, _Istream_Cstr f ) with( f.cstr ) {
+	istype & ?|?( istype & is, _Istream_Cstr f ) with( basic_istream_table, f.cstr ) {
+		assert(eof);
 		if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 		const char * scanset;
 		size_t nscanset = 0;
@@ -1082,7 +1083,7 @@ forall( istype & | basic_istream( istype ) ) {
 		} else {
 			if ( flags.delimiter ) {					// getline
 				int len = 0;							// may not be set in fmt
-				if ( delimiters[2] != '\0' ) {			// (quoted) read single character ?
+				if ( delimiters[2] != '\0' ) {			// (quote) read single character ?
 					sprintf( &fmtstr[pos], "c%%n" );
 				} else {
 					sprintf( &fmtstr[pos], "[^%c]%%n", delimiters[0] );
@@ -1130,7 +1131,7 @@ forall( istype & | basic_istream( istype ) ) {
 			if ( ! flags.ignore && args == 0 ) s[0]= '\0'; // read failed => no pattern match => set string to null
 		} // if
 		if ( args == 1 && eof( is ) ) {					// data but scan ended at EOF
-			clear( is );								// => reset EOF => detect again on next read
+			clearerr( is );								// => reset EOF => detect again on next read
 		} // if
 		return is;
 	} // ?|?
@@ -1138,7 +1139,7 @@ forall( istype & | basic_istream( istype ) ) {
 
 #define INPUT_FMT_IMPL( T, CODE ) \
 forall( istype & | basic_istream( istype ) ) { \
-	istype & ?|?( istype & is, _Istream_Manip(T) f ) { \
+	istype & ?|?( istype & is, _Istream_Manip(T) f ) with ( basic_istream_table ) { \
 		enum { size = 16 }; \
 		char fmtstr[size]; \
 		if ( f.wd == -1 ) { \
@@ -1202,7 +1203,7 @@ forall( istype & | basic_istream( istype ) ) {
 
 
 forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial( E ) )
-istype & ?|?( istype & is, E & e ) {
+istype & ?|?( istype & is, E & e ) with ( basic_istream_table ) {
 //	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 
 	// Match longest input enumerator string to enumerator labels, where enumerator names are unique.
@@ -1225,7 +1226,7 @@ istype & ?|?( istype & is, E & e ) {
 		int args = fmt( is, "%c", &ch );				// read character
 	  if ( eof( is ) ) {
 			if ( c == 0 ) return is;					// no characters read ?
-			clear( is );								// => read something => reset EOF => detect again on next read
+			clearerr( is );								// => read something => reset EOF => detect again on next read
 			break;
 		} // if
 	  if ( args != 1 ) throwResume ExceptionInst( missing_data ); // may be unnecessary since reading single character

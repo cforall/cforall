@@ -12,7 +12,7 @@ struct some_node {
 
 void ?{}(some_node & this) { this.next = 0p; }
 
-static inline some_node * volatile & ?`next ( some_node * node ) {
+static inline some_node * volatile & next( some_node * node ) {
 	return node->next;
 }
 

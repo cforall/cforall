@@ -736,8 +736,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"?=?",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -778,8 +776,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"?{}",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -801,8 +797,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"?{}",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -833,8 +827,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"^?{}",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -881,8 +873,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"?=?",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -923,8 +913,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"?{}",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -947,8 +935,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"?{}",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -980,8 +966,6 @@ void buildForall(
 		newAssertions.push_back( new ast::FunctionDecl(
 			location,
 			"^?{}",
-			{}, // forall
-			{}, // assertions
 			{
 				new ast::ObjectDecl(
 					location,
@@ -1584,10 +1568,31 @@ ast::FunctionDecl * buildFunctionDecl(
 	std::vector<ast::ptr<ast::DeclWithType>> returns;
 	buildParamList( td->function.params, params );
 	buildForall( td->forall, forall );
-	// Functions do not store their assertions there anymore.
+	// Functions do not store their assertions there anymore.  <-- FIXME: clarify or remove this comment
+	// Assertions were parsed as belonging to the type that preceded them.
+	// forall ( T | is_foo(T), U | are_bar(T, U) )
+	//   => parse
+	// forall( [ typarm( T, [is_foo(T)] ), typarm( U, [are_bar(T, U)] ) ] )
+	//   => now, flatten as
+	// forall( [ T, U ] ), assns( [ is_foo(T), are_bar(T, U)] )
 	for ( ast::ptr<ast::TypeDecl> & type_param : forall ) {
 		auto mut = type_param.get_and_mutate();
 		splice( assertions, mut->assertions );
+	}
+	// When assertions without a type preceding them were parsed, placeholder
+	// types were invented to hold them.
+	// forall ( | is_foo(), U | is_bar(U) )
+	//   => parse
+	// forall( [ typarm( PLCHLD, [is_foo()] ), typarm( U, [is_bar(U)] ) ] )
+	//   => prev step
+	// forall( [ PLCHLD, U ] ), assns( [ is_foo(), is_bar(U)] )
+	//   => now, remove the placeholders
+	// forall( [ U ] ), assns( [ is_foo(), is_bar(U)] )
+	for (std::vector<ast::ptr<ast::TypeDecl>>::iterator it = forall.begin();
+			it != forall.end(); ) {
+		// placeholder types have empty names
+		if ( (*it)->name == "" ) it = forall.erase(it);
+		else ++it;
 	}
 	if ( td->base ) {
 		switch ( td->base->kind ) {

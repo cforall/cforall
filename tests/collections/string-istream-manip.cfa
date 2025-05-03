@@ -1,7 +1,7 @@
 
 #include <fstream.hfa>
-#include <collections/string.hfa>
-#include <collections/string_res.hfa>
+#include <string.hfa>
+#include <string_res.hfa>
 #include <stdio.h>
 
 // No-op manipulators.
@@ -44,7 +44,7 @@ int main() {
 				forceStringHeapFreeSpaceTo(9);
 				sin | s;
 				sout | casename | s;
-			} while ( size(s) > 0 && s[size(s)-1] != 'x' );
+			} while ( len(s) > 0 && s[len(s)-1] != 'x' );
 		}
 		echoTillX("preS1");
 		echoTillX("preS2");
@@ -59,7 +59,7 @@ int main() {
 				s = "";
 				sin | plainjane( s );
 				sout | casename | s;
-			} while ( size(s) > 0 && s[size(s)-1] != 'x' );
+			} while ( len(s) > 0 && s[len(s)-1] != 'x' );
 		}
 		echoTillX("preSMN1");
 		echoTillX("preSMN2");
@@ -74,7 +74,7 @@ int main() {
 				s = "";
 				sin | plainjane( s );
 				sout | casename | s;
-			} while ( size(s) > 0 && s[size(s)-1] != 'x' );
+			} while ( len(s) > 0 && s[len(s)-1] != 'x' );
 		}
 		echoTillX("preRMN1");
 		echoTillX("preRMN2");
@@ -90,7 +90,7 @@ int main() {
 				sin | skip("-\n");
 				sin | incl( ".:|# x", s );
 				sout | casename | " \"" | s | "\"";
-			} while ( size(s) > 0 && s[size(s)-1] != 'x' );
+			} while ( len(s) > 0 && s[len(s)-1] != 'x' );
 		}
 		echoTillX("preSMI1");
 		echoTillX("preSMI2");
@@ -106,7 +106,7 @@ int main() {
 				sin | skip("-\n");
 				sin | excl( "-\n", s );
 				sout | casename | " \"" | s | "\"";
-			} while ( size(s) > 0 && s[size(s)-1] != 'x' );
+			} while ( len(s) > 0 && s[len(s)-1] != 'x' );
 		}
 		echoTillX("preSME1");
 		echoTillX("preSME2");
@@ -122,7 +122,7 @@ int main() {
 				s = "";
 				sin | getline( s );
 				sout | casename | s;
-			} while ( size(s) > 0 && s[size(s)-1] != 'x' );
+			} while ( len(s) > 0 && s[len(s)-1] != 'x' );
 		}
 		echoTillX("preSMG1");
 		echoTillX("preSMG2");
@@ -137,7 +137,7 @@ int main() {
 				s = "";
 				sin | getline( s, '@' );
 				sout | casename | s;
-			} while ( size(s) > 0 && s[size(s)-1] != 'x' );
+			} while ( len(s) > 0 && s[len(s)-1] != 'x' );
 			sin | skip(" \n");
 		}
 		echoTillX("preSMD1");
@@ -175,11 +175,11 @@ int main() {
 		sin | getline( s, '%' ) | nl;					sout | "17" | s;
 		sin | ignore( getline( s, '%' ) ) | nl;			sout | "18" | s;
 
-		sin | quoted( s );								sout | "19" | s;
-		sin | quoted( s, '\'' );						sout | "20" | s;
-		sin | quoted( s, '{', '}' );					sout | "21" | s;
-		sin | quoted( s, 'X', 'Y' );					sout | "22" | s;
-		sin | ignore( quoted( s, 'X', 'Y' ) );			sout | "23" | s;
+		sin | quote( s );								sout | "19" | s;
+		sin | quote( s, '\'' );							sout | "20" | s;
+		sin | quote( s, '{', '}' );						sout | "21" | s;
+		sin | quote( s, 'X', 'Y' );						sout | "22" | s;
+		sin | ignore( quote( s, 'X', 'Y' ) );			sout | "23" | s;
 		sin | nl;
 	}
 	// Full repeat on string_res layer assures the full manipulator vocabulary is supported there.
@@ -212,10 +212,10 @@ int main() {
 		sin | getline( s, '%' ) | nl;					sout | "17" | s;
 		sin | ignore( getline( s, '%' ) ) | nl;			sout | "18" | s;
 
-		sin | quoted( s );								sout | "19" | s;
-		sin | quoted( s, '\'' );						sout | "20" | s;
-		sin | quoted( s, '{', '}' );					sout | "21" | s;
-		sin | quoted( s, 'X', 'Y' );					sout | "22" | s;
-		sin | ignore( quoted( s, 'X', 'Y' ) );			sout | "23" | s;
+		sin | quote( s );								sout | "19" | s;
+		sin | quote( s, '\'' );							sout | "20" | s;
+		sin | quote( s, '{', '}' );						sout | "21" | s;
+		sin | quote( s, 'X', 'Y' );						sout | "22" | s;
+		sin | ignore( quote( s, 'X', 'Y' ) );			sout | "23" | s;
 	}
 }

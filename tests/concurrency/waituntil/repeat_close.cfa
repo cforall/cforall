@@ -9,8 +9,7 @@ volatile long long int inserts = 0;
 volatile long long int removes = 0;
 
 thread Producer {};
-void main( Producer & this ) {
-    long long int my_inserts = 0;
+void main( Producer & ) {
     long long int A_i = 0, B_i = 0, C_i = 0, D_i = 0, E_i = 0, F_i = 0;
     try {
         for( long long int i = 0;;i++ ) {
@@ -21,12 +20,12 @@ void main( Producer & this ) {
             and waituntil( E << i ) { E_i++; }
             and waituntil( F << i ) { F_i++; }
         }
-    } catch ( channel_closed * e ) {} 
+    } catch ( channel_closed * e ) {}
     __atomic_fetch_add( &inserts, A_i + B_i + C_i + D_i + E_i + F_i, __ATOMIC_SEQ_CST );
 }
 
 thread Consumer {};
-void main( Consumer & this ) {
+void main( Consumer & ) {
     long long int in, A_removes = 0, B_removes = 0, C_removes = 0, D_removes = 0, E_removes = 0, F_removes = 0;
     try {
         for( ;; ) {
@@ -82,7 +81,7 @@ int main( int argc, char * argv[] ) {
 
     printf("Start\n");
     for ( i; num_times ) {
-        printf("%lu\n", i);
+        printf("%zu\n", i);
         A{chan_size};
         B{chan_size};
         C{chan_size};

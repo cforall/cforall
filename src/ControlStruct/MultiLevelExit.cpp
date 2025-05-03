@@ -498,11 +498,10 @@ const SwitchStmt * MultiLevelExitCore::postvisit( const SwitchStmt * stmt ) {
 			mutStmt->cases.push_back( new CaseClause( mutStmt->location, nullptr, {} ) );
 		}
 
+		// The end of the last case is always immediately before the first
+		// statement after the switch, so we can jump here as a break.
 		auto mutCase = mutStmt->cases.back().get_and_mutate();
-
-		Label label( mutCase->location, "breakLabel" );
-		auto branch = new BranchStmt( mutCase->location, BranchStmt::Break, label );
-		branch->labels.push_back( entry.useBreakExit() );
+		auto branch = labelledNullStmt( mutCase->location, entry.useBreakExit() );
 		mutCase->stmts.push_back( branch );
 
 		return mutStmt;

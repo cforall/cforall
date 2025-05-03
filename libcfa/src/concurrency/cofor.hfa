@@ -32,11 +32,11 @@ thread cofor_runner {
 void ?{}( cofor_runner & this ) { this.done = false; }
 
 void main( cofor_runner & this ) with(this) {
-    while ( !done || !items`isEmpty ) {
+    while ( ! done || ! isEmpty( items ) ) {
 		lock( mutex_lock );
-        runner_node * node = &try_pop_front( items );
+        runner_node * node = &remove_first( items );
 		unlock( mutex_lock );
-		if ( !node )
+		if ( ! node )
 			continue;
         func( node->value );
         free( node->value );

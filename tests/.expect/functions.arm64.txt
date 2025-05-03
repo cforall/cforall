@@ -138,7 +138,6 @@ static inline void _layoutof__tuple2_(unsigned long int *_sizeof__tuple2_, unsig
     if ( ((*_sizeof__tuple2_)&((*_alignof__tuple2_)-1)) ) ((void)((*_sizeof__tuple2_)+=((*_alignof__tuple2_)-((*_sizeof__tuple2_)&((*_alignof__tuple2_)-1)))));
 
 }
-struct _conc__tuple2_0;
 struct _conc__tuple2_0 {
     signed int field_0;
     signed int field_1;
@@ -181,7 +180,6 @@ static inline void _layoutof__tuple3_(unsigned long int *_sizeof__tuple3_, unsig
     if ( ((*_sizeof__tuple3_)&((*_alignof__tuple3_)-1)) ) ((void)((*_sizeof__tuple3_)+=((*_alignof__tuple3_)-((*_sizeof__tuple3_)&((*_alignof__tuple3_)-1)))));
 
 }
-struct _conc__tuple3_1;
 struct _conc__tuple3_1 {
     signed int field_0;
     signed int field_1;
@@ -201,7 +199,6 @@ void _X2fvFv_iii__1(__attribute__ ((unused)) signed int __anonymous_object24, si
 struct _conc__tuple3_1 _X1fFT3iii_iii__1(__attribute__ ((unused)) signed int __anonymous_object26, signed int _X1xi_1, __attribute__ ((unused)) signed int __anonymous_object27){
     __attribute__ ((unused)) struct _conc__tuple3_1 _X9_retval_fT3iii_1 = {  };
 }
-struct _conc__tuple3_2;
 struct _conc__tuple3_2 {
     signed int field_0;
     signed int field_1;
@@ -293,7 +290,6 @@ static const signed int *_X2f2FPKi___1(void){
 static inline signed int *const _X2f3FPi___1(void){
     __attribute__ ((unused)) signed int *const _X10_retval_f3KPi_1;
 }
-struct _conc__tuple2_3;
 struct _conc__tuple2_3 {
     signed int *field_0;
     signed int field_1;

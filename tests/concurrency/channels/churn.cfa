@@ -29,7 +29,7 @@ void getRandArray( int * chanIndices ) {
     }
 }
 
-void main(Consumer & this) {
+void main(Consumer &) {
     size_t i = 0;
     size_t runs = 0;
     size_t my_check = 0;
@@ -52,7 +52,7 @@ void main(Consumer & this) {
                 runs++;
             }
         } catchResume ( channel_closed * e ) {} // continue to remove until would block
-        catch ( channel_closed * e ) {} 
+        catch ( channel_closed * e ) {}
     }
 
     lock(o);
@@ -64,7 +64,7 @@ void main(Consumer & this) {
 
 thread Producer {};
 
-void main(Producer & this) {
+void main(Producer &) {
     size_t i = 0;
     size_t runs = 0;
     size_t my_check = 0;
@@ -76,7 +76,7 @@ void main(Producer & this) {
             my_check = my_check ^ i;
             runs++;
         }
-    } catch ( channel_closed * e ) {} 
+    } catch ( channel_closed * e ) {}
     lock(o);
     total_operations += runs;
     prod_check = prod_check ^ my_check;
@@ -92,16 +92,19 @@ int main( int argc, char *argv[] ) {
 			ChannelSize = ato( argv[3] );
 			if ( ChannelSize < 1 ) fallthrough default;
 		} // if
+		fallthrough;
       case 3:
 		if ( strcmp( argv[2], "d" ) != 0 ) {			// default ?
 			Channels = ato( argv[2] );
 			if ( Channels < 1 ) fallthrough default;
 		} // if
+		fallthrough;
       case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[1] );
 			if ( Processors < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 1:											// use defaults
 		break;
 	  default:
@@ -120,7 +123,7 @@ int main( int argc, char *argv[] ) {
         channels[i]{ ChannelSize };
 
     sout | "start";
-    {   
+    {
         Consumer c[Consumers];
         {
             Producer p[Producers];

@@ -116,7 +116,7 @@ extern "C" {
         subcaseHarness( MAKEDATA(SUBCASE_ISOLATION) );
     }
 
-#else 
+#else
     #define xstr(s) str(s)
     #define str(s) #s
 
@@ -179,7 +179,8 @@ extern "C" {
     }
 
     // not used
-    static int true_main(const char * path, const char * env[]) { return 0; }
-
+    static int true_main(const char *, const char * []) { return 0; }
+    __attribute__((unused)) static void check_main(const char *);
+    __attribute__((unused)) static void print_status(int);
 
 #endif

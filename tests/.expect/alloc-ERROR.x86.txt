@@ -15,8 +15,6 @@ alloc.cfa:382:1 error: Invalid application of existing declaration(s) in express
         ...to:
           Name: stp
 
-      ... with resolved type:
-        unsigned int
 
 
 

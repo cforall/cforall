@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Jun 26 15:13:00 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 10 16:45:22 2023
-// Update Count     : 69
+// Last Modified On : Wed Sep 25 17:23:49 2024
+// Update Count     : 74
 //
 
 // Normally we would get this from the CFA prelude.
@@ -26,6 +26,7 @@
 #include "concurrency/invoke.h"
 #include "stdhdr/assert.h"
 #include "virtual.h"
+#include <unistd.h>										// write
 
 extern void __cabi_abort( const char fmt[], ... );
 
@@ -123,6 +124,7 @@ static void __cfaehm_exception_cleanup(
 	case _URC_FATAL_PHASE1_ERROR:
 	case _URC_FATAL_PHASE2_ERROR:
 	default:
+		write( 2, "abort1\n", 7 );
 		abort();
 	}
 }
@@ -137,6 +139,7 @@ void __cfaehm_allocate_exception( exception_t * except ) {
 
 	if ( ! store ) {
 		// Failure: cannot allocate exception. Terminate thread.
+		write( 2, "abort2\n", 7 );
 		abort(); // <- Although I think it might be the process.
 	}
 
@@ -199,7 +202,7 @@ static _Unwind_Reason_Code _Stop_Fn(
 	if ( actions & _UA_END_OF_STACK ) {
 		__cabi_abort(
 			"Propagation failed to find a matching handler.\n"
-			"Possible cause is a missing try block with appropriate catch clause for specified exception type.\n"
+			"Possible cause is a missing try block with appropriate catch clause for the specified or derived exception type.\n"
 			"Last exception name or message: %s.\n",
 			NODE_TO_EXCEPT( UNWIND_TO_NODE( unwind_exception ) )->
 				virtual_table->msg( NODE_TO_EXCEPT( UNWIND_TO_NODE( unwind_exception ) ) )
@@ -224,6 +227,7 @@ void __cfaehm_cancel_stack( exception_t * exception ) {
 	_Unwind_Reason_Code ret;
 	ret = __cfaehm_cancellation_unwind( &node->unwind_exception );
 	printf("UNWIND ERROR %d after force unwind\n", ret);
+	write( 2, "abort3\n", 7 );
 	abort();
 }
 
@@ -245,6 +249,7 @@ void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *)) {
 	struct exception_context_t * context = this_exception_context();
 	if ( NULL == context->current_exception ) {
 		printf("UNWIND ERROR missing exception in begin unwind\n");
+		write( 2, "abort4\n", 7 );
 		abort();
 	}
 	struct _Unwind_Exception * storage =
@@ -270,6 +275,7 @@ void __cfaehm_begin_unwind(void(*defaultHandler)(exception_t *)) {
 	if ( ret == _URC_FATAL_PHASE1_ERROR || ret == _URC_FATAL_PHASE2_ERROR ) {
 #endif
 		printf("UNWIND ERROR %d after raise exception\n", ret);
+		write( 2, "abort5\n", 7 );
 		abort();
 	}
 
@@ -291,6 +297,7 @@ void __cfaehm_throw_terminate( exception_t * val, void (*defaultHandler)(excepti
 static __attribute__((noreturn)) void __cfaehm_rethrow_adapter( exception_t * except ) {
 	// TODO: Print some error message.
 	(void)except;
+	write( 2, "abort6\n", 7 );
 	abort();
 }
 
@@ -298,6 +305,7 @@ void __cfaehm_rethrow_terminate(void) {
 	__cfadbg_print_safe(exception, "Rethrowing termination exception\n");
 
 	__cfaehm_begin_unwind( __cfaehm_rethrow_adapter );
+	write( 2, "abort7\n", 7 );
 	abort();
 }
 

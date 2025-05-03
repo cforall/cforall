@@ -25,7 +25,6 @@
 #include "LinkageSpec.hpp"
 #include "Stmt.hpp"
 #include "Type.hpp"
-#include "Util.hpp"                // for TranslationDeps
 #include "TypeSubstitution.hpp"
 #include "Common/Utility.hpp"
 #include "Common/SemanticError.hpp"
@@ -280,23 +279,29 @@ ConstantExpr * ConstantExpr::null( const CodeLocation & loc, const Type * ptrTyp
 
 // --- SizeofExpr
 
-SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, ast::TranslationDeps::getSizeType() ), type( t ) {}
+SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * type )
+: SizeofExpr( loc, type, nullptr ) {}
+
+SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * type, const Type * result )
+: Expr( loc, result ), type( type ) {}
 
 // --- AlignofExpr
 
-AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, ast::TranslationDeps::getSizeType() ), type( t ) {}
+AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * type )
+: AlignofExpr( loc, type, nullptr ) {}
+
+AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * type, const Type * result )
+: Expr( loc, result ), type( type ) {}
 
 // --- CountofExpr
 
 CountofExpr::CountofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc, ast::TranslationDeps::getSizeType() ), type( t ) {}
+: Expr( loc ), type( t ) {}
 
 // --- OffsetofExpr
 
-OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const DeclWithType * mem )
-: Expr( loc, ast::TranslationDeps::getSizeType() ), type( ty ), member( mem ) {
+OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const DeclWithType * mem, const Type * res )
+: Expr( loc, res ), type( ty ), member( mem ) {
 	assert( type );
 	assert( member );
 }
@@ -304,9 +309,7 @@ OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const Dec
 // --- OffsetPackExpr
 
 OffsetPackExpr::OffsetPackExpr( const CodeLocation & loc, const StructInstType * ty )
-: Expr( loc, new ArrayType{
-	ast::TranslationDeps::getSizeType(), nullptr, FixedLen, DynamicDim }
-), type( ty ) {
+: Expr( loc ), type( ty ) {
 	assert( type );
 }
 
@@ -317,6 +320,7 @@ LogicalExpr::LogicalExpr(
 : Expr( loc, new BasicType{ BasicKind::SignedInt } ), arg1( a1 ), arg2( a2 ), isAnd( ia ) {}
 
 // --- CommaExpr
+
 bool CommaExpr::get_lvalue() const {
 	// This is wrong by C, but the current implementation uses it.
 	// (ex: Specialize, Lvalue and Box)
@@ -388,22 +392,18 @@ TupleAssignExpr::TupleAssignExpr(
 // --- StmtExpr
 
 StmtExpr::StmtExpr( const CodeLocation & loc, const CompoundStmt * ss )
-: Expr( loc ), stmts( ss ), returnDecls(), dtors() { computeResult(); }
+: Expr( loc ), stmts( ss ) { computeResult(); }
 
 void StmtExpr::computeResult() {
 	assert( stmts );
 	const std::list<ptr<Stmt>> & body = stmts->kids;
-	if ( ! returnDecls.empty() ) {
-		// prioritize return decl for result type, since if a return decl exists, then the StmtExpr
-		// is currently in an intermediate state where the body will always give a void result type
-		result = returnDecls.front()->get_type();
-	} else if ( ! body.empty() ) {
-		if ( const ExprStmt * exprStmt = body.back().as< ExprStmt >() ) {
-			result = exprStmt->expr->result;
-		}
+	// If there is a tail expression, its result is entire result.
+	if ( !body.empty() && ( resultExpr = body.back().as<ExprStmt>() ) ) {
+		result = resultExpr->expr->result;
+	// Otherwise, fill in the result with void so there is a result type.
+	} else {
+		result = new VoidType();
 	}
-	// ensure a result type exists
-	if ( ! result ) { result = new VoidType{}; }
 }
 
 // --- UniqueExpr

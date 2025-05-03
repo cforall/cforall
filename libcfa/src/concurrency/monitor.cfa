@@ -8,9 +8,9 @@
 //
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
-// Last Modified By : Kyoung Seo
-// Last Modified On : Thd Jan 16 12:59:00 2025
-// Update Count     : 73
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Apr 25 07:20:22 2025
+// Update Count     : 80
 //
 
 #define __cforall_thread__
@@ -77,7 +77,7 @@ static inline __lock_size_t aggregate( monitor$ * storage [], const __waitfor_ma
 	__waitfor_mask_t masks[count];							/* Save the current waitfor masks to restore them later */ \
 	__spinlock_t * locks[count];							/* We need to pass-in an array of locks to BlockInternal */
 
-#define monitor_save    save   ( monitors, count, locks, recursions, masks )
+#define monitor_save save ( monitors, count, locks, recursions, masks )
 #define monitor_restore restore( monitors, count, locks, recursions, masks )
 
 
@@ -94,16 +94,16 @@ static void __enter( monitor$ * this, const __monitor_group_t & group ) {
 
 	if ( unlikely(0 != (0x1 & (uintptr_t)this->owner)) ) {
 		abort( "Attempt by thread \"%.256s\" (%p) to access joined monitor %p.", thrd->self_cor.name, thrd, this );
-	} else if ( !this->owner ) {
+	} else if ( ! this->owner ) {
 		// No one has the monitor, just take it
 		__set_owner( this, thrd );
 
-		__cfaabi_dbg_print_safe( "Kernel :  mon is free \n" );
+		__cfaabi_dbg_print_safe( "Kernel : mon is free \n" );
 	} else if ( this->owner == thrd) {
 		// We already have the monitor, just note how many times we took it
 		this->recursion += 1;
 
-		__cfaabi_dbg_print_safe( "Kernel :  mon already owned \n" );
+		__cfaabi_dbg_print_safe( "Kernel : mon already owned \n" );
 	} else if ( is_accepted( this, group) ) {
 		// Some one was waiting for us, enter
 		__set_owner( this, thrd );
@@ -111,9 +111,9 @@ static void __enter( monitor$ * this, const __monitor_group_t & group ) {
 		// Reset mask
 		reset_mask( this );
 
-		__cfaabi_dbg_print_safe( "Kernel :  mon accepts \n" );
+		__cfaabi_dbg_print_safe( "Kernel : mon accepts \n" );
 	} else {
-		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
+		__cfaabi_dbg_print_safe( "Kernel : blocking \n" );
 
 		// Some one else has the monitor, wait in line for it
 		/* paranoid */ verify( thrd->user_link.next == 0p );
@@ -123,13 +123,13 @@ static void __enter( monitor$ * this, const __monitor_group_t & group ) {
 		unlock( this->lock );
 		park();
 
-		__cfaabi_dbg_print_safe( "Kernel : %10p Entered  mon %p\n", thrd, this);
+		__cfaabi_dbg_print_safe( "Kernel : %10p Entered mon %p\n", thrd, this);
 
 		/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
 		return;
 	}
 
-	__cfaabi_dbg_print_safe( "Kernel : %10p Entered  mon %p\n", thrd, this);
+	__cfaabi_dbg_print_safe( "Kernel : %10p Entered mon %p\n", thrd, this);
 
 	/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
 	/* paranoid */ verify( this->lock.lock );
@@ -151,18 +151,18 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 	__cfaabi_dbg_print_safe( "Kernel : %10p Entering dtor for mon %p (%p)\n", thrd, this, this->owner);
 
 
-	if ( !this->owner ) {
+	if ( ! this->owner ) {
 		__cfaabi_dbg_print_safe( "Kernel : Destroying free mon %p\n", this);
 
 		// No one has the monitor, just take it
 		__set_owner( this, thrd );
 
 		/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
-		/* paranoid */ verify( !is_thrd || thrd->state == Halted || thrd->state == Cancelled );
+		/* paranoid */ verify( ! is_thrd || thrd->state == Halted || thrd->state == Cancelled );
 
 		unlock( this->lock );
 		return;
-	} else if ( this->owner == thrd && !join) {
+	} else if ( this->owner == thrd && ! join) {
 		// We already have the monitor... but where about to destroy it so the nesting will fail
 		// Abort!
 		abort( "Attempt to destroy monitor %p by thread \"%.256s\" (%p) in nested mutex.", this, thrd->self_cor.name, thrd );
@@ -178,20 +178,20 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 		__set_owner( this, thrd );
 
 		/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
-		/* paranoid */ verify( !is_thrd || thrd->state == Halted || thrd->state == Cancelled );
+		/* paranoid */ verify( ! is_thrd || thrd->state == Halted || thrd->state == Cancelled );
 
 		unlock( this->lock );
 		return;
 	}
 
 	// The monitor is busy, if this is a thread and the thread owns itself, it better be active
-	/* paranoid */ verify( !is_thrd || this->owner != thrd || (thrd->state != Halted && thrd->state != Cancelled) );
+	/* paranoid */ verify( ! is_thrd || this->owner != thrd || (thrd->state != Halted && thrd->state != Cancelled) );
 
 	__lock_size_t count = 1;
 	monitor$ ** monitors = &this;
 	__monitor_group_t group = { &this, 1, func };
 	if ( is_accepted( this, group) ) {
-		__cfaabi_dbg_print_safe( "Kernel :  mon accepts dtor, block and signal it \n" );
+		__cfaabi_dbg_print_safe( "Kernel : mon accepts dtor, block and signal it \n" );
 
 		// Wake the thread that is waiting for this
 		__condition_criterion_t * urgent = pop( this->signal_stack );
@@ -219,7 +219,7 @@ static void __dtor_enter( monitor$ * this, fptr_t func, bool join ) {
 		__cfaabi_dbg_print_safe( "Kernel : Destroying %p\n", this);
 		return;
 	} else {
-		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
+		__cfaabi_dbg_print_safe( "Kernel : blocking \n" );
 
 		wait_ctx( thrd, 0 )
 		this->dtor_node = &waiter;
@@ -253,7 +253,7 @@ static void __leave( monitor$ * this ) {
 	// If we haven't left the last level of recursion
 	// it means we don't need to do anything
 	if ( this->recursion != 0) {
-		__cfaabi_dbg_print_safe( "Kernel :  recursion still %d\n", this->recursion);
+		__cfaabi_dbg_print_safe( "Kernel : recursion still %d\n", this->recursion);
 		unlock( this->lock );
 		return;
 	}
@@ -263,13 +263,13 @@ static void __leave( monitor$ * this ) {
 
 	// Check the new owner is consistent with who we wake-up
 	// new_owner might be null even if someone owns the monitor when the owner is still waiting for another monitor
-	/* paranoid */ verifyf( !new_owner || new_owner == this->owner, "Expected owner to be %p, got %p (m: %p)", new_owner, this->owner, this );
+	/* paranoid */ verifyf( ! new_owner || new_owner == this->owner, "Expected owner to be %p, got %p (m: %p)", new_owner, this->owner, this );
 
 	// We can now let other threads in safely
 	unlock( this->lock );
 
 	//We need to wake-up the thread
-	/* paranoid */ verifyf( !new_owner || new_owner == this->owner, "Expected owner to be %p, got %p (m: %p)", new_owner, this->owner, this );
+	/* paranoid */ verifyf( ! new_owner || new_owner == this->owner, "Expected owner to be %p, got %p (m: %p)", new_owner, this->owner, this );
 	unpark( new_owner );
 }
 
@@ -279,7 +279,7 @@ static void __dtor_leave( monitor$ * this, bool join ) {
 		if ( active_thread() != this->owner ) {
 			abort( "Destroyed monitor %p has inconsistent owner, expected %p got %p.\n", this, active_thread(), this->owner);
 		}
-		if ( this->recursion != 1  && !join ) {
+		if ( this->recursion != 1 && ! join ) {
 			abort( "Destroyed monitor %p has %d outstanding nested calls.\n", this, this->recursion - 1);
 		}
 	)
@@ -316,7 +316,7 @@ void __thread_finish( thread$ * thrd ) {
 	unlock( this->lock );
 
 	// Unpark the next owner if needed
-	/* paranoid */ verifyf( !new_owner || new_owner == this->owner, "Expected owner to be %p, got %p (m: %p)", new_owner, this->owner, this );
+	/* paranoid */ verifyf( ! new_owner || new_owner == this->owner, "Expected owner to be %p, got %p (m: %p)", new_owner, this->owner, this );
 	/* paranoid */ verify( ! __preemption_enabled() );
 	/* paranoid */ verify( thrd->state == Halted );
 	unpark( new_owner );
@@ -423,17 +423,17 @@ static void ?{}(__condition_node_t & this, thread$ * waiting_thread, __lock_size
 }
 
 static void ?{}(__condition_criterion_t & this ) with( this ) {
-	ready  = false;
+	ready = false;
 	target = 0p;
-	owner  = 0p;
-	next   = 0p;
+	owner = 0p;
+	this.next = 0p;
 }
 
 static void ?{}(__condition_criterion_t & this, monitor$ * target, __condition_node_t & owner ) {
-	this.ready  = false;
+	this.ready = false;
 	this.target = target;
-	this.owner  = &owner;
-	this.next   = 0p;
+	this.owner = &owner;
+	this.next = 0p;
 }
 
 //-----------------------------------------------------------------------------
@@ -524,7 +524,7 @@ bool signal( condition & this ) libcfa_public {
 	//Add the thread to the proper AS stack
 	for ( i; count ) {
 		__condition_criterion_t * crit = &node->criteria[i];
-		assert( !crit->ready );
+		assert( ! crit->ready );
 		push( crit->target->signal_stack, crit );
 	}
 
@@ -535,7 +535,7 @@ bool signal( condition & this ) libcfa_public {
 }
 
 bool signal_block( condition & this ) libcfa_public {
-	if ( !this.blocked.head ) { return false; }
+	if ( ! this.blocked.head ) { return false; }
 
 	//Check that everything is as expected
 	verifyf( this.monitors != 0p, "Waiting with no monitors (%p)", this.monitors );
@@ -570,7 +570,7 @@ bool signal_block( condition & this ) libcfa_public {
 
 	// WE WOKE UP
 
-	__cfaabi_dbg_print_buffer_local( "Kernel :   signal_block returned\n" );
+	__cfaabi_dbg_print_buffer_local( "Kernel : signal_block returned\n" );
 
 	//We are back, restore the masks and recursions
 	monitor_restore;
@@ -580,7 +580,7 @@ bool signal_block( condition & this ) libcfa_public {
 
 // Access the user_info of the thread waiting at the front of the queue
 uintptr_t front( condition & this ) libcfa_public {
-	verifyf( !is_empty(this),
+	verifyf( ! is_empty(this),
 		"Attempt to access user data on an empty condition.\n"
 		"Possible cause is not checking if the condition is empty before reading stored data."
 	);
@@ -623,15 +623,15 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 
 	{
 		// Check if the entry queue
-		thread$ * next; int index;
-		[next, index] = search_entry_queue( mask, monitors, count );
+		thread$ * nxt; int index;
+		[nxt, index] = search_entry_queue( mask, monitors, count );
 
-		if ( next ) {
+		if ( nxt ) {
 			*mask.accepted = index;
 			__acceptable_t& accepted = mask[index];
 			if ( accepted.is_dtor ) {
 				__cfaabi_dbg_print_buffer_local( "Kernel : dtor already there\n" );
-				verifyf( accepted.size == 1,  "ERROR: Accepted dtor has more than 1 mutex parameter." );
+				verifyf( accepted.size == 1, "ERROR: Accepted dtor has more than 1 mutex parameter." );
 
 				monitor$ * mon2dtor = accepted[0];
 				verifyf( mon2dtor->dtor_node, "ERROR: Accepted monitor has no dtor_node." );
@@ -650,7 +650,7 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 				// Save monitor states
 				monitor_save;
 
-				__cfaabi_dbg_print_buffer_local( "Kernel :  baton of %"PRIdFAST16" monitors : ", count );
+				__cfaabi_dbg_print_buffer_local( "Kernel : baton of %"PRIdFAST16" monitors : ", count );
 				#ifdef __CFA_DEBUG_PRINT__
 					for ( i; count ) {
 						__cfaabi_dbg_print_buffer_local( "%p %p ", monitors[i], monitors[i]->signal_stack.top );
@@ -659,13 +659,13 @@ void __waitfor_internal( const __waitfor_mask_t & mask, int duration ) libcfa_pu
 				__cfaabi_dbg_print_buffer_local( "\n" );
 
 				// Set the owners to be the next thread
-				__set_owner( monitors, count, next );
+				__set_owner( monitors, count, nxt );
 
 				// unlock all the monitors
 				unlock_all( locks, count );
 
 				// unpark the thread we signalled
-				unpark( next );
+				unpark( nxt );
 
 				//Everything is ready to go to sleep
 				park();
@@ -740,13 +740,13 @@ static inline void __set_owner( monitor$ * this, thread$ * owner ) {
 static inline void __set_owner( monitor$ * monitors [], __lock_size_t count, thread$ * owner ) {
 	/* paranoid */ verify ( monitors[0]->lock.lock );
 	/* paranoid */ verifyf( monitors[0]->owner == active_thread(), "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), monitors[0]->owner, monitors[0]->recursion, monitors[0] );
-	monitors[0]->owner        = owner;
-	monitors[0]->recursion    = 1;
+	monitors[0]->owner = owner;
+	monitors[0]->recursion = 1;
 	for ( i; 1~count ) {
 		/* paranoid */ verify ( monitors[i]->lock.lock );
 		/* paranoid */ verifyf( monitors[i]->owner == active_thread(), "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), monitors[i]->owner, monitors[i]->recursion, monitors[i] );
-		monitors[i]->owner        = owner;
-		monitors[i]->recursion    = 0;
+		monitors[i]->owner = owner;
+		monitors[i]->recursion = 0;
 	}
 }
 
@@ -764,14 +764,14 @@ static inline void reset_mask( monitor$ * this ) {
 
 static inline thread$ * next_thread( monitor$ * this ) {
 	//Check the signaller stack
-	__cfaabi_dbg_print_safe( "Kernel :  mon %p AS-stack top %p\n", this, this->signal_stack.top);
+	__cfaabi_dbg_print_safe( "Kernel : mon %p AS-stack top %p\n", this, this->signal_stack.top);
 	__condition_criterion_t * urgent = pop( this->signal_stack );
 	if ( urgent ) {
 		//The signaller stack is not empty,
 		//regardless of if we are ready to baton pass,
 		//we need to set the monitor as in use
-		/* paranoid */ verifyf( !this->owner || active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
-		__set_owner( this,  urgent->owner->waiting_thread );
+		/* paranoid */ verifyf( ! this->owner || active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
+		__set_owner( this, urgent->owner->waiting_thread );
 
 		return check_condition( urgent );
 	}
@@ -779,8 +779,8 @@ static inline thread$ * next_thread( monitor$ * this ) {
 	// No signaller thread
 	// Get the next thread in the entry_queue
 	thread$ * new_owner = pop_head( this->entry_queue );
-	/* paranoid */ verifyf( !this->owner || active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
-	/* paranoid */ verify( !new_owner || new_owner->user_link.next == 0p );
+	/* paranoid */ verifyf( ! this->owner || active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
+	/* paranoid */ verify( ! new_owner || new_owner->user_link.next == 0p );
 	__set_owner( this, new_owner );
 
 	return new_owner;
@@ -791,7 +791,7 @@ static inline bool is_accepted( monitor$ * this, const __monitor_group_t & group
 	__lock_size_t count = this->mask.size;
 
 	// Check if there are any acceptable functions
-	if ( !it ) return false;
+	if ( ! it ) return false;
 
 	// If this isn't the first monitor to test this, there is no reason to repeat the test.
 	if ( this != group[0] ) return group[0]->mask.accepted >= 0;
@@ -819,7 +819,7 @@ static inline void init( __lock_size_t count, monitor$ * monitors [], __conditio
 static inline void init_push( __lock_size_t count, monitor$ * monitors [], __condition_node_t & waiter, __condition_criterion_t criteria [] ) {
 	for ( i; count ) {
 		(criteria[i]){ monitors[i], waiter };
-		__cfaabi_dbg_print_safe( "Kernel :  target %p = %p\n", criteria[i].target, &criteria[i] );
+		__cfaabi_dbg_print_safe( "Kernel : target %p = %p\n", criteria[i].target, &criteria[i] );
 		push( criteria[i].target->signal_stack, &criteria[i] );
 	}
 
@@ -901,13 +901,13 @@ static inline thread$ * check_condition( __condition_criterion_t * target ) {
 		ready2run = criteria[i].ready && ready2run;
 	}
 
-	__cfaabi_dbg_print_safe( "Kernel :  Runing %i (%p)\n", ready2run, ready2run ? (thread*)node->waiting_thread : (thread*)0p );
+	__cfaabi_dbg_print_safe( "Kernel : Runing %i (%p)\n", ready2run, ready2run ? (thread*)node->waiting_thread : (thread*)0p );
 	return ready2run ? node->waiting_thread : 0p;
 }
 
 static inline void brand_condition( condition & this ) {
 	thread$ * thrd = active_thread();
-	if ( !this.monitors ) {
+	if ( ! this.monitors ) {
 		// __cfaabi_dbg_print_safe( "Branding\n" );
 		assertf( thrd->monitors.data != 0p, "No current monitor to brand condition %p", thrd->monitors.data );
 		this.monitor_count = thrd->monitors.size;
@@ -927,15 +927,15 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 	__acceptable_t * begin = begin(mask);
 	for ( __acceptable_t * it = begin; it != end; it++, i++ ) {
 		#if defined( __CFA_WITH_VERIFY__ )
-		thread$ * last = 0p;
+		thread$ * prior = 0p;
 		#endif // __CFA_WITH_VERIFY__
 
 		for ( thread$ ** thrd_it = &entry_queue.head; (*thrd_it) != 1p; thrd_it = &get_next(**thrd_it) ) {
 			thread$ * curr = *thrd_it;
 
-			/* paranoid */ verifyf( !last || last->user_link.next == curr, "search not making progress, from %p (%p) to %p",
-									last, last->user_link.next, curr );
-			/* paranoid */ verifyf( curr != last, "search not making progress, from %p to %p", last, curr );
+			/* paranoid */ verifyf( ! prior || prior->user_link.next == curr, "search not making progress, from %p (%p) to %p",
+									prior, prior->user_link.next, curr );
+			/* paranoid */ verifyf( curr != prior, "search not making progress, from %p to %p", prior, curr );
 
 			// For each thread in the entry-queue check for a match
 			if ( *it == curr->monitors ) {
@@ -944,7 +944,7 @@ static inline [thread$ *, int] search_entry_queue( const __waitfor_mask_t & mask
 			} // if
 
 			#if defined( __CFA_WITH_VERIFY__ )
-			last = curr;
+			prior = curr;
 			#endif
 		} // for
 	} // for
@@ -1000,18 +1000,18 @@ void lock( monitor$ * this ) libcfa_public {
 
 	if ( unlikely(0 != (0x1 & (uintptr_t)this->owner)) ) {
 		abort( "Attempt by thread \"%.256s\" (%p) to access joined monitor %p.", thrd->self_cor.name, thrd, this );
-	} else if ( !this->owner ) {
+	} else if ( ! this->owner ) {
 		// No one has the monitor, just take it
 		__set_owner( this, thrd );
 
-		__cfaabi_dbg_print_safe( "Kernel :  mon is free \n" );
+		__cfaabi_dbg_print_safe( "Kernel : mon is free \n" );
 	} else if ( this->owner == thrd) {
 		// We already have the monitor, just note how many times we took it
 		this->recursion += 1;
 
-		__cfaabi_dbg_print_safe( "Kernel :  mon already owned \n" );
+		__cfaabi_dbg_print_safe( "Kernel : mon already owned \n" );
 	} else {
-		__cfaabi_dbg_print_safe( "Kernel :  blocking \n" );
+		__cfaabi_dbg_print_safe( "Kernel : blocking \n" );
 
 		// Some one else has the monitor, wait in line for it
 		/* paranoid */ verify( thrd->user_link.next == 0p );
@@ -1021,13 +1021,13 @@ void lock( monitor$ * this ) libcfa_public {
 		unlock( this->lock );
 		park();
 
-		__cfaabi_dbg_print_safe( "Kernel : %10p Entered  mon %p\n", thrd, this);
+		__cfaabi_dbg_print_safe( "Kernel : %10p Entered mon %p\n", thrd, this);
 
 		/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
 		return;
 	}
 
-	__cfaabi_dbg_print_safe( "Kernel : %10p Entered  mon %p\n", thrd, this);
+	__cfaabi_dbg_print_safe( "Kernel : %10p Entered mon %p\n", thrd, this);
 
 	/* paranoid */ verifyf( active_thread() == this->owner, "Expected owner to be %p, got %p (r: %i, m: %p)", active_thread(), this->owner, this->recursion, this );
 	/* paranoid */ verify( this->lock.lock );

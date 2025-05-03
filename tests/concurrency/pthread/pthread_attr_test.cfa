@@ -3,10 +3,13 @@
 #include <fstream.hfa>
 #include <thread.hfa>
 
-void* foo(void* _attr){
+void* foo(void*){
+    pthread_t self = pthread_self();
+    pthread_attr_t self_attr;
+    pthread_getattr_np(self, &self_attr);
+
     size_t size;
-    pthread_attr_t* attr = (pthread_attr_t*)_attr;
-    int status = pthread_attr_getstacksize(attr, &size);
+    int status = pthread_attr_getstacksize(&self_attr, &size);
     if (status != 0){
         sout | "error return code";
         exit(1);
@@ -15,14 +18,14 @@ void* foo(void* _attr){
     return NULL;
 }
 
-int main(int argc, char const *argv[])
+int main()
 {
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setstacksize(&attr, 123456789);
     pthread_t thr;
     void* res;
-    pthread_create(&thr, &attr, foo, (void*)&attr);
+    pthread_create(&thr, &attr, foo, (void*)0);
     pthread_join(thr, &res);
     pthread_attr_destroy(&attr);
     return 0;

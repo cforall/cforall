@@ -9,8 +9,8 @@
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:32:26 2023
-// Update Count     : 2
+// Last Modified On : Thu Apr 24 18:12:59 2025
+// Update Count     : 72
 //
 
 #pragma once
@@ -19,16 +19,16 @@
 
 forall( Decorator &, T & )
 struct tytagref {
-    inline T &;
+	inline T &;
 };
 
 forall( tOuter &, tMid &, tInner & )
 trait embedded {
-    tytagref( tMid, tInner ) ?`inner( tOuter & );
+	tytagref( tMid, tInner ) ?`inner( tOuter & );
 };
 
 // embedded is reflexive, with no info (void) as the type tag
-forall (T &)
+forall( T & )
 static inline tytagref(void, T) ?`inner ( T & this ) { tytagref( void, T ) ret = {this}; return ret; }
 
 
@@ -36,290 +36,325 @@ static inline tytagref(void, T) ?`inner ( T & this ) { tytagref( void, T ) ret =
 // P9_EMBEDDED: Use on every case of plan-9 inheritance, to make "implements embedded" be a closure of plan-9 inheritance.
 //
 // struct foo {
-//    int a, b, c;
-//    inline (bar);
+//	int a, b, c;
+//	inline (bar);
 // };
 // P9_EMBEDDED( foo, bar )
 //
 
 // usual version, for structs that are top-level declarations
-#define P9_EMBEDDED(        derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase, static ) P9_EMBEDDED_BDY_( immedBase )
+#define P9_EMBEDDED( derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase, static ) P9_EMBEDDED_BDY_( immedBase )
 
 // special version, for structs that are declared in functions
-#define P9_EMBEDDED_INFUNC( derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase,        ) P9_EMBEDDED_BDY_( immedBase )
+#define P9_EMBEDDED_INFUNC( derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase, ) P9_EMBEDDED_BDY_( immedBase )
 
 // forward declarations of both the above; generally not needed
 // may help you control where the P9_EMBEEDED cruft goes, in case "right after the stuct" isn't where you want it
-#define P9_EMBEDDED_FWD(        derived, immedBase )      P9_EMBEDDED_DECL_( derived, immedBase, static ) ;
-#define P9_EMBEDDED_FWD_INFUNC( derived, immedBase ) auto P9_EMBEDDED_DECL_( derived, immedBase,        ) ;
+#define P9_EMBEDDED_FWD( derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase, static ) ;
+#define P9_EMBEDDED_FWD_INFUNC( derived, immedBase ) auto P9_EMBEDDED_DECL_( derived, immedBase, ) ;
 
 // private helpers
 #define P9_EMBEDDED_DECL_( derived, immedBase, STORAGE ) \
-    forall( Tbase &, TdiscardPath & | { tytagref( TdiscardPath, Tbase ) ?`inner( immedBase & ); } ) \
-    STORAGE inline tytagref(immedBase, Tbase) ?`inner( derived & this )
-    
+	forall( Tbase &, TdiscardPath & | { tytagref( TdiscardPath, Tbase ) ?`inner( immedBase & ); } ) \
+	STORAGE inline tytagref( immedBase, Tbase ) ?`inner( derived & this )
+
 #define P9_EMBEDDED_BDY_( immedBase ) { \
-        immedBase & ib = this; \
-        Tbase & b = ib`inner; \
-        tytagref(immedBase, Tbase) result = { b }; \
-        return result; \
-    }
+		immedBase & ib = this; \
+		Tbase & b = ib`inner; \
+		tytagref( immedBase, Tbase ) result = { b }; \
+		return result; \
+	}
 
-#define EMBEDDED_VIA( OUTER, MID, INNER ) \
-   (struct { tytagref(MID, INNER) ( * ?`inner ) ( OUTER & ); }){ ?`inner } 
+#define EMBEDDED_VIA( OUTER, MID, INNER ) (struct { tytagref( MID, INNER ) ( * ?`inner ) ( OUTER & ); }){ ?`inner }
 
-#define DLINK_VIA( TE, TLINK ) \
-   EMBEDDED_VIA( TE, TLINK, dlink(TE) )
+#define DLINK_VIA( TE, TLINK ) EMBEDDED_VIA( TE, TLINK, dlink( TE ) )
 
 
-// The origin is the position encountered at the start of iteration,
-// signifying, "need to advance to the first element," and at the end
-// of iteration, signifying, "no more elements."  Normal comsumption of
-// an iterator runs ?`moveNext as the first step, and uses the return
-// of ?`moveNext as a guard, before dereferencing the iterator.  So
-// normal consumption of an iterator does not dereference an iterator
-// in origin position.  The value of a pointer (underlying a refence)
-// that is exposed publicly as an iteraor, and also a pointer stored
-// internally in a link field, is tagged, to indicate "is the origin"
-// (internally, is the list-head sentinel node), or untagged, to indicate
-// "is a regular node."  Intent is to help a user who dereferences an
-// iterator in origin position (which would be an API-use error on their
+// The origin is the position encountered at the start of iteration, signifying, "need to advance to the first element,"
+// and at the end of iteration, signifying, "no more elements."  Normal comsumption of an iterator runs "advance" as
+// the first step, and uses the return of "advance" as a guard, before dereferencing the iterator.  So normal
+// consumption of an iterator does not dereference an iterator in origin position.  The value of a pointer (underlying a
+// refence) that is exposed publicly as an iteraor, and also a pointer stored internally in a link field, is tagged, to
+// indicate "is the origin" (internally, is the list-head sentinel node), or untagged, to indicate "is a regular node."
+// Intent is to help a user who dereferences an iterator in origin position (which would be an API-use error on their
 // part), by failing fast.
 
 #if defined( __x86_64 )
-    // Preferred case: tag in the most-significant bit.  Dereference
-    // has been shown to segfault consistently.  Maintenance should
-    // list more architectures as "ok" here, to let them use the
-    // preferred case, when valid.
-    #define ORIGIN_TAG_BITNO ( 8 * sizeof( size_t ) - 1 )
+	// Preferred case: tag in the most-significant bit.  Dereference has been shown to segfault consistently.
+	// Maintenance should list more architectures as "ok" here, to let them use the preferred case, when valid.
+	#define ORIGIN_TAG_BITNO ( 8 * sizeof( size_t ) - 1 )
 #else
-    // Fallback case: tag in the least-significant bit.  Dereference
-    // will often give an alignment error, but may not, e.g. if
-    // accessing a char-typed member.  32-bit x86 uses the most-
-    // significant bit for real room on the heap.
-    #define ORIGIN_TAG_BITNO 0
+	// Fallback case: tag in the least-significant bit.  Dereference will often give an alignment error, but may not,
+	// e.g. if accessing a char-typed member.  32-bit x86 uses the most- significant bit for real room on the heap.
+	#define ORIGIN_TAG_BITNO 0
 #endif
 #define ORIGIN_TAG_MASK (((size_t)1) << ORIGIN_TAG_BITNO)
 
-#define ORIGIN_TAG_SET(p)   ((p) |  ORIGIN_TAG_MASK)
-#define ORIGIN_TAG_CLEAR(p) ((p) & ~ORIGIN_TAG_MASK)
-#define ORIGIN_TAG_QUERY(p) ((p) &  ORIGIN_TAG_MASK)
-
+#define ORIGIN_TAG_SET( p )   ((p) |  ORIGIN_TAG_MASK)
+#define ORIGIN_TAG_CLEAR( p ) ((p) & ~ORIGIN_TAG_MASK)
+#define ORIGIN_TAG_QUERY( p ) ((p) &  ORIGIN_TAG_MASK)
 
 forall( tE & ) {
+	struct dlink{
+		tE * next;
+		tE * prev;
+	};
 
-    struct dlink{
-        tE *next;
-        tE *prev;
-    };
+	static inline void ?{}( dlink( tE ) & this ) {
+		this.next = this.prev = 0p;
+	}
 
-    static inline void ?{}( dlink(tE) & this ) {
-        this.next = 0p;
-        this.prev = 0p;
-    }
+	forall( tLinks & = dlink( tE ) )
+	struct dlist {
+		inline dlink( tE );
+	};
 
-    forall( tLinks & = dlink(tE) )
-    struct dlist {
-        inline dlink(tE);
-    };
+	forall( tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
+		static inline tE * $get_list_origin_addr( dlist( tE, tLinks ) & list ) {
+			dlink( tE ) & link_from_null = (*(tE *)0p)`inner;
+			ptrdiff_t link_offset = (ptrdiff_t)&link_from_null;
+			size_t origin_addr = ((size_t)&list) - link_offset;
+			size_t preResult = ORIGIN_TAG_SET( origin_addr );
+			return (tE *)preResult;
+		}
 
-    forall( tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
-        static inline tE * $get_list_origin_addr( dlist(tE, tLinks) & lst ) {
-            dlink(tE) & link_from_null = ( * (tE *) 0p )`inner;
-            ptrdiff_t link_offset = (ptrdiff_t) & link_from_null;
-            size_t origin_addr = ((size_t) & lst) - link_offset;
-            size_t preResult = ORIGIN_TAG_SET( origin_addr );
-            return (tE *)preResult;
-        }
-
-        static inline void ?{}( dlist(tE, tLinks) & this ) {
-            tE * listOrigin = $get_list_origin_addr( this );
-            ( ( dlink(tE) & ) this ){ listOrigin, listOrigin } ;
-        }
-    }
-
+		static inline void ?{}( dlist( tE, tLinks ) & this ) {
+			tE * listOrigin = $get_list_origin_addr( this );
+			((dlink( tE ) &)this){ listOrigin, listOrigin };
+		}
+	}
 }
 
 
-forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
-
-	static inline void insert_after(tE & list_pos, tE &to_insert) {
-		verify (&list_pos != 0p);
-		verify (&to_insert != 0p);
-        dlink(tE) & linkToInsert = to_insert`inner;
-		verify(linkToInsert.prev == 0p);
-		verify(linkToInsert.next == 0p);
-        tE & list_pos_elem = * (tE *) ORIGIN_TAG_CLEAR( (size_t) & list_pos );
-        dlink(tE) & list_pos_links = list_pos_elem`inner;
-        asm( "" : : : "memory" );
-        tE & after_raw = * list_pos_links.next;
-        tE & after_elem = * (tE *) ORIGIN_TAG_CLEAR( (size_t) & after_raw );
-		linkToInsert.prev = & list_pos;
-		linkToInsert.next = & after_raw;
-        dlink(tE) & afterLinks = after_elem`inner;
-        afterLinks.prev = &to_insert;
-		list_pos_links.next = &to_insert;
-        asm( "" : : : "memory" );
+static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
+	bool isListed( tE & node ) {
+		verify( &node != 0p );
+		dlink( tE ) & node_links = node`inner;
+		return (node_links.prev != 0p) || (node_links.next != 0p);
 	}
 
-	static inline void insert_before(tE & list_pos, tE &to_insert) {
-		verify (&list_pos != 0p);
-		verify (&to_insert != 0p);
-        dlink(tE) & linkToInsert = to_insert`inner;
-		verify(linkToInsert.next == 0p);
-		verify(linkToInsert.prev == 0p);
-        tE & list_pos_elem = * (tE *) ORIGIN_TAG_CLEAR( (size_t) & list_pos );
-        dlink(tE) & list_pos_links = list_pos_elem`inner;
-        asm( "" : : : "memory" );
-        tE & before_raw = * (list_pos_links).prev;
-        tE & before_elem = * (tE *) ORIGIN_TAG_CLEAR( (size_t) & before_raw );
-		linkToInsert.next = & list_pos;
-		linkToInsert.prev = & before_raw;
-        dlink(tE) & beforeLinks = before_elem`inner;
-        beforeLinks.next = &to_insert;
-		(list_pos_links).prev = &to_insert;
-        asm( "" : : : "memory" );
+	bool isEmpty( dlist( tE, tLinks ) & list ) {
+		tE * firstPtr = list.next;
+		if ( ORIGIN_TAG_QUERY(( size_t)firstPtr) ) firstPtr = 0p;
+		return firstPtr == 0p;
 	}
 
-	static inline tE & remove(tE & list_pos) {
-		verify (&list_pos != 0p);
-        verify( ! ORIGIN_TAG_QUERY((size_t) & list_pos) );
-        dlink(tE) & list_pos_links = list_pos`inner;
-        tE & before_raw = * list_pos_links.prev;
-        tE & before_elem = * (tE *) ORIGIN_TAG_CLEAR( (size_t) & before_raw );
-        dlink(tE) & before_links = before_elem`inner;
-        tE & after_raw = * list_pos_links.next;
-        tE & after_elem = * (tE *) ORIGIN_TAG_CLEAR( (size_t) & after_raw );
-        dlink(tE) & after_links = after_elem`inner;
-        before_links.next = &after_raw;
-        after_links.prev = &before_raw;
-        asm( "" : : : "memory" );
+	tE & first( dlist( tE, tLinks ) & list ) {
+		tE * firstPtr = list.next;
+		if ( ORIGIN_TAG_QUERY( (size_t)firstPtr ) ) firstPtr = 0p;
+		return *firstPtr;
+	}
+
+	tE & last( dlist( tE, tLinks ) & list ) {
+		tE * lastPtr = list.prev;
+		if ( ORIGIN_TAG_QUERY( (size_t)lastPtr) ) lastPtr = 0p;
+		return *lastPtr;
+	}
+
+	tE & insert_before( tE & before, tE & node ) {
+		verify( &before != 0p );
+		verify( &node != 0p );
+
+		dlink( tE ) & linkToInsert = node`inner;
+
+		verify( linkToInsert.next == 0p );
+		verify( linkToInsert.prev == 0p );
+
+		tE & list_pos_elem = *(tE *)ORIGIN_TAG_CLEAR( (size_t)&before );
+		dlink( tE ) & list_pos_links = list_pos_elem`inner;
+		asm( "" : : : "memory" );
+		tE & before_raw = *list_pos_links.prev;
+		tE & before_elem = *(tE *) ORIGIN_TAG_CLEAR( (size_t)&before_raw );
+		linkToInsert.next = &before;
+		linkToInsert.prev = &before_raw;
+		dlink( tE ) & beforeLinks = before_elem`inner;
+		beforeLinks.next = &node;
+		list_pos_links.prev = &node;
+		asm( "" : : : "memory" );
+		return node;
+	}
+
+	tE & insert_after( tE & after, tE & node ) {
+		verify( &after != 0p );
+		verify( &node != 0p );
+
+		dlink( tE ) & linkToInsert = node`inner;
+
+		verify( linkToInsert.prev == 0p );
+		verify( linkToInsert.next == 0p );
+
+		tE & list_pos_elem = *(tE *)ORIGIN_TAG_CLEAR( (size_t)&after );
+		dlink( tE ) & list_pos_links = list_pos_elem`inner;
+		asm( "" : : : "memory" );
+		tE & after_raw = *list_pos_links.next;
+		tE & after_elem = *(tE *)ORIGIN_TAG_CLEAR( (size_t)&after_raw );
+		linkToInsert.prev = &after;
+		linkToInsert.next = &after_raw;
+		dlink( tE ) & afterLinks = after_elem`inner;
+		afterLinks.prev = &node;
+		list_pos_links.next = &node;
+		asm( "" : : : "memory" );
+		return node;
+	}
+
+	tE & remove( tE & node ) {
+		verify( &node != 0p );
+		verify( ! ORIGIN_TAG_QUERY( (size_t)&node) );
+
+		dlink( tE ) & list_pos_links = node`inner;
+		tE & before_raw = *list_pos_links.prev;
+		tE & before_elem = *(tE *)ORIGIN_TAG_CLEAR( (size_t)&before_raw );
+		dlink( tE ) & before_links = before_elem`inner;
+		tE & after_raw = *list_pos_links.next;
+		tE & after_elem = *(tE *)ORIGIN_TAG_CLEAR( (size_t)&after_raw );
+		dlink( tE ) & after_links = after_elem`inner;
+		before_links.next = &after_raw;
+		after_links.prev = &before_raw;
+		asm( "" : : : "memory" );
 		list_pos_links.prev = 0p;
 		list_pos_links.next = 0p;
-        asm( "" : : : "memory" );
-        return list_pos;
+		asm( "" : : : "memory" );
+		return node;
 	}
 
-    static inline tE & ?`first( dlist(tE, tLinks) &lst ) {
-        tE * firstPtr = lst.next;
-        if (ORIGIN_TAG_QUERY((size_t)firstPtr)) firstPtr = 0p;
-        return *firstPtr;
-    }
-    static inline tE & ?`last ( dlist(tE, tLinks) &lst ) {
-        tE * lastPtr = lst.prev;
-        if (ORIGIN_TAG_QUERY((size_t)lastPtr)) lastPtr = 0p;
-        return *lastPtr;
-    }
-
-    static inline bool ?`isEmpty( dlist(tE, tLinks) & lst ) {
-        tE * firstPtr = lst.next;
-        if (ORIGIN_TAG_QUERY((size_t)firstPtr)) firstPtr = 0p;
-        return firstPtr == 0p;
-    }
-
-    static inline bool ?`isListed( tE & e ) {
-		verify (&e != 0p);
-        dlink(tE) & e_links = e`inner;
-		return (e_links.prev != 0p) || (e_links.next != 0p);
-    }
-
-    static inline tE & ?`elems( dlist(tE, tLinks) & lst ) {
-        tE * origin = $get_list_origin_addr( lst );
-        return *origin;
-    }
-
-    static inline bool ?`moveNext( tE && refx ) {
-        tE && ref_inner = refx;
-        tE & oldReferent = * (tE*) ORIGIN_TAG_CLEAR( (size_t) & ref_inner );
-        &ref_inner = oldReferent`inner.next;
-        return &ref_inner != 0p  &&
-            ! ORIGIN_TAG_QUERY( (size_t) & ref_inner );
-    }
-
-    static inline bool ?`movePrev( tE && refx ) {
-        tE && ref_inner = refx;
-        tE & oldReferent = * (tE*) ORIGIN_TAG_CLEAR( (size_t) & ref_inner );
-        &ref_inner = oldReferent`inner.prev;
-        return &ref_inner != 0p  &&
-            ! ORIGIN_TAG_QUERY( (size_t) & ref_inner );
-    }
-
-    static inline bool ?`hasNext( tE & e ) {
-        return e`moveNext;
-    }
-
-    static inline bool ?`hasPrev( tE & e ) {
-        return e`movePrev;
-    }
-
-    static inline tE & ?`next( tE & e ) {
-        if( e`moveNext ) return e;
-        return * 0p;
-    }
-
-    static inline tE & ?`prev( tE & e ) {
-        if( e`movePrev ) return e;
-        return * 0p;
-    }
-
-    static inline void insert_first( dlist(tE, tLinks) &lst, tE & e ) {
-        insert_after(lst`elems, e);
-    }
-
-    static inline void insert_last( dlist(tE, tLinks) &lst, tE & e ) {
-        insert_before(lst`elems, e);
-    }
-
-    static inline tE & try_pop_front( dlist(tE, tLinks) &lst ) {
-        tE & first_inlist = lst`first;
-        tE & first_item = first_inlist;
-        if (&first_item) remove(first_inlist);
-        return first_item;
-    }
-
-    static inline tE & try_pop_back( dlist(tE, tLinks) &lst ) {
-        tE & last_inlist = lst`last;
-        tE & last_item = last_inlist;
-        if (&last_item) remove(last_inlist);
-        return last_item;
-    }
-
-
-  #if !defined(NDEBUG) && (defined(__CFA_DEBUG__) || defined(__CFA_VERIFY__))
-	static bool $validate_fwd( dlist(tE, tLinks) & this ) {
-        if ( ! & this`first ) return ( (& this`last) == 0p);
-
-        tE & lagElem = *0p;
-
-        while ( tE & it = this`elems; it`moveNext ) {
-            if (& lagElem == 0p &&  &it != & this`first ) return false;
-            & lagElem = & it;
-        }
-
-        if (& lagElem != & this`last) return false;
-
-        // TODO: verify that it is back at this`elems;
-        return true;
+	tE & iter( dlist( tE, tLinks ) & list ) {
+		tE * origin = $get_list_origin_addr( list );
+		return *origin;
 	}
-	static bool $validate_rev( dlist(tE, tLinks) & this ) {
-        if ( ! & this`last ) return ( (& this`first) == 0p);
 
-        tE & lagElem = *0p;
-
-        while ( tE & it = this`elems; it`movePrev ) {
-            if (& lagElem == 0p &&  &it != & this`last ) return false;
-            & lagElem = & it;
-        }
-
-        if (& lagElem != & this`first) return false;
-
-        // TODO: verify that it is back at this`elems;
-        return true;
+	bool recede( tE && refx ) {
+		tE && ref_inner = refx;
+		tE & oldReferent = *(tE*)ORIGIN_TAG_CLEAR( (size_t)&ref_inner );
+		&ref_inner = oldReferent`inner.prev;
+		return &ref_inner != 0p && ! ORIGIN_TAG_QUERY( (size_t)&ref_inner );
 	}
-	static inline bool validate( dlist(tE, tLinks) & this ) {
-		return $validate_fwd(this) && $validate_rev(this);
-	}
-  #endif
 
+	bool advance( tE && refx ) {
+		tE && ref_inner = refx;
+		tE & oldReferent = *(tE*)ORIGIN_TAG_CLEAR( (size_t)&ref_inner );
+		&ref_inner = oldReferent`inner.next;
+		return &ref_inner != 0p && ! ORIGIN_TAG_QUERY( (size_t)&ref_inner );
+	}
+
+    bool isFirst( tE & node ) {
+        return recede( node );
+    }
+
+    bool isLast( tE & node ) {
+        return advance( node );
+    }
+
+	tE & prev( tE & node ) {
+		if ( recede( node ) ) return node;
+		return *0p;
+	}
+
+	tE & next( tE & node ) {
+		if ( advance( node ) ) return node;
+		return *0p;
+	}
+
+	tE & insert_first( dlist( tE, tLinks ) & list, tE & node ) {
+		insert_after( iter( list ), node );
+		return node;
+	}
+
+	tE & insert_last( dlist( tE, tLinks ) & list, tE & node ) {
+		insert_before( iter( list ), node );
+		return node;
+	}
+	tE & insert( dlist( tE, tLinks ) & list, tE & node ) { // synonym for insert_last
+		insert_last( list, node );
+		return node;
+	}
+
+	tE & remove_first( dlist( tE, tLinks ) & list ) {
+		tE & first_node = first( list );
+		if ( &first_node ) return remove( first_node );
+		return first_node;
+	}
+
+	tE & remove_last( dlist( tE, tLinks ) & list ) {
+		tE & last_node = last( list );
+		if ( &last_node ) return remove( last_node );
+		return last_node;
+	}
+
+	// Transfer the "from" list to the end of this sequence; the "from" list is empty after the transfer.
+//	void transfer( dlist( tE, tLinks ) & to, dlist( tE, tLinks ) & from ) {
+//		if ( isEmpty( from ) ) return;					// "from" list empty ?
+//		if ( isEmpty( to ) ) {							// "to" list empty ?
+//			root = from.root;
+//		} else {										// "to" list not empty
+//			T * toEnd = (T *)uBack( root );
+//			T * fromEnd = (T *)from.uBack( from.root );
+//			uBack( root ) = fromEnd;
+//			from.uNext( fromEnd ) = root;
+//			from.uBack( from.root ) = toEnd;
+//			uNext( toEnd ) = from.root;
+//		} // if
+//		from.root = nullptr;							// mark "from" list empty
+//	}
+
+	// Transfer the "from" list up to node "n" to the end of this list; the "from" list becomes the sequence after node "n".
+	// Node "n" must be in the "from" list.
+//	void split( dlist( tE, tLinks ) & to, dlist( tE, tLinks ) & from, tE & node ) {
+//		#ifdef __U_DEBUG__
+//		if ( ! n->listed() ) abort( "(uSequence &)%p.split( %p ) : Node is not on a list.", this, n );
+//		#endif // __U_DEBUG__
+//		uSequence<T> to;
+//		to.root = from.root;							// start of "to" list
+//		from.root = (T *)uNext( n );					// start of "from" list
+//		if ( to.root == from.root ) {					// last node in list ?
+//			from.root = nullptr;						// mark "from" list empty
+//		} else {
+//			uBack( from.root ) = (T *)uBack( to.root );	// fix "from" list
+//			uNext( uBack( to.root ) ) = from.root;
+//			uNext( n ) = to.root;						// fix "to" list
+//			uBack( to.root ) = n;
+//		} // if
+//		transfer( to );
+//	}
+
+	#if ! defined(NDEBUG) && (defined(__CFA_DEBUG__) || defined(__CFA_VERIFY__))
+	bool $validate_fwd( dlist( tE, tLinks ) & this ) {
+		if ( ! & first( this ) ) return &last( this ) == 0p;
+
+		tE & lagElem = *0p;
+		while ( tE & it = iter( this ); advance( it ) ) {
+			if ( & lagElem == 0p &&  &it != & first( this ) ) return false;
+			&lagElem = &it;
+		}
+
+		if ( &lagElem != &last( this ) ) return false;
+
+		// TODO: verify that it is back at iter( this );
+		return true;
+	}
+
+	bool $validate_rev( dlist( tE, tLinks ) & this ) {
+		if ( ! & last( this ) ) return &first( this ) == 0p;
+
+		tE & lagElem = *0p;
+		while ( tE & it = iter( this ); recede( it ) ) {
+			if ( &lagElem == 0p && &it != & last( this ) ) return false;
+			&lagElem = &it;
+		}
+
+		if ( &lagElem != &first( this ) ) return false;
+
+		// TODO: verify that it is back at iter( this );
+		return true;
+	}
+
+	bool validate( dlist( tE, tLinks ) & this ) {
+		return $validate_fwd( this ) && $validate_rev( this );
+	}
+	#endif
 }
 
+// TEMPORARY, until foreach statement created.
+#define FOREACH( list, index ) for ( typeof(iter( list )) & (index) = iter( list ); advance( index ); )
+#define FOREACH_REV( list, index ) for ( typeof(iter( list )) & (index) = iter( list ); recede( index ); )
+#define FOREACH_COND( list, index, expr ) for ( typeof(iter( list )) & (index) = iter( list ); advance( index ) && !(expr); )
+#define FOREACH_REV_COND( list, index, expr ) for ( typeof(iter( list )) & (index) = iter( list ); recede( index ) && !(expr); )

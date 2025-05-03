@@ -262,9 +262,10 @@ static inline {
 
 	forall( ostype & | ostream( ostype ) ) {
 		ostype & ?|?( ostype & os, Int mp ) {
-			if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
+			ostream_data(ostype) const & table = ostream_table;
+			if ( table.sepPrt$( os ) ) table.fmt( os, "%s", table.sepGetCur$( os ) );
 			gmp_printf( "%Zd", mp.mpz );
-			sep( os );
+			table.sep( os );
 			return os;
 		} // ?|?
 		OSTYPE_VOID_IMPL( os, Int )

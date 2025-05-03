@@ -1,5 +1,6 @@
-#include <collections/string.hfa>
+#include <string.hfa>
 #include <string_sharectx.hfa>
+#include <fstream.hfa>
 
 
 // Purpose: call each function in string.hfa, top to bottom
@@ -158,7 +159,7 @@ int main () {
 
 
 
-    sout | size(s); // 5
+    sout | len(s); // 5
 
     //
     // concatenation/append
@@ -391,11 +392,18 @@ int main () {
     // exclude (until)       numbers:  tell me where the numbers start (include rest of the non-numbers)
 
     sout
-        | include( alphabet, cc_cba )  // 3
-        | exclude( alphabet, cc_cba )  // 0
-        | include( alphabet, cc_onml )  // 0
-        | exclude( alphabet, cc_onml )  // 11
-        | include( alphabet, cc_alphabet )  // 26
-        | exclude( alphabet, cc_alphabet ); // 0
-}
+        | (return size_t)include( alphabet, cc_cba )  // 3
+        | (return size_t)exclude( alphabet, cc_cba )  // 0
+        | (return size_t)include( alphabet, cc_onml )  // 0
+        | (return size_t)exclude( alphabet, cc_onml )  // 11
+        | (return size_t)include( alphabet, cc_alphabet )  // 26
+        | (return size_t)exclude( alphabet, cc_alphabet ); // 0
 
+    sout
+        | (return string)include( alphabet, cc_cba )  // "abc"
+        | (return string)exclude( alphabet, cc_cba )  // ""
+        | (return string)include( alphabet, cc_onml )  // ""
+        | (return string)exclude( alphabet, cc_onml )  // "abcdefghijk"
+        | (return string)include( alphabet, cc_alphabet )  // "abcdefghijklmnopqrstuvwxyz"
+        | (return string)exclude( alphabet, cc_alphabet ); // ""
+}

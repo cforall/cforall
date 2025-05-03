@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Aug 17 10:41:00 2020
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Oct 28 14:34:00 2020
-// Update Count     : 1
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Wed Sep 25 17:25:37 2024
+// Update Count     : 15
 //
 
 #define __cforall_thread__
@@ -45,7 +45,13 @@ static _Unwind_Reason_Code NAME( \
 }
 
 STOP_AT_END_FUNCTION(main_cancelstop,
-	abort();
+	abort(
+		"Propagation failed to find a matching handler.\n"
+		"Possible cause is a missing try block with appropriate catch clause for the specified or derived exception type.\n"
+		"Last exception name or message: %%s.\n"
+//		NODE_TO_EXCEPT( UNWIND_TO_NODE( unwind_exception ) )->
+//			virtual_table->msg( NODE_TO_EXCEPT( UNWIND_TO_NODE( unwind_exception ) ) )
+		);
 )
 
 STOP_AT_END_FUNCTION(thread_cancelstop,
@@ -58,7 +64,7 @@ STOP_AT_END_FUNCTION(coroutine_cancelstop,
 	struct coroutine$ * dst = src->last;
     dst->cancellation = 1p;
 	$ctx_switch( src, dst );
-	abort();
+	abort( "coroutine_cancelstop" );
 )
 
 extern "C" {

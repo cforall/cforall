@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 12 05:45:50 2024
-// Update Count     : 275
+// Last Modified On : Mon Apr 14 20:42:01 2025
+// Update Count     : 276
 //
 
 #pragma once
@@ -37,6 +37,8 @@ struct ofstream {
 }; // ofstream
 
 // Satisfies ostream
+extern basic_ostream_data(ofstream) const & basic_ostream_table;
+extern ostream_data(ofstream) const & ostream_table;
 
 // private
 bool getNL$( ofstream & );
@@ -73,7 +75,7 @@ void ends( ofstream & );
 int fmt( ofstream &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
 
 bool fail( ofstream & );
-void clear( ofstream & );
+void clearerr( ofstream & );
 int flush( ofstream & );
 void open( ofstream &, const char name[], const char mode[] ); // FIX ME: use default = "w"
 void open( ofstream &, const char name[] );
@@ -105,6 +107,8 @@ struct ifstream {
 }; // ifstream
 
 // Satisfies istream
+extern basic_istream_data(ifstream) const & basic_istream_table;
+extern istream_data(ifstream) const & istream_table;
 
 // private
 bool getANL$( ifstream & );
@@ -121,7 +125,7 @@ ifstream & ungetc( char c, ifstream & is );
 bool eof( ifstream & is );
 
 bool fail( ifstream & is );
-void clear( ifstream & );
+void clearerr( ifstream & );
 void open( ifstream & is, const char name[], const char mode[] ); // FIX ME: use default = "r"
 void open( ifstream & is, const char name[] );
 void close( ifstream & is );

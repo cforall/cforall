@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed Dec 2 11:37:00 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Feb 15 08:41:28 2022
-// Update Count     : 5
+// Last Modified On : Mon May 13 07:32:09 2024
+// Update Count     : 6
 //
 
 #pragma once
@@ -30,6 +30,7 @@ struct EmptyNote {};
 template<typename Key, typename Value, typename Note = EmptyNote>
 class ScopedMap {
 	typedef std::map< Key, Value > MapType;
+public:
 	struct Scope {
 		MapType map;
 		Note note;
@@ -43,6 +44,7 @@ class ScopedMap {
 		Scope & operator= (const Scope &) = default;
 		Scope & operator= (Scope &&) = default;
 	};
+  private:
 	typedef std::vector< Scope > ScopeList;
 
 	/// Scoped list of maps.

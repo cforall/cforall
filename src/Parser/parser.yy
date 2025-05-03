@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 17 14:35:08 2025
-// Update Count     : 6935
+// Last Modified On : Fri Apr 18 15:23:42 2025
+// Update Count     : 7283
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -53,6 +53,9 @@ using namespace std;
 #include "AST/Type.hpp"                                 // for BasicType, BasicKind
 #include "Common/SemanticError.hpp"                     // error_str
 #include "Common/Utility.hpp"                           // for maybeMoveBuild, maybeBuild, CodeLo...
+#include "AST/Attribute.hpp"         // for Attribute
+#include "AST/Print.hpp"             // for print
+#include "Common/Iterate.hpp"        // for reverseIterate
 
 // lex uses __null in a boolean context, it's fine.
 #ifdef __clang__
@@ -97,7 +100,7 @@ bool appendStr( string & to, string & from ) {
 	return true;
 } // appendStr
 
-DeclarationNode * distAttr( DeclarationNode * typeSpec, DeclarationNode * declList ) {
+DeclarationNode * distTypeSpec( DeclarationNode * typeSpec, DeclarationNode * declList ) {
 	// Distribute type specifier across all declared variables, e.g., static, const, __attribute__.
 	assert( declList );
 
@@ -131,47 +134,56 @@ DeclarationNode * distAttr( DeclarationNode * typeSpec, DeclarationNode * declLi
 	// extractType to recover the type for the aggregate instances.
 	declList->addType( cl, copyattr );					// cl IS DELETED!!!
 	return declList;
+} // distTypeSpec
+
+void distAttr( DeclarationNode * attributes, DeclarationNode * declaration ) {
+	// distribute attributes across all declaring list
+	for ( DeclarationNode * attr = attributes; attr != nullptr ; attr = attr->next ) {
+		for ( DeclarationNode * decl = declaration ; decl != nullptr ; decl = decl->next ) {
+			decl->attributes.insert( decl->attributes.begin(), attr->attributes.begin(), attr->attributes.end() );
+		} // for
+	} // for
 } // distAttr
 
 void distExt( DeclarationNode * declaration ) {
 	// distribute EXTENSION across all declarations
-	for ( DeclarationNode *iter = declaration ; iter != nullptr ; iter = iter->next ) {
-		iter->set_extension( true );
+	for ( DeclarationNode * decl = declaration ; decl != nullptr ; decl = decl->next ) {
+		decl->set_extension( true );
 	} // for
 } // distExt
 
 void distInl( DeclarationNode * declaration ) {
 	// distribute INLINE across all declarations
-	for ( DeclarationNode *iter = declaration ; iter != nullptr ; iter = iter->next ) {
-		iter->set_inLine( true );
+	for ( DeclarationNode *decl = declaration ; decl != nullptr ; decl = decl->next ) {
+		decl->set_inLine( true );
 	} // for
 } // distInl
 
 void distQual( DeclarationNode * declaration, DeclarationNode * qualifiers ) {
 	// distribute qualifiers across all non-variable declarations in a distribution statemement
-	for ( DeclarationNode * iter = declaration ; iter != nullptr ; iter = iter->next ) {
+	for ( DeclarationNode * decl = declaration ; decl != nullptr ; decl = decl->next ) {
 		// SKULLDUGGERY: Distributions are parsed inside out, so qualifiers are added to declarations inside out. Since
 		// addQualifiers appends to the back of the list, the forall clauses are in the wrong order (right to left). To
 		// get the qualifiers in the correct order and still use addQualifiers (otherwise, 90% of addQualifiers has to
 		// be copied to add to front), the appropriate forall pointers are interchanged before calling addQualifiers.
 		DeclarationNode * clone = qualifiers->clone();
 		if ( qualifiers->type ) {						// forall clause ? (handles SC)
-			if ( iter->type->kind == TypeData::Aggregate ) { // struct/union ?
-				swap( clone->type->forall, iter->type->aggregate.params );
-				iter->addQualifiers( clone );
-			} else if ( iter->type->kind == TypeData::AggregateInst && iter->type->aggInst.aggregate->aggregate.body ) { // struct/union ?
+			if ( decl->type->kind == TypeData::Aggregate ) { // struct/union ?
+				swap( clone->type->forall, decl->type->aggregate.params );
+				decl->addQualifiers( clone );
+			} else if ( decl->type->kind == TypeData::AggregateInst && decl->type->aggInst.aggregate->aggregate.body ) { // struct/union ?
 				// Create temporary node to hold aggregate, call addQualifiers as above, then put nodes back together.
 				DeclarationNode newnode;
-				swap( newnode.type, iter->type->aggInst.aggregate );
+				swap( newnode.type, decl->type->aggInst.aggregate );
 				swap( clone->type->forall, newnode.type->aggregate.params );
 				newnode.addQualifiers( clone );
-				swap( newnode.type, iter->type->aggInst.aggregate );
-			} else if ( iter->type->kind == TypeData::Function ) { // routines ?
-				swap( clone->type->forall, iter->type->forall );
-				iter->addQualifiers( clone );
+				swap( newnode.type, decl->type->aggInst.aggregate );
+			} else if ( decl->type->kind == TypeData::Function ) { // routines ?
+				swap( clone->type->forall, decl->type->forall );
+				decl->addQualifiers( clone );
 			} // if
 		} else {										// just SC qualifiers
-			iter->addQualifiers( clone );
+			decl->addQualifiers( clone );
 		} // if
 	} // for
 	delete qualifiers;
@@ -209,14 +221,14 @@ DeclarationNode * fieldDecl( DeclarationNode * typeSpec, DeclarationNode * field
 	} // if
 
 	// printf( "fieldDecl3 typeSpec %p\n", typeSpec ); typeSpec->print( std::cout, 0 );
-	DeclarationNode * temp = distAttr( typeSpec, fieldList ); // mark all fields in list
+	DeclarationNode * temp = distTypeSpec( typeSpec, fieldList ); // mark all fields in list
 	// printf( "fieldDecl4 temp %p\n", temp ); temp->print( std::cout, 0 );
 	return temp;
 } // fieldDecl
 
 #define NEW_ZERO new ExpressionNode( build_constantInteger( yylloc, *new string( "0" ) ) )
 #define NEW_ONE  new ExpressionNode( build_constantInteger( yylloc, *new string( "1" ) ) )
-#define UPDOWN( compop, left, right ) (compop == OperKinds::LThan || compop == OperKinds::LEThan ? left : right)
+#define UPDOWN( compop, left, right ) (compop == OperKinds::LThan || compop == OperKinds::LEThan || compop == OperKinds::Neq ? left : right)
 #define MISSING_ANON_FIELD "illegal syntax, missing loop fields with an anonymous loop index is meaningless as loop index is unavailable in loop body."
 #define MISSING_LOW "illegal syntax, missing low value for ascanding range so index is uninitialized."
 #define MISSING_HIGH "illegal syntax, missing high value for descending range so index is uninitialized."
@@ -229,7 +241,7 @@ static ForCtrl * makeForCtrl( const CodeLocation & location, DeclarationNode * i
 		comp ) );
 	if ( inc ) inc = new ExpressionNode( build_binary_val( location,
 		// choose += or -= for upto/downto
-		compop == OperKinds::LThan || compop == OperKinds::LEThan ? OperKinds::PlusAssn : OperKinds::MinusAssn,
+		UPDOWN( compop, OperKinds::PlusAssn, OperKinds::MinusAssn ),
 		new ExpressionNode( build_varref( location, new string( *init->name ) ) ),
 		inc ) );
 	// The StatementNode call frees init->name, it must happen later.
@@ -252,7 +264,7 @@ ForCtrl * forCtrl( const CodeLocation & location, ExpressionNode * type, string 
 	if ( constant && (constant->rep == "0" || constant->rep == "1") ) {
 		type = new ExpressionNode( new ast::CastExpr( location, maybeMoveBuild(type), new ast::BasicType( ast::BasicKind::SignedInt ) ) );
 	} // if
-	DeclarationNode * initDecl = distAttr(
+	DeclarationNode * initDecl = distTypeSpec(
 		DeclarationNode::newTypeof( type, true ),
 		DeclarationNode::newName( index )->addInitializer( new InitializerNode( start ) )
 	);
@@ -405,7 +417,8 @@ if ( N ) {																		\
 %token LSassign		RSassign							// <<=	>>=
 %token ANDassign	ERassign	ORassign				// &=	^=	|=
 
-%token ErangeUp		ErangeUpEq	ErangeDown	ErangeDownEq // +~	+~=/~=	-~	-~=
+%token ErangeUpLt	ErangeUpLe	ErangeEq	ErangeNe	// +~ +~=/~= ~== ~!=
+%token ErangeDownGt	ErangeDownGe	ErangeDownEq	ErangeDownNe //	-~ -~= -~== -~!=
 %token ATassign											// @=
 
 %type<tok> identifier					identifier_at				identifier_or_type_name		attr_name
@@ -429,18 +442,18 @@ if ( N ) {																		\
 %type<expr> argument_expression_list_opt argument_expression_list	argument_expression			default_initializer_opt
 %type<ifctrl> conditional_declaration
 %type<forctrl> for_control_expression	for_control_expression_list
-%type<oper> upupeq updown updowneq downupdowneq
+%type<oper> upupeq	updown	updownS	updownEq
 %type<expr> subrange
 %type<decl> asm_name_opt
 %type<expr> asm_operands_opt			asm_operands_list			asm_operand
-%type<labels> label_list
+%type<labels> asm_label_list
 %type<expr> asm_clobbers_list_opt
 %type<is_volatile> asm_volatile_opt
 %type<expr> handler_predicate_opt
 %type<genexpr> generic_association		generic_assoc_list
 
 // statements
-%type<stmt> statement					labeled_statement			compound_statement
+%type<stmt> statement					labelled_statement			compound_statement
 %type<stmt> statement_decl				statement_decl_list			statement_list_nodecl
 %type<stmt> selection_statement
 %type<clause> switch_clause_list_opt	switch_clause_list
@@ -925,6 +938,8 @@ unary_expression:
 		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ) ) ); }
 	| SIZEOF '(' type_no_function ')'
 		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
+	| SIZEOF '(' attribute_list type_no_function ')'
+		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuildType( $4->addQualifiers( $3 ) ) ) ); }
 	| ALIGNOF unary_expression							// GCC, variable alignment
 		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ) ) ); }
 	| ALIGNOF '(' type_no_function ')'					// GCC, type alignment
@@ -1201,7 +1216,7 @@ comma_expression_opt:
 // ************************** STATEMENTS *******************************
 
 statement:
-	labeled_statement
+	labelled_statement
 	| compound_statement
 	| expression_statement
 	| selection_statement
@@ -1219,11 +1234,9 @@ statement:
 	| asm_statement
 	| DIRECTIVE
 		{ $$ = new StatementNode( build_directive( yylloc, $1 ) ); }
-//	| attribute ';'
-//		{ $$ = new StatementNode( $1 ); } 
 	;
 
-labeled_statement:
+labelled_statement:
 		// labels cannot be identifiers 0 or 1
 	identifier_or_type_name ':' attribute_list_opt statement
 		{ $$ = $4->add_label( yylloc, $1, $3 ); }
@@ -1253,27 +1266,29 @@ statement_decl_list:									// C99
 	;
 
 statement_decl:
-	declaration											// CFA, new & old style declarations
-		{ $$ = new StatementNode( $1 ); }
-	| EXTENSION declaration								// GCC
-		{ distExt( $2 ); $$ = new StatementNode( $2 ); }
-	| function_definition
-		{ $$ = new StatementNode( $1 ); }
-	| EXTENSION function_definition						// GCC
-		{ distExt( $2 ); $$ = new StatementNode( $2 ); }
-	| statement
+	attribute_list_opt declaration						// CFA, new & old style declarations
+		{ distAttr( $1, $2 ); $$ = new StatementNode( $2 ); }
+	| attribute_list_opt EXTENSION declaration			// GCC
+		{ distAttr( $1, $3 ); distExt( $3 ); $$ = new StatementNode( $3 ); }
+	| attribute_list_opt function_definition
+		{ distAttr( $1, $2 ); $$ = new StatementNode( $2 ); }
+	| attribute_list_opt EXTENSION function_definition	// GCC
+		{ distAttr( $1, $3 ); distExt( $3 ); $$ = new StatementNode( $3 ); }
+	| attribute_list_opt statement						// FIX ME!
+		{ $$ = $2->addQualifiers( $1 ); }
 	;
 
 statement_list_nodecl:
-	statement
-	| statement_list_nodecl statement
-		{ assert( $1 ); $1->set_last( $2 ); $$ = $1; }
+	attribute_list_opt statement
+		{ $$ = $2->addQualifiers( $1 ); }									// FIX ME!
+	| statement_list_nodecl attribute_list_opt statement
+		{ assert( $1 ); $1->set_last( $3->addQualifiers( $2 ) ); $$ = $1; }	// FIX ME!
 	| statement_list_nodecl error						// invalid syntax rule
 		{ SemanticError( yylloc, "illegal syntax, declarations only allowed at the start of the switch body,"
 						 " i.e., after the '{'." ); $$ = nullptr; }
 	;
 
-expression_statement:
+expression_statement:									// expression or null statement
 	comma_expression_opt ';'
 		{ $$ = new StatementNode( build_expr( yylloc, $1 ) ); }
 	;
@@ -1470,150 +1485,156 @@ for_control_expression:
 
 	| comma_expression									// CFA, anonymous loop-index
 		{ $$ = forCtrl( yylloc, $1, new string( DeclarationNode::anonymous.newName() ), NEW_ZERO, OperKinds::LThan, $1->clone(), NEW_ONE ); }
-	| downupdowneq comma_expression						// CFA, anonymous loop-index
+	| updown comma_expression							// CFA, anonymous loop-index
 		{ $$ = forCtrl( yylloc, $2, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $1, NEW_ZERO, $2->clone() ), $1, UPDOWN( $1, $2->clone(), NEW_ZERO ), NEW_ONE ); }
 
-	| comma_expression updowneq comma_expression		// CFA, anonymous loop-index
+	| comma_expression updownS comma_expression			// CFA, anonymous loop-index
 		{ $$ = forCtrl( yylloc, $1, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $2, $1->clone(), $3 ), $2, UPDOWN( $2, $3->clone(), $1->clone() ), NEW_ONE ); }
-	| '@' updowneq comma_expression						// CFA, anonymous loop-index
+	| '@' updownS comma_expression						// CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, new string( DeclarationNode::anonymous.newName() ), $3->clone(), $2, nullptr, NEW_ONE );
 		}
-	| comma_expression updowneq '@'						// CFA, anonymous loop-index
+	| comma_expression updownS '@'						// CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 		}
-	| comma_expression updowneq comma_expression '~' comma_expression // CFA, anonymous loop-index
+
+	| comma_expression updownS comma_expression '~' comma_expression // CFA, anonymous loop-index
 		{ $$ = forCtrl( yylloc, $1, new string( DeclarationNode::anonymous.newName() ), UPDOWN( $2, $1->clone(), $3 ), $2, UPDOWN( $2, $3->clone(), $1->clone() ), $5 ); }
-	| '@' updowneq comma_expression '~' comma_expression // CFA, anonymous loop-index
+	| '@' updownS comma_expression '~' comma_expression // CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, new string( DeclarationNode::anonymous.newName() ), $3->clone(), $2, nullptr, $5 );
 		}
-	| comma_expression updowneq '@' '~' comma_expression // CFA, anonymous loop-index
+	| comma_expression updownS '@' '~' comma_expression // CFA, anonymous loop-index
 		{
 			if ( $2 == OperKinds::LThan || $2 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 			else { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 		}
-	| comma_expression updowneq comma_expression '~' '@' // CFA, invalid syntax rule
+	| comma_expression updownS comma_expression '~' '@' // CFA, invalid syntax rule
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| '@' updowneq '@'									// CFA, invalid syntax rule
+	| '@' updownS '@'									// CFA, invalid syntax rule
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| '@' updowneq comma_expression '~' '@'				// CFA, invalid syntax rule
+	| '@' updownS comma_expression '~' '@'				// CFA, invalid syntax rule
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| comma_expression updowneq '@' '~' '@'				// CFA, invalid syntax rule
+	| comma_expression updownS '@' '~' '@'				// CFA, invalid syntax rule
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
-	| '@' updowneq '@' '~' '@'							// CFA, invalid syntax rule
+	| '@' updownS '@' '~' '@'							// CFA, invalid syntax rule
 		{ SemanticError( yylloc, MISSING_ANON_FIELD ); $$ = nullptr; }
 
 		// These rules accept a comma_expression for the initialization, when only an identifier is correct. Being
 		// permissive allows for a better error message from forCtrl.
 	| comma_expression ';' comma_expression				// CFA
 		{ $$ = forCtrl( yylloc, $3, $1, NEW_ZERO, OperKinds::LThan, $3->clone(), NEW_ONE ); }
-	| comma_expression ';' downupdowneq comma_expression // CFA
+	| comma_expression ';' updown comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $4, $1, UPDOWN( $3, NEW_ZERO, $4->clone() ), $3, UPDOWN( $3, $4->clone(), NEW_ZERO ), NEW_ONE ); }
 
-	| comma_expression ';' comma_expression updowneq comma_expression // CFA
+	| comma_expression ';' comma_expression updownS comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), NEW_ONE ); }
-	| comma_expression ';' '@' updowneq comma_expression // CFA
+	| comma_expression ';' '@' updownS comma_expression // CFA
 		{
 			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $5, $1, $5->clone(), $4, nullptr, NEW_ONE );
 		}
-	| comma_expression ';' comma_expression updowneq '@' // CFA
+	| comma_expression ';' comma_expression updownS '@' // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, NEW_ONE );
 		}
-	| comma_expression ';' '@' updowneq '@'				// CFA, invalid syntax rule
+	| comma_expression ';' '@' updownS '@'				// CFA, invalid syntax rule
 		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
-	| comma_expression ';' comma_expression updowneq comma_expression '~' comma_expression // CFA
+	| comma_expression ';' comma_expression updownEq comma_expression // CFA
+		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), NEW_ONE ); }
+
+	| comma_expression ';' comma_expression updownS comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), $7 ); }
-	| comma_expression ';' '@' updowneq comma_expression '~' comma_expression // CFA, invalid syntax rule
+	| comma_expression ';' '@' updownS comma_expression '~' comma_expression // CFA, invalid syntax rule
 		{
 			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $5, $1, $5->clone(), $4, nullptr, $7 );
 		}
-	| comma_expression ';' comma_expression updowneq '@' '~' comma_expression // CFA
+	| comma_expression ';' comma_expression updownS '@' '~' comma_expression // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, $7 );
 		}
-	| comma_expression ';' comma_expression updowneq comma_expression '~' '@' // CFA
+	| comma_expression ';' comma_expression updownS comma_expression '~' '@' // CFA
 		{ $$ = forCtrl( yylloc, $3, $1, UPDOWN( $4, $3->clone(), $5 ), $4, UPDOWN( $4, $5->clone(), $3->clone() ), nullptr ); }
-	| comma_expression ';' '@' updowneq comma_expression '~' '@' // CFA, invalid syntax rule
+	| comma_expression ';' '@' updownS comma_expression '~' '@' // CFA, invalid syntax rule
 		{
 			if ( $4 == OperKinds::LThan || $4 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $5, $1, $5->clone(), $4, nullptr, nullptr );
 		}
-	| comma_expression ';' comma_expression updowneq '@' '~' '@' // CFA
+	| comma_expression ';' comma_expression updownS '@' '~' '@' // CFA
 		{
 			if ( $4 == OperKinds::GThan || $4 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 			else if ( $4 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $3, $1, $3->clone(), $4, nullptr, nullptr );
 		}
-	| comma_expression ';' '@' updowneq '@' '~' '@' // CFA
+	| comma_expression ';' '@' updownS '@' '~' '@'		// CFA
 		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
-//	| '@' identifier ';' comma_expression			// CFA
 	| declaration comma_expression						// CFA
 		{ $$ = forCtrl( yylloc, $1, NEW_ZERO, OperKinds::LThan, $2, NEW_ONE ); }
-	| declaration downupdowneq comma_expression			// CFA
+	| declaration updown comma_expression				// CFA
 		{ $$ = forCtrl( yylloc, $1, UPDOWN( $2, NEW_ZERO, $3 ), $2, UPDOWN( $2, $3->clone(), NEW_ZERO ), NEW_ONE ); }
 
-	| declaration comma_expression updowneq comma_expression // CFA
+	| declaration comma_expression updownS comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $1, UPDOWN( $3, $2->clone(), $4 ), $3, UPDOWN( $3, $4->clone(), $2->clone() ), NEW_ONE ); }
-	| declaration '@' updowneq comma_expression			// CFA
+	| declaration '@' updownS comma_expression			// CFA
 		{
 			if ( $3 == OperKinds::LThan || $3 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $4, $3, nullptr, NEW_ONE );
 		}
-	| declaration comma_expression updowneq '@'			// CFA
+	| declaration comma_expression updownS '@'			// CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, NEW_ONE );
 		}
 
-	| declaration comma_expression updowneq comma_expression '~' comma_expression // CFA
+	| declaration comma_expression updownEq comma_expression // CFA
+		{ $$ = forCtrl( yylloc, $1, UPDOWN( $3, $2->clone(), $4 ), $3, UPDOWN( $3, $4->clone(), $2->clone() ), NEW_ONE ); }
+
+	| declaration comma_expression updownS comma_expression '~' comma_expression // CFA
 		{ $$ = forCtrl( yylloc, $1, UPDOWN( $3, $2, $4 ), $3, UPDOWN( $3, $4->clone(), $2->clone() ), $6 ); }
-	| declaration '@' updowneq comma_expression '~' comma_expression // CFA
+	| declaration '@' updownS comma_expression '~' comma_expression // CFA
 		{
 			if ( $3 == OperKinds::LThan || $3 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $4, $3, nullptr, $6 );
 		}
-	| declaration comma_expression updowneq '@' '~' comma_expression // CFA
+	| declaration comma_expression updownS '@' '~' comma_expression // CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, $6 );
 		}
-	| declaration comma_expression updowneq comma_expression '~' '@' // CFA
+	| declaration comma_expression updownS comma_expression '~' '@' // CFA
 		{ $$ = forCtrl( yylloc, $1, UPDOWN( $3, $2, $4 ), $3, UPDOWN( $3, $4->clone(), $2->clone() ), nullptr ); }
-	| declaration '@' updowneq comma_expression '~' '@' // CFA
+	| declaration '@' updownS comma_expression '~' '@'	// CFA
 		{
 			if ( $3 == OperKinds::LThan || $3 == OperKinds::LEThan ) { SemanticError( yylloc, MISSING_LOW ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $4, $3, nullptr, nullptr );
 		}
-	| declaration comma_expression updowneq '@' '~' '@'	// CFA
+	| declaration comma_expression updownS '@' '~' '@'	// CFA
 		{
 			if ( $3 == OperKinds::GThan || $3 == OperKinds::GEThan ) { SemanticError( yylloc, MISSING_HIGH ); $$ = nullptr; }
 			else if ( $3 == OperKinds::LEThan ) { SemanticError( yylloc, "illegal syntax, equality with missing high value is meaningless. Use \"~\"." ); $$ = nullptr; }
 			else $$ = forCtrl( yylloc, $1, $2, $3, nullptr, nullptr );
 		}
-	| declaration '@' updowneq '@' '~' '@'				// CFA, invalid syntax rule
+	| declaration '@' updownS '@' '~' '@'				// CFA, invalid syntax rule
 		{ SemanticError( yylloc, "illegal syntax, missing low/high value for ascending/descending range so index is uninitialized." ); $$ = nullptr; }
 
-	| comma_expression ';' type_type_specifier						// CFA, enum type
+	| comma_expression ';' type_type_specifier			// CFA, enum type
 		{
 			$$ = enumRangeCtrl( $1, OperKinds::LEThan, new ExpressionNode( new ast::TypeExpr( yylloc, $3->clone()->buildType() ) ), $3 );
 		}
-	| comma_expression ';' downupdowneq enum_key		// CFA, enum type, reverse direction
+	| comma_expression ';' updown enum_key				// CFA, enum type, reverse direction
 		{
 			if ( $3 == OperKinds::GThan ) {
 				SemanticError( yylloc, "all enumeration ranges are equal (all values). Add an equal, e.g., ~=, -~=." ); $$ = nullptr;
@@ -1641,35 +1662,35 @@ enum_key:
 		}
 	;
 
-// This rule exists to handle the ambiguity with unary operator '~'. The rule is the same as updowneq minus the '~'.
+// This rule exists to handle the ambiguity with unary operator '~'. The rule is the same as updownS minus the '~'.
 // Specifically, "for ( ~5 )" means the complement of 5, not loop 0..4. Hence, in this case "for ( ~= 5 )", i.e., 0..5,
 // it is not possible to just remove the '='. The entire '~=' must be removed.
-downupdowneq:
-	ErangeUp
+updown:
+	ErangeUpLt
 		{ $$ = OperKinds::LThan; }
-	| ErangeDown
+	| ErangeDownGt
 		{ $$ = OperKinds::GThan; }
-	| ErangeUpEq
+	| ErangeUpLe
 		{ $$ = OperKinds::LEThan; }
-	| ErangeDownEq
+	| ErangeDownGe
 		{ $$ = OperKinds::GEThan; }
 	;
 
-updown:
+updownS:
 	'~'													// shorthand 0 ~ 10 => 0 +~ 10
 		{ $$ = OperKinds::LThan; }
-	| ErangeUp
-		{ $$ = OperKinds::LThan; }
-	| ErangeDown
-		{ $$ = OperKinds::GThan; }
+	| updown
 	;
 
-updowneq:
-	updown
-	| ErangeUpEq
-		{ $$ = OperKinds::LEThan; }
+updownEq:
+	ErangeEq
+		{ $$ = OperKinds::Eq; }
+	| ErangeNe
+		{ $$ = OperKinds::Neq; }
 	| ErangeDownEq
-		{ $$ = OperKinds::GEThan; }
+		{ $$ = OperKinds::Eq; }
+	| ErangeDownNe
+		{ $$ = OperKinds::Neq; }
 	;
 
 jump_statement:
@@ -1902,7 +1923,7 @@ asm_statement:
 		{ $$ = new StatementNode( build_asm( yylloc, $2, $4, $6, $8 ) ); }
 	| ASM asm_volatile_opt '(' string_literal ':' asm_operands_opt ':' asm_operands_opt ':' asm_clobbers_list_opt ')' ';'
 		{ $$ = new StatementNode( build_asm( yylloc, $2, $4, $6, $8, $10 ) ); }
-	| ASM asm_volatile_opt GOTO '(' string_literal ':' ':' asm_operands_opt ':' asm_clobbers_list_opt ':' label_list ')' ';'
+	| ASM asm_volatile_opt GOTO '(' string_literal ':' ':' asm_operands_opt ':' asm_clobbers_list_opt ':' asm_label_list ')' ';'
 		{ $$ = new StatementNode( build_asm( yylloc, $2, $5, nullptr, $8, $10, $12 ) ); }
 	;
 
@@ -1944,17 +1965,11 @@ asm_clobbers_list_opt:									// GCC
 		{ $$ = $1->set_last( $3 ); }
 	;
 
-label_list:
-	identifier
-		{
-			$$ = new LabelNode(); $$->labels.emplace_back( yylloc, *$1 );
-			delete $1;									// allocated by lexer
-		}
-	| label_list ',' identifier
-		{
-			$$ = $1; $1->labels.emplace_back( yylloc, *$3 );
-			delete $3;									// allocated by lexer
-		}
+asm_label_list:
+	identifier_or_type_name
+		{ $$ = new LabelNode(); $$->labels.emplace_back( yylloc, *$1 ); delete $1; } // allocated by lexer
+	| asm_label_list ',' identifier_or_type_name
+		{ $$ = $1; $1->labels.emplace_back( yylloc, *$3 ); delete $3; }	// allocated by lexer
 	;
 
 // ****************************** DECLARATIONS *********************************
@@ -1966,7 +1981,8 @@ declaration_list_opt:									// used at beginning of switch statement
 	;
 
 declaration_list:
-	declaration
+	attribute_list_opt declaration
+		{ $$ = $2->addQualifiers( $1 ); }
 	| declaration_list declaration
 		{ $$ = $1->set_last( $2 ); }
 	;
@@ -2113,20 +2129,20 @@ cfa_function_return:									// CFA
 	;
 
 cfa_typedef_declaration:								// CFA
-	TYPEDEF cfa_variable_specifier
+	TYPEDEF attribute_list_opt cfa_variable_specifier
 		{
-			typedefTable.addToEnclosingScope( *$2->name, TYPEDEFname, "cfa_typedef_declaration 1" );
-			$$ = $2->addTypedef();
+			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "cfa_typedef_declaration 1" );
+			$$ = $3->addTypedef()->addQualifiers( $2 );
 		}
-	| TYPEDEF cfa_function_specifier
+	| TYPEDEF attribute_list_opt cfa_function_specifier
 		{
-			typedefTable.addToEnclosingScope( *$2->name, TYPEDEFname, "cfa_typedef_declaration 2" );
-			$$ = $2->addTypedef();
+			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "cfa_typedef_declaration 2" );
+			$$ = $3->addTypedef()->addQualifiers( $2 );
 		}
-	| cfa_typedef_declaration ',' identifier
+	| cfa_typedef_declaration ',' attribute_list_opt identifier
 		{
-			typedefTable.addToEnclosingScope( *$3, TYPEDEFname, "cfa_typedef_declaration 3" );
-			$$ = $1->set_last( $1->cloneType( $3 ) );
+			typedefTable.addToEnclosingScope( *$4, TYPEDEFname, "cfa_typedef_declaration 3" );
+			$$ = $1->set_last( $1->cloneType( $4 )->addQualifiers( $3 ) );
 		}
 	;
 
@@ -2134,17 +2150,17 @@ cfa_typedef_declaration:								// CFA
 // a separate form of declaration, which syntactically precludes storage-class specifiers and initialization.
 
 typedef_declaration:
-	TYPEDEF type_specifier declarator
+	TYPEDEF attribute_list_opt type_specifier declarator
 		{
-			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "typedef_declaration 1" );
-			if ( $2->type->forall || ($2->type->kind == TypeData::Aggregate && $2->type->aggregate.params) ) {
+			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "typedef_declaration 1" );
+			if ( $3->type->forall || ($3->type->kind == TypeData::Aggregate && $3->type->aggregate.params) ) {
 				SemanticError( yylloc, "forall qualifier in typedef is currently unimplemented." ); $$ = nullptr;
-			} else $$ = $3->addType( $2 )->addTypedef(); // watchout frees $2 and $3
+			} else $$ = $4->addType( $3 )->addTypedef()->addQualifiers( $2 ); // watchout frees $3 and $4
 		}
-	| typedef_declaration ',' declarator
+	| typedef_declaration ',' attribute_list_opt declarator
 		{
-			typedefTable.addToEnclosingScope( *$3->name, TYPEDEFname, "typedef_declaration 2" );
-			$$ = $1->set_last( $1->cloneBaseType( $3 )->addTypedef() );
+			typedefTable.addToEnclosingScope( *$4->name, TYPEDEFname, "typedef_declaration 2" );
+			$$ = $1->set_last( $1->cloneBaseType( $4 )->addTypedef()->addQualifiers( $3 ) );
 		}
 	| type_qualifier_list TYPEDEF type_specifier declarator // remaining OBSOLESCENT (see 2 )
 		{ SemanticError( yylloc, "Type qualifiers/specifiers before TYPEDEF is deprecated, move after TYPEDEF." ); $$ = nullptr; }
@@ -2157,18 +2173,14 @@ typedef_declaration:
 typedef_expression:
 		// deprecated GCC, naming expression type: typedef name = exp; gives a name to the type of an expression
 	TYPEDEF identifier '=' assignment_expression
-		{
-			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
-		}
+		{ SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr; }
 	| typedef_expression ',' identifier '=' assignment_expression
-		{
-			SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr;
-		}
+		{ SemanticError( yylloc, "TYPEDEF expression is deprecated, use typeof(...) instead." ); $$ = nullptr; }
 	;
 
 c_declaration:
 	declaration_specifier declaring_list
-		{ $$ = distAttr( $1, $2 ); }
+		{ $$ = distTypeSpec( $1, $2 ); }
 	| typedef_declaration
 	| typedef_expression								// deprecated GCC, naming expression type
 	| sue_declaration_specifier
@@ -2238,7 +2250,7 @@ declaration_specifier_nobody:							// type specifier + storage class - {...}
 type_specifier:											// type specifier
 	basic_type_specifier
 	| sue_type_specifier
-	| type_type_specifier
+	| type_type_specifier attribute_list_opt
 	;
 
 type_specifier_nobody:									// type specifier - {...}
@@ -2264,15 +2276,15 @@ type_qualifier_list:
 		// ISO/IEC 9899:1999 Section 6.7.3(4 ) : If the same qualifier appears more than once in the same
 		// specifier-qualifier-list, either directly or via one or more typedefs, the behavior is the same as if it
 		// appeared only once.
-	type_qualifier
-	| type_qualifier_list type_qualifier
+	type_qualifier attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
+	| type_qualifier_list type_qualifier attribute_list_opt
+		{ $$ = $1->addQualifiers( $2 )->addQualifiers( $3 ); }
 	;
 
 type_qualifier:
 	type_qualifier_name
 		{ $$ = DeclarationNode::newFromTypeData( $1 ); }
-	| attribute											// trick handles most attribute locations
 	;
 
 type_qualifier_name:
@@ -2300,7 +2312,7 @@ forall:
 
 declaration_qualifier_list:
 	storage_class_list
-	| type_qualifier_list storage_class_list			// remaining OBSOLESCENT (see 2 )
+	| type_qualifier_list storage_class_list
 		{ $$ = $1->addQualifiers( $2 ); }
 	| declaration_qualifier_list type_qualifier_list storage_class_list
 		{ $$ = $1->addQualifiers( $2 )->addQualifiers( $3 ); }
@@ -2312,9 +2324,10 @@ storage_class_list:
 		//
 		// ISO/IEC 9899:1999 Section 6.7.1(2) : At most, one storage-class specifier may be given in the declaration
 		// specifiers in a declaration.
-	storage_class
-	| storage_class_list storage_class
+	storage_class attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
+	| storage_class_list storage_class attribute_list_opt
+		{ $$ = $1->addQualifiers( $2 )->addQualifiers( $3 ); }
 	;
 
 storage_class:
@@ -2439,8 +2452,8 @@ basic_declaration_specifier:
 	basic_type_specifier
 	| declaration_qualifier_list basic_type_specifier
 		{ $$ = $2->addQualifiers( $1 ); }
-	| basic_declaration_specifier storage_class			// remaining OBSOLESCENT (see 2)
-		{ $$ = $1->addQualifiers( $2 ); }
+	| basic_declaration_specifier storage_class attribute_list_opt // remaining OBSOLESCENT (see 2)
+		{ $$ = $1->addQualifiers( $2 )->addQualifiers( $3 ); }
 	| basic_declaration_specifier storage_class type_qualifier_list
 		{ $$ = $1->addQualifiers( $2 )->addQualifiers( $3 ); }
 	| basic_declaration_specifier storage_class basic_type_specifier
@@ -2448,8 +2461,11 @@ basic_declaration_specifier:
 	;
 
 basic_type_specifier:
-	direct_type
+	direct_type attribute_list_opt
+		{ $$ = $1->addQualifiers( $2 ); }
 		// Cannot have type modifiers, e.g., short, long, etc.
+	| type_qualifier_list_opt indirect_type attribute_list
+		{ $$ = $2->addQualifiers( $1 )->addQualifiers( $3 ); }
 	| type_qualifier_list_opt indirect_type type_qualifier_list_opt
 		{ $$ = $2->addQualifiers( $1 )->addQualifiers( $3 ); }
 	;
@@ -2521,11 +2537,12 @@ sue_type_specifier_nobody:								// struct, union, enum - {...} + type specifie
 	;
 
 type_declaration_specifier:
-	type_type_specifier
-	| declaration_qualifier_list type_type_specifier
-		{ $$ = $2->addQualifiers( $1 ); }
-	| type_declaration_specifier storage_class			// remaining OBSOLESCENT (see 2)
+	type_type_specifier attribute_list_opt
 		{ $$ = $1->addQualifiers( $2 ); }
+	| declaration_qualifier_list type_type_specifier attribute_list_opt
+		{ $$ = $2->addQualifiers( $1 )->addQualifiers( $3 ); }
+	| type_declaration_specifier storage_class attribute_list_opt // remaining OBSOLESCENT (see 2)
+		{ $$ = $1->addQualifiers( $2 )->addQualifiers( $3 ); }
 	| type_declaration_specifier storage_class type_qualifier_list
 		{ $$ = $1->addQualifiers( $2 )->addQualifiers( $3 ); }
 	;
@@ -2577,36 +2594,36 @@ elaborated_type_nobody:									// struct, union, enum - {...}
 aggregate_type:											// struct, union
 	aggregate_key attribute_list_opt
 		{ forall = false; }								// reset
-	  '{' field_declaration_list_opt '}' type_parameters_opt
-		{ $$ = DeclarationNode::newAggregate( $1, nullptr, $7, $5, true )->addQualifiers( $2 ); }
-	| aggregate_key attribute_list_opt identifier
+	  '{' field_declaration_list_opt '}' type_parameters_opt attribute_list_opt
+		{ $$ = DeclarationNode::newAggregate( $1, nullptr, $7, $5, true )->addQualifiers( $2 )->addQualifiers( $8 ); }
+	| aggregate_key attribute_list_opt identifier attribute_list_opt
 		{
 			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname, "aggregate_type: 1" );
 			forall = false;								// reset
 		}
-	  '{' field_declaration_list_opt '}' type_parameters_opt
+	  '{' field_declaration_list_opt '}' type_parameters_opt attribute_list_opt
 		{
-			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
+			$$ = DeclarationNode::newAggregate( $1, $3, $9, $7, true )->addQualifiers( $2 )->addQualifiers( $4 )->addQualifiers( $10 );
 		}
-	| aggregate_key attribute_list_opt TYPEDEFname		// unqualified type name
+	| aggregate_key attribute_list_opt TYPEDEFname attribute_list_opt // unqualified type name
 		{
 			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname, "aggregate_type: 2" );
 			forall = false;								// reset
 		}
-	  '{' field_declaration_list_opt '}' type_parameters_opt
+	  '{' field_declaration_list_opt '}' type_parameters_opt attribute_list_opt
 		{
 			DeclarationNode::newFromTypeData( build_typedef( $3 ) );
-			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
+			$$ = DeclarationNode::newAggregate( $1, $3, $9, $7, true )->addQualifiers( $2 )->addQualifiers( $4 )->addQualifiers( $10 );
 		}
-	| aggregate_key attribute_list_opt TYPEGENname		// unqualified type name
+	| aggregate_key attribute_list_opt TYPEGENname attribute_list_opt // unqualified type name
 		{
 			typedefTable.makeTypedef( *$3, forall || typedefTable.getEnclForall() ? TYPEGENname : TYPEDEFname, "aggregate_type: 3" );
 			forall = false;								// reset
 		}
-	  '{' field_declaration_list_opt '}' type_parameters_opt
+	  '{' field_declaration_list_opt '}' type_parameters_opt attribute_list_opt
 		{
 			DeclarationNode::newFromTypeData( build_type_gen( $3, nullptr ) );
-			$$ = DeclarationNode::newAggregate( $1, $3, $8, $6, true )->addQualifiers( $2 );
+			$$ = DeclarationNode::newAggregate( $1, $3, $9, $7, true )->addQualifiers( $2 )->addQualifiers( $10 );
 		}
 	| aggregate_type_nobody
 	;
@@ -2685,17 +2702,15 @@ aggregate_control:										// CFA
 	;
 
 field_declaration_list_opt:
-	// empty
+	// empty => struct S { /* no fields */ }; 
 		{ $$ = nullptr; }
-	| field_declaration_list_opt field_declaration
-		{ $$ = $1 ? $1->set_last( $2 ) : $2; }
+	| field_declaration_list_opt attribute_list_opt field_declaration
+		{ distAttr( $2, $3 ); $$ = $1 ? $1->set_last( $3 ) : $3; }
 	;
 
 field_declaration:
 	type_specifier field_declaring_list_opt ';'
-		{
-			$$ = fieldDecl( $1, $2 );
-		}
+		{ $$ = fieldDecl( $1, $2 ); }
 	| type_specifier field_declaring_list_opt '}'		// invalid syntax rule
 		{
 			SemanticError( yylloc, "illegal syntax, expecting ';' at end of previous declaration." );
@@ -2705,23 +2720,23 @@ field_declaration:
 		{ $$ = fieldDecl( $2, $3 ); distExt( $$ ); }
 	| STATIC type_specifier field_declaring_list_opt ';' // CFA
 		{ SemanticError( yylloc, "STATIC aggregate field qualifier currently unimplemented." ); $$ = nullptr; }
-	| INLINE type_specifier field_abstract_list_opt ';'	// CFA
+	| INLINE attribute_list_opt type_specifier field_abstract_list_opt ';'	// CFA
 		{
-			if ( ! $3 ) {								// field declarator ?
-				$3 = DeclarationNode::newName( nullptr );
+			if ( ! $4 ) {								// field declarator ?
+				$4 = DeclarationNode::newName( nullptr );
 			} // if
-			$3->inLine = true;
-			$$ = distAttr( $2, $3 );					// mark all fields in list
-			distInl( $3 );
+			$4->inLine = true;
+			$$ = distTypeSpec( $3, $4 );				// mark all fields in list
+			distInl( $4 );
 		}
-	| INLINE aggregate_control ';'						// CFA
+	| INLINE attribute_list_opt aggregate_control ';'						// CFA
 		{ SemanticError( yylloc, "INLINE aggregate control currently unimplemented." ); $$ = nullptr; }
 	| typedef_declaration ';'							// CFA
 	| cfa_field_declaring_list ';'						// CFA, new style field declaration
 	| EXTENSION cfa_field_declaring_list ';'			// GCC
 		{ distExt( $2 ); $$ = $2; }						// mark all fields in list
-	| INLINE cfa_field_abstract_list ';'				// CFA, new style field declaration
-		{ $$ = $2; }									// mark all fields in list
+	| INLINE attribute_list_opt cfa_field_abstract_list ';'	// CFA, new style field declaration
+		{ $$ = $3->addQualifiers( $2 ); }				// mark all fields in list
 	| cfa_typedef_declaration ';'						// CFA
 	| static_assert ';'									// C11
 	;
@@ -2761,8 +2776,7 @@ field_abstract_list_opt:
 	;
 
 field_abstract:
-		// 	no bit fields
-	variable_abstract_declarator
+	variable_abstract_declarator						// 	no bit fields
 	;
 
 cfa_field_declaring_list:								// CFA, new style field declaration
@@ -2795,14 +2809,14 @@ bit_subrange_size:
 
 enum_type:
 		// anonymous, no type name 
-	ENUM attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
+	ENUM attribute_list_opt hide_opt '{' enumerator_list comma_opt '}' attribute_list_opt
 		{
 			if ( $3 == EnumHiding::Hide ) {
 				SemanticError( yylloc, "illegal syntax, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
 			} // if
-			$$ = DeclarationNode::newEnum( nullptr, $5, true, false )->addQualifiers( $2 );
+			$$ = DeclarationNode::newEnum( nullptr, $5, true, false )->addQualifiers( $2 )->addQualifiers( $8 );
 		}
-	| ENUM enumerator_type attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
+	| ENUM enumerator_type attribute_list_opt hide_opt '{' enumerator_list comma_opt '}' attribute_list_opt
 		{
 			if ( $2 && ($2->storageClasses.val != 0 || $2->type->qualifiers.any()) ) {
 				SemanticError( yylloc, "illegal syntax, storage-class and CV qualifiers are not meaningful for enumeration constants, which are const." );
@@ -2810,16 +2824,16 @@ enum_type:
 			if ( $4 == EnumHiding::Hide ) {
 				SemanticError( yylloc, "illegal syntax, hiding ('!') the enumerator names of an anonymous enumeration means the names are inaccessible." ); $$ = nullptr;
 			} // if
-			$$ = DeclarationNode::newEnum( nullptr, $6, true, true, $2 )->addQualifiers( $3 );
+			$$ = DeclarationNode::newEnum( nullptr, $6, true, true, $2 )->addQualifiers( $3 )->addQualifiers( $9 );
 		}
 
 		// named type
-	| ENUM attribute_list_opt identifier
+	| ENUM attribute_list_opt identifier attribute_list_opt
 		{ typedefTable.makeTypedef( *$3, "enum_type 1" ); }
-	  hide_opt '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $3, $7, true, false, nullptr, $5 )->addQualifiers( $2 ); }
-	| ENUM attribute_list_opt typedef_name hide_opt '{' enumerator_list comma_opt '}' // unqualified type name
-		{ $$ = DeclarationNode::newEnum( $3->name, $6, true, false, nullptr, $4 )->addQualifiers( $2 ); }
+	  hide_opt '{' enumerator_list comma_opt '}' attribute_list_opt
+		{ $$ = DeclarationNode::newEnum( $3, $8, true, false, nullptr, $6 )->addQualifiers( $2 ->addQualifiers( $4 ))->addQualifiers( $11 ); }
+	| ENUM attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}' attribute_list_opt // unqualified type name
+		{ $$ = DeclarationNode::newEnum( $3->name, $7, true, false, nullptr, $5 )->addQualifiers( $2 )->addQualifiers( $4 )->addQualifiers( $10 ); }
 	| ENUM enumerator_type attribute_list_opt identifier attribute_list_opt
 		{
 			if ( $2 && ($2->storageClasses.any() || $2->type->qualifiers.val != 0) ) {
@@ -2827,10 +2841,10 @@ enum_type:
 			}
 			typedefTable.makeTypedef( *$4, "enum_type 2" );
 		}
-	  hide_opt '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $4, $9, true, true, $2, $7 )->addQualifiers( $3 )->addQualifiers( $5 ); }
-	| ENUM enumerator_type attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}'
-		{ $$ = DeclarationNode::newEnum( $4->name, $8, true, true, $2, $6 )->addQualifiers( $3 )->addQualifiers( $5 ); }
+	  hide_opt '{' enumerator_list comma_opt '}' attribute_list_opt
+		{ $$ = DeclarationNode::newEnum( $4, $9, true, true, $2, $7 )->addQualifiers( $3 )->addQualifiers( $5 )->addQualifiers( $12 ); }
+	| ENUM enumerator_type attribute_list_opt typedef_name attribute_list_opt hide_opt '{' enumerator_list comma_opt '}' attribute_list_opt
+		{ $$ = DeclarationNode::newEnum( $4->name, $8, true, true, $2, $6 )->addQualifiers( $3 )->addQualifiers( $5 )->addQualifiers( $11 ); }
 
 		// forward declaration
 	| enum_type_nobody
@@ -2909,11 +2923,15 @@ parameter_list_ellipsis_opt:
 
 parameter_list:											// abstract + real
 	parameter_declaration
+	| attribute_list parameter_declaration
+		{ $$ = $2->addQualifiers( $1 ); }
 	| abstract_parameter_declaration
-	| parameter_list ',' parameter_declaration
-		{ $$ = $1->set_last( $3 ); }
-	| parameter_list ',' abstract_parameter_declaration
-		{ $$ = $1->set_last( $3 ); }
+	| attribute_list abstract_parameter_declaration
+		{ $$ = $2->addQualifiers( $1 ); }
+	| parameter_list ',' attribute_list_opt parameter_declaration
+		{ $4->addQualifiers( $3 ); $$ = $1->set_last( $4 ); }
+	| parameter_list ',' attribute_list_opt abstract_parameter_declaration
+		{ $4->addQualifiers( $3 ); $$ = $1->set_last( $4 ); }
 	;
 
 cfa_parameter_list_ellipsis_opt:						// CFA, abstract + real
@@ -3001,15 +3019,19 @@ identifier_list:										// K&R-style parameter list => no types
 	;
 
 type_no_function:										// sizeof, alignof, cast (constructor)
-	cfa_abstract_declarator_tuple						// CFA
-	| type_specifier									// cannot be type_specifier_nobody, e.g., (struct S {}){} is a thing
+	type_specifier										// cannot be type_specifier_nobody, e.g., (struct S {}){} is a thing
 	| type_specifier abstract_declarator
 		{ $$ = $2->addType( $1 ); }
+	| cfa_abstract_declarator_tuple						// CFA
 	;
 
 type:													// typeof, assertion
 	type_no_function
+	| attribute_list type_no_function
+		{ $$ = $2->addQualifiers( $1 ); }
 	| cfa_abstract_function								// CFA
+	| attribute_list cfa_abstract_function				// CFA
+		{ $$ = $2->addQualifiers( $1 ); }
 	;
 
 initializer_opt:
@@ -3102,12 +3124,7 @@ type_initializer_opt:									// CFA
 
 type_parameter:											// CFA
 	type_class identifier_or_type_name
-		{
-			typedefTable.addToScope( *$2, TYPEDEFname, "type_parameter 1" );
-			if ( $1 == ast::TypeDecl::Otype ) { SemanticError( yylloc, "otype keyword is deprecated, use T " ); }
-			if ( $1 == ast::TypeDecl::Dtype ) { SemanticError( yylloc, "dtype keyword is deprecated, use T &" ); }
-			if ( $1 == ast::TypeDecl::Ttype ) { SemanticError( yylloc, "ttype keyword is deprecated, use T ..." ); }
-		}
+		{ typedefTable.addToScope( *$2, TYPEDEFname, "type_parameter 1" ); }
 	  type_initializer_opt assertion_list_opt
 		{ $$ = DeclarationNode::newTypeParam( $1, $2 )->addTypeInitializer( $4 )->addAssertions( $5 ); }
 	| identifier_or_type_name new_type_class
@@ -3121,7 +3138,8 @@ type_parameter:											// CFA
 		}
 	// | type_specifier identifier_parameter_declarator
 	| assertion_list
-		{ $$ = DeclarationNode::newTypeParam( ast::TypeDecl::Dtype, new string( DeclarationNode::anonymous.newName() ) )->addAssertions( $1 ); }
+		// Invent a placeholder type to wrap these bare assertions.  Rely on buildFunctionDecl to remove the placeholder.
+		{ $$ = DeclarationNode::newTypeParam( ast::TypeDecl::Dtype, new string( "" ) )->addAssertions( $1 ); }
 	| ENUM '(' identifier_or_type_name ')' identifier_or_type_name new_type_class type_initializer_opt assertion_list_opt
 		{	
 			typedefTable.addToScope( *$3, TYPEDIMname, "type_parameter 4" );
@@ -3145,13 +3163,13 @@ new_type_class:											// CFA
 
 type_class:												// CFA
 	OTYPE
-		{ $$ = ast::TypeDecl::Otype; }
+		{ SemanticError( yylloc, "otype keyword is deprecated, use T " ); }
 	| DTYPE
-		{ $$ = ast::TypeDecl::Dtype; }
+		{ SemanticError( yylloc, "dtype keyword is deprecated, use T &" ); }
 	| FTYPE
 		{ $$ = ast::TypeDecl::Ftype; }
 	| TTYPE
-		{ $$ = ast::TypeDecl::Ttype; }
+		{ SemanticError( yylloc, "ttype keyword is deprecated, use T ..." ); }
 	;
 
 assertion_list_opt:										// CFA
@@ -3220,7 +3238,7 @@ trait_specifier:										// CFA
 			SemanticWarning( yylloc, Warning::DeprecTraitSyntax );
 			$$ = DeclarationNode::newTrait( $2, $4, nullptr );
 		}
-	| forall TRAIT identifier_or_type_name '{' '}'		// alternate
+	| forall TRAIT identifier_or_type_name '{' '}'		// new alternate
 		{ $$ = DeclarationNode::newTrait( $3, $1, nullptr ); }
 	| TRAIT identifier_or_type_name '(' type_parameter_list ')' '{' trait_declaration_list '}'
 		{
@@ -3267,17 +3285,17 @@ translation_unit:
 		{ parseTree = parseTree ? parseTree->set_last( $1 ) : $1; }
 	;
 
-external_definition_list:
-	push external_definition pop
-		{ $$ = $2; }
-	| external_definition_list push external_definition pop
-		{ $$ = $1 ? $1->set_last( $3 ) : $3; }
-	;
-
 external_definition_list_opt:
 	// empty
 		{ $$ = nullptr; }
 	| external_definition_list
+	;
+
+external_definition_list:
+	attribute_list_opt push external_definition pop
+		{ distAttr( $1, $3 ); $$ = $3; }
+	| external_definition_list attribute_list_opt push external_definition pop
+		{ distAttr( $2, $4 ); $$ = $1 ? $1->set_last( $4 ) : $4->addQualifiers( $2 ); }
 	;
 
 up:
@@ -3586,6 +3604,8 @@ variable_declarator:
 variable_ptr:
 	ptrref_operator variable_declarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list variable_declarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list variable_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' variable_ptr ')' attribute_list_opt			// redundant parenthesis
@@ -3650,6 +3670,8 @@ function_no_ptr:
 function_ptr:
 	ptrref_operator function_declarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list function_declarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list function_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' function_ptr ')' attribute_list_opt
@@ -3702,6 +3724,8 @@ KR_function_no_ptr:
 KR_function_ptr:
 	ptrref_operator KR_function_declarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list KR_function_declarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list KR_function_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' KR_function_ptr ')'
@@ -3755,6 +3779,8 @@ variable_type_redeclarator:
 variable_type_ptr:
 	ptrref_operator variable_type_redeclarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list variable_type_redeclarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list variable_type_redeclarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' variable_type_ptr ')' attribute_list_opt		// redundant parenthesis
@@ -3819,6 +3845,8 @@ function_type_no_ptr:
 function_type_ptr:
 	ptrref_operator function_type_redeclarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list function_type_redeclarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list function_type_redeclarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' function_type_ptr ')' attribute_list_opt
@@ -3863,6 +3891,8 @@ identifier_parameter_declarator:
 identifier_parameter_ptr:
 	ptrref_operator identifier_parameter_declarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list identifier_parameter_declarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list identifier_parameter_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' identifier_parameter_ptr ')' attribute_list_opt // redundant parenthesis
@@ -3921,6 +3951,8 @@ typedef_name:
 type_parameter_ptr:
 	ptrref_operator type_parameter_redeclarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list type_parameter_redeclarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list type_parameter_redeclarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' type_parameter_ptr ')' attribute_list_opt		// redundant parenthesis
@@ -3962,12 +3994,14 @@ abstract_declarator:
 	;
 
 abstract_ptr:
-	ptrref_operator
-		{ $$ = DeclarationNode::newPointer( nullptr, $1 ); }
+	ptrref_operator attribute_list_opt
+		{ $$ = DeclarationNode::newPointer( nullptr, $1 )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list
 		{ $$ = DeclarationNode::newPointer( $2, $1 ); }
 	| ptrref_operator abstract_declarator
 		{ $$ = $2->addPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list abstract_declarator
+		{ $$ = $3->addPointer( DeclarationNode::newPointer( nullptr, $1 )->addQualifiers( $2 ) ); }
 	| ptrref_operator type_qualifier_list abstract_declarator
 		{ $$ = $3->addPointer( DeclarationNode::newPointer( $2, $1 ) ); }
 	| '(' abstract_ptr ')' attribute_list_opt
@@ -4033,7 +4067,7 @@ array_type_list:
 upupeq:
 	'~'
 		{ $$ = OperKinds::LThan; }
-	| ErangeUpEq
+	| ErangeUpLe
 		{ $$ = OperKinds::LEThan; }
 	;
 
@@ -4095,8 +4129,8 @@ abstract_parameter_declarator:
 	;
 
 abstract_parameter_ptr:
-	ptrref_operator
-		{ $$ = DeclarationNode::newPointer( nullptr, $1 ); }
+	ptrref_operator attribute_list_opt
+		{ $$ = DeclarationNode::newPointer( nullptr, $1 )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list
 		{ $$ = DeclarationNode::newPointer( $2, $1 ); }
 	| ptrref_operator abstract_parameter_declarator
@@ -4174,8 +4208,8 @@ variable_abstract_declarator:
 	;
 
 variable_abstract_ptr:
-	ptrref_operator
-		{ $$ = DeclarationNode::newPointer( nullptr, $1 ); }
+	ptrref_operator attribute_list_opt
+		{ $$ = DeclarationNode::newPointer( nullptr, $1 )->addQualifiers( $2 ); }
 	| ptrref_operator type_qualifier_list
 		{ $$ = DeclarationNode::newPointer( $2, $1 ); }
 	| ptrref_operator variable_abstract_declarator
@@ -4222,8 +4256,10 @@ cfa_identifier_parameter_declarator_no_tuple:			// CFA
 
 cfa_identifier_parameter_ptr:							// CFA
 		// No SUE declaration in parameter list.
-	ptrref_operator type_specifier_nobody
+ 	ptrref_operator type_specifier_nobody
 		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list type_specifier_nobody
+		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| type_qualifier_list ptrref_operator type_specifier_nobody
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	| ptrref_operator cfa_abstract_function
@@ -4322,6 +4358,8 @@ cfa_abstract_declarator_no_tuple:						// CFA
 cfa_abstract_ptr:										// CFA
 	ptrref_operator type_specifier
 		{ $$ = $2->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) ); }
+	| ptrref_operator attribute_list type_specifier
+		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( nullptr, $1 ) )->addQualifiers( $2 ); }
 	| type_qualifier_list ptrref_operator type_specifier
 		{ $$ = $3->addNewPointer( DeclarationNode::newPointer( $1, $2 ) ); }
 	| ptrref_operator cfa_abstract_function

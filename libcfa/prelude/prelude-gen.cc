@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz and Thierry Delisle
 // Created On       : Sat Feb 16 08:44:58 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Jan 13 14:15:29 2025
-// Update Count     : 55
+// Last Modified On : Mon Mar 10 17:30:48 2025
+// Update Count     : 65
 //
 
 #include <algorithm>
@@ -148,16 +148,12 @@ string mask2string(unsigned int mask, array<string, N> names) {
 	return result;
 }
 
-template <typename... T>
-constexpr auto make_array(T&&... values) ->
-    std::array<
-        typename std::decay<typename std::common_type<T...>::type>::type,
-        sizeof...(T)>
-{
-    return std::array<
-        typename std::decay<
-            typename std::common_type<T...>::type>::type,
-        sizeof...(T)>{{std::forward<T>(values)...}};
+template<typename... T>
+using make_array_t = std::array<std::decay_t<std::common_type_t<T...>>, sizeof...(T)>;
+
+template<typename... T>
+constexpr make_array_t<T...> make_array(T&&... values) {
+	return make_array_t<T...>{{std::forward<T>(values)...}};
 }
 
 int main() {

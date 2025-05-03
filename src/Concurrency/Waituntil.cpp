@@ -719,7 +719,7 @@ CompoundStmt * GenerateWaitUntilCore::genStatusCheckFor( const WaitUntilStmt * s
 				                    )
 				                )
 				            ),
-				            new BranchStmt( cLoc, BranchStmt::Kind::Break, Label( cLoc, switchLabel ) )
+				            new BranchStmt( cLoc, BranchStmt::Goto, Label( cLoc, switchLabel ) )
 				        }
 				    )
 				}
@@ -732,6 +732,12 @@ CompoundStmt * GenerateWaitUntilCore::genStatusCheckFor( const WaitUntilStmt * s
 		new SwitchStmt( loc,
 			new NameExpr( loc, idxName ),
 			std::move( switchCases ),
+			{}
+		)
+	);
+
+	ifBody->push_back(
+		new NullStmt( loc,
 			{ Label( loc, switchLabel ) }
 		)
 	);
@@ -789,11 +795,14 @@ CompoundStmt * GenerateWaitUntilCore::genStatusCheckFor( const WaitUntilStmt * s
 				                new NameExpr( loc, predName ),
 				                { new NameExpr( loc, clauseData.at(0)->statusName ) }
 				            ),
-				            new BranchStmt( loc, BranchStmt::Kind::Break, Label( loc, forLabel ) )
+				            new BranchStmt( loc, BranchStmt::Goto, Label( loc, forLabel ) )
 				        ),
 				        ifSwitch
 				    }
 				),   // body
+				{}
+			),
+			new NullStmt( loc,
 				{ Label( loc, forLabel ) }
 			)
 		}

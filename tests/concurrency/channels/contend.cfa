@@ -129,11 +129,13 @@ int main( int argc, char * argv[] ) {
 			ChannelSize = ato( argv[2] );
 			if ( ChannelSize < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 2:
 		if ( strcmp( argv[1], "d" ) != 0 ) {			// default ?
 			Processors = ato( argv[1] );
 			if ( Processors < 1 ) fallthrough default;
 		} // if
+		fallthrough;
 	  case 1:											// use defaults
 		break;
 	  default:

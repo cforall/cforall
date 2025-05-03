@@ -1,6 +1,6 @@
-#include <iostream.hfa>
-#include <collections/string.hfa>
-#include <collections/string_res.hfa>
+#include <fstream.hfa>
+#include <string.hfa>
+#include <string_res.hfa>
 
 
 void istream_cstr(void) {
@@ -36,7 +36,7 @@ void istream_string_res(void) {
     sout | s3;        step_otherStringAction();
     for(;;) {
         sin | si;
-      if (size(si) > 0 && si[0] == '=') break;
+      if (len(si) > 0 && si[0] == '=') break;
         sout | si;    step_otherStringAction();
     }
 }
@@ -49,7 +49,7 @@ void istream_string(void) {
     sout | s3;        step_otherStringAction();
     for(;;) {
         sin | si;
-      if (size(si) > 0 && si[0] == '=') break;
+      if (len(si) > 0 && si[0] == '=') break;
         sout | si;    step_otherStringAction();
     }
 }

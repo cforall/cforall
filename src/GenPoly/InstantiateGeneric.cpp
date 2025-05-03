@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Aug 16 10:51:00 2022
 // Last Modified By : Andrew Beach
-// Last Modified On : Mon Oct 31 16:48:00 2022
-// Update Count     : 1
+// Last Modified On : Wed Mar 12 15:18:00 2025
+// Update Count     : 2
 //
 
 #include "InstantiateGeneric.hpp"
@@ -41,6 +41,12 @@ namespace {
 // Utilities:
 
 using type_vector = ast::vector< ast::TypeExpr >;
+
+template<typename C, typename V>
+bool contains( C const & container, V const & value ) {
+	return std::any_of( container.begin(), container.end(),
+			[value]( auto& element ){ return element == value; } );
+}
 
 /// Abstracts type equality for a list of parameter types.
 struct TypeList {
@@ -158,6 +164,26 @@ bool isDtypeStatic( ast::vector<ast::TypeDecl> const & baseParams ) {
 	);
 }
 
+/// Get the scrubbed type of a declaration (see scrubTypeVars functions).
+ast::TypeExpr const * scrubTypeDecl(
+		CodeLocation const & location, ast::TypeDecl const * typeDecl ) {
+	switch ( typeDecl->kind ) {
+	// Erase any incomplete dtype to `void` (`T *` -> `void *`).
+	case ast::TypeDecl::Dtype:
+		return new ast::TypeExpr( location, new ast::VoidType() );
+	// Erase any ftype to `void (*)(void)`.
+	case ast::TypeDecl::Ftype:
+		return new ast::TypeExpr( location, new ast::FunctionType() );
+	// Remaining cases are not supported.
+	case ast::TypeDecl::Ttype:
+		assertf( false, "Ttype parameters are not currently allowed as parameters to generic types." );
+		break;
+	default:
+		assertf( false, "Unhandled type parameter kind" );
+		break;
+	}
+}
+
 /// Makes substitutions of params into baseParams; returns dtypeStatic if
 /// there is a concrete instantiation based only on {d,f}type-to-void
 /// conversions, concrete if there is a concrete instantiation requiring at
@@ -189,23 +215,8 @@ GenericType makeSubstitutions(
 					scrubAllTypeVars( ast::deepCopy( paramExpr->type ) ) ) );
 				gt |= GenericType::concrete;
 			}
-		} else switch ( (*baseParam)->kind ) {
-		case ast::TypeDecl::Dtype:
-			// Here, pretend that any incomplete dtype is `void`.
-			out.emplace_back( new ast::TypeExpr( paramExpr->location,
-				new ast::VoidType() ) );
-			break;
-		case ast::TypeDecl::Ftype:
-			// Here, pretend that any ftype is `void (*)(void)`.
-			out.emplace_back( new ast::TypeExpr( paramExpr->location,
-				new ast::FunctionType() ) );
-			break;
-		case ast::TypeDecl::Ttype:
-			assertf( false, "Ttype parameters are not currently allowed as parameters to generic types." );
-			break;
-		default:
-			assertf( false, "Unhandled type parameter kind" );
-			break;
+		} else {
+			out.emplace_back( scrubTypeDecl( paramExpr->location, *baseParam ) );
 		}
 	}
 
@@ -417,7 +428,7 @@ ast::Expr const * FixDtypeStatic::fixMemberExpr(
 	}
 }
 
-struct GenericInstantiator final :
+class GenericInstantiator final :
 		public ast::WithCodeLocation,
 		public ast::WithConstTypeSubstitution,
 		public ast::WithDeclsToAdd,
@@ -438,9 +449,15 @@ struct GenericInstantiator final :
 	/// Index of current member, used to recreate MemberExprs with the
 	/// member from an instantiation.
 	int memberIndex = -1;
+	/// The polymorphic types we are currently instantiating.
+	ast::vector<ast::Decl> instantiating;
+public:
 
 	GenericInstantiator() :
 		instantiations(), dtypeStatics(), typeNamer("_conc_") {}
+
+	ast::StructDecl const * previsit( ast::StructDecl const * );
+	ast::UnionDecl const * previsit( ast::UnionDecl const * );
 
 	ast::Type const * postvisit( ast::StructInstType const * inst );
 	ast::Type const * postvisit( ast::UnionInstType const * inst );
@@ -480,6 +497,9 @@ private:
 	ast::Type const * replaceWithConcrete( ast::Type const * type, bool doClone );
 
 	template<typename AggrDecl>
+	AggrDecl const * fixAggrDecl( AggrDecl const * decl );
+
+	template<typename AggrDecl>
 	ast::Type const * fixInstType( ast::SueInstType<AggrDecl> const * inst );
 
 	/// Strips a dtype-static aggregate decl of its type parameters,
@@ -488,6 +508,35 @@ private:
 		ast::vector<ast::TypeDecl> & baseParams,
 		ast::vector<ast::TypeExpr> const & typeSubs );
 };
+
+ast::StructDecl const * GenericInstantiator::previsit( ast::StructDecl const * decl ) {
+	return fixAggrDecl( decl );
+}
+
+ast::UnionDecl const * GenericInstantiator::previsit( ast::UnionDecl const * decl ) {
+	return fixAggrDecl( decl );
+}
+
+template<typename AggrDecl>
+AggrDecl const * GenericInstantiator::fixAggrDecl( AggrDecl const * decl ) {
+	// This function and stripDtypeParams handle declarations before their
+	// first use (required to be in the previsit for types with a self use).
+	if ( decl->params.empty() || !isDtypeStatic( decl->params ) ) {
+		return decl;
+	}
+
+	ast::vector<ast::TypeExpr> typeSubs;
+	for ( auto const & param : decl->params ) {
+		assert( !param->isComplete() );
+		typeSubs.emplace_back( scrubTypeDecl( param->location, param ) );
+	}
+
+	assert( decl->unique() );
+	auto mutDecl = ast::mutate( decl );
+	stripDtypeParams( mutDecl, mutDecl->params, typeSubs );
+
+	return mutDecl;
+}
 
 ast::Type const * GenericInstantiator::postvisit(
 		ast::StructInstType const * inst ) {
@@ -530,6 +579,8 @@ ast::Type const * GenericInstantiator::fixInstType(
 	switch ( gt ) {
 	case GenericType::dtypeStatic:
 	{
+		// This call to stripDtypeParams is used when a forward declaration
+		// has allowed an instance to appear before the full declaration.
 		auto mutInst = ast::mutate( inst );
 		assert( mutInst->base->unique() );
 		auto mutBase = mutInst->base.get_and_mutate();
@@ -554,17 +605,22 @@ ast::Type const * GenericInstantiator::fixInstType(
 				typeSubs
 			);
 
-			// Forward declare before recursion. (TODO: Only when needed, #199.)
+			// Insert the declaration so it doesn't create it again,
 			insert( inst, typeSubs, newDecl );
-			if ( AggrDecl const * forwardDecl = ast::asForward( newDecl ) ) {
-				declsToAddBefore.push_back( forwardDecl );
-			}
+			// ... but mark this declaration as one we are working on.
+			auto guard = makeFuncGuard(
+				[this, newDecl](){ instantiating.push_back( newDecl ); },
+				[this](){ instantiating.pop_back(); } );
 			// Recursively instantiate members:
 			concDecl = strict_dynamic_cast<AggrDecl const *>(
 				newDecl->accept( *visitor ) );
-			// Must occur before declaration is added so
-			// that member instantiation appear first.
+
+			// Produce the declaration after its members are instantiated.
 			declsToAddBefore.push_back( concDecl );
+		} else if ( contains( instantiating, concDecl ) ) {
+			if ( AggrDecl const * forwardDecl = ast::asForward( concDecl ) ) {
+				declsToAddBefore.push_back( forwardDecl );
+			}
 		}
 		return new ast::SueInstType<AggrDecl>( concDecl, inst->qualifiers );
 	}
@@ -631,7 +687,7 @@ ast::Expr const * GenericInstantiator::postvisit( ast::Expr const * expr ) {
 // This attempts to figure out what the final name of the field will be.
 // Pretty printing can cause this to become incorrect.
 std::string getPrintName( ast::DeclWithType const * decl ) {
-	return ( decl->linkage.is_mangled )
+	return ( decl->linkage.is_mangled && decl->mangleName != "" )
 		? decl->scopedMangleName() : decl->name;
 }
 

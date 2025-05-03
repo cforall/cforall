@@ -1696,8 +1696,6 @@ const ast::Expr * ast::Pass< core_t >::visit( const ast::StmtExpr * node ) {
 			maybe_accept( node, &StmtExpr::result );
 		}
 		maybe_accept( node, &StmtExpr::stmts       );
-		maybe_accept( node, &StmtExpr::returnDecls );
-		maybe_accept( node, &StmtExpr::dtors       );
 	}
 
 	VISIT_END( Expr, node );

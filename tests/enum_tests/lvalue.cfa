@@ -1,0 +1,28 @@
+// Check that the value catagory (lvalue or not) is correct.
+
+enum EnumC {
+	C,
+};
+
+enum() EnumOpaque {
+	O,
+};
+
+enum(int) EnumTyped {
+	T = -7,
+};
+
+int main() {
+	// Enumeration labels are like literals and are rvalues.
+	&C;
+	&O;
+	&T;
+
+	// Variables of enumerations are just regular variables though.
+	EnumC c = C;
+	&c;
+	EnumOpaque o = O;
+	&o;
+	EnumTyped t = T;
+	&t;
+}
