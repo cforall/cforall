@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 14 20:43:14 2025
-// Update Count     : 2081
+// Last Modified On : Sun May 18 08:23:40 2025
+// Update Count     : 2175
 //
 
 #include "iostream.hfa"
@@ -943,7 +943,7 @@ forall( istype & | basic_istream( istype ) ) {
 		return is;
 	} // ?|?
 
-	istype & ?|?( istype & is, const char fmt[] ) with ( basic_istream_table ) {		// match text
+	istype & ?|?( istype & is, const char fmt[] ) with ( basic_istream_table ) { // match text
 		size_t len = strlen( fmt );
 		char fmtstr[len + 16];
 		strcpy( fmtstr, fmt );							// copy format and add %n
@@ -1201,68 +1201,74 @@ forall( istype & | basic_istream( istype ) ) {
 	} // ?|?
 } // distribution
 
+// *********************************** enumerations ***********************************
 
 forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial( E ) )
 istype & ?|?( istype & is, E & e ) with ( basic_istream_table ) {
-//	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
-
 	// Match longest input enumerator string to enumerator labels, where enumerator names are unique.
+	size_t N = countof( E ), lnths[N], maxlen = 0;		// N must be > 0, maxlen must be > 0
 
-	int N = countof( E ), lnths[N], fred = 0;
-	int r = 0;
-	for ( s; E ) {										// scan string rows gathering lengths
-		lnths[r] = strlen( label( s ) );
-		if ( lnths[r] > fred ) fred = lnths[r];
-		r += 1;
+	size_t ec = 0;
+	for ( s; E ) {										// gather label lengths
+		lnths[ec] = strlen( label( s ) );
+		if ( lnths[ec] > maxlen ) maxlen = lnths[ec];	// gather longest length
+		// printf( "%s %zd\n", label( s ), lnths[e] );
+		ec += 1;
 	} // for
-
-	int mcol = -1;										// last match column
-	char ch, curr = '\0', prev = '\0';
+	// printf( "maxlen %d\n", maxlen );
 
 	fmt( is, " " );										// remove leading whitespace
-	if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
+  if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
+	// printf( "after whitespace\n" );
 
-	for ( c; fred ) {									// scan columns of the label matix (some columns missing)
-		int args = fmt( is, "%c", &ch );				// read character
-	  if ( eof( is ) ) {
-			if ( c == 0 ) return is;					// no characters read ?
+	char ch;
+	ssize_t exact = -1;									// -1 => no exact match seen so far
+
+	for ( c; maxlen ) {									// scan columns of the label matrix (some columns missing)
+		fmt( is, "%c", &ch );							// read character => get a character or EOF
+		// printf( "after fmt %d %d '%c'\n", c, args, ch );
+		if ( eof( is ) || isspace( ch ) != 0 ) {		// enumerator delimiter ? => end of enumerator
+			// printf( "match eof %zd %s\n", exact, label( fromInt( exact ) ) );
+			if ( exact != -1 ) {						// exact match available ?
+				e = fromInt( exact );
+				return is;
+			} // if
+			// printf( "no match\n" );
+			// consume input character(s) as garbage
 			clearerr( is );								// => read something => reset EOF => detect again on next read
-			break;
+			throwResume ExceptionInst( missing_data );	// no matching enumerator
 		} // if
-	  if ( args != 1 ) throwResume ExceptionInst( missing_data ); // may be unnecessary since reading single character
 
-		for ( r; N ) {									// scan enumeration strings for matching character in current column
-			if ( c < lnths[r] ) {						// string long enough for this column check ?
-				char match = label( fromInt( r ) )[c];	// optimization
-				// Stop on first match, could be other matches.
-				if ( (match == ch) && (c == 0 || curr == label( fromInt( r ) )[c - 1]) ) {
-					mcol = c;							// matching column
-					prev = curr;						// last matching character
-					curr = ch;							// current matching character
-					break;
-				} // if
+		bool match = false;
+		for ( r; N ) {									// scan all enumeration labels for matching character
+			// if ( lnths[r] > c ) printf( "%d %d %d %c %s %c\n", c, r, lnths[r], ch, label( fromInt( r ) ), label( fromInt( r ) )[c] );
+			if ( lnths[r] > c && label( fromInt( r ) )[c] == ch ) { // label long enough and matching character ?
+				// printf( "match char\n" );
+				match = true;
+				if ( lnths[r] - 1 == c ) exact = r;		// exact match ?
+				else if ( exact != -1 && lnths[exact] <= c ) exact = -1; // previous exact match too short ?
+			} else {
+				lnths[r] = 0;							// mark enumerator ineligible
 			} // if
-		} else {
-			ungetc( ch, is );							// push back last unmatching character
-			if ( mcol == -1 ) throwResume ExceptionInst( missing_data ); // no matching character in first column
-			break;
 		} // for
- 	} // for
-
-	for ( c; N ) {										// scan enumeration strings of length "mcol" for match
-		if ( mcol == lnths[c] - 1 ) {
-			char match = label( fromInt( c ) )[mcol];	// optimization
-			if ( (match == curr) && (mcol == 0 || prev == label( fromInt( c ) )[mcol - 1]) ) {
-				e = fromInt( c );
-				break;
-			} // if
+		// printf( "match %d\n", match );
+		if ( ! match ) {								// no matching character in column
+			if ( exact != -1 ) {						// exact match available ?
+				// printf( "match %zd unget %c\n", exact, ch );
+				ungetc( ch, is );						// push back last unmatching character
+				e = fromInt( exact );
+				return is;
+			} //  if
+			// consume input character(s) as garbage
+			throwResume ExceptionInst( missing_data );	// no match found
 		} // if
-	} else {
-		throwResume ExceptionInst( missing_data );		// no match in this column
-	} // for
+		//printf( "loop match %d\n", match );
+ 	} // for
+	// printf( "loop end\n" );
+	e = fromInt( exact );
 	return is;
 }
-
+ 
 forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
 	ostype & ?|?( ostype & os, E e ) {
 		return os | label( e );

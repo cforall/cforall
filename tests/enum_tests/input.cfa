@@ -1,19 +1,104 @@
 #include <fstream.hfa>
 
 int main() {
-	enum(int) E { BBB = 3, AAA, AA, AB, B, CB, AC };
-	E e;
+	{ // enumerators small to large
+		enum(int) E { B, AB, AA, AAA, BBB };
+		E e;
 
-	try {
-		for () {
-			try {
-				sin | e;
-			} catch( missing_data * ) {
-				sout | "missing data";
-				continue;								// try again
-			} // try
-			sout | e | "= " | value( e );
-		} // for
-	} catch( end_of_file * ) {
-	} // try
+		try {
+			for ( 14 ) {								// eums in input
+				try {
+					sin | e;
+				} catch( missing_data * ) {
+					sout | "missing data";
+					continue;							// try again
+				} // try
+				sout | e | nonl;
+			} // for
+		} catch( end_of_file * ) {
+			abort( "enum test failure" );
+		} // try
+		sout | nl;
+	}
+	sout | nl;
+	{ // enumerators large to small
+		enum(int) E { BBB, AAA, AA, AB, B };
+		E e;
+
+		try {
+			for ( 14 ) {								// eums in input
+				try {
+					sin | e;
+				} catch( missing_data * ) {
+					sout | "missing data";
+					continue;							// try again
+				} // try
+				sout | e | nonl;
+			} // for
+		} catch( end_of_file * ) {
+			abort( "enum test failure" );
+		} // try
+		sout | nl | nl;
+	}
+	{ // enumerators small to large, overlapping patterns
+		enum(int) E { A, B, BB, AB, BA, AA, AAA, ABA, AAB, BBB, BBA, BAB };
+		E e;
+
+		try {
+			for ( 3 ) {									// N rows
+				for ( countof( E ) ) {					// eums in input
+					try {
+						sin | e;
+					} catch( missing_data * ) {
+						sout | "missing data";
+						continue;						// try again
+					} // try
+					sout | e | nonl;
+				} // for
+				sout | nl;
+			} // for
+		} catch( end_of_file * ) {
+			abort( "enum test failure" );
+		} // try
+		sout | nl;
+	}
+	{ // enumerators large to small, overlapping patterns
+		enum(int) E { BAB, BBA, BBB, AAB, ABA, AAA, AA, BA, AB, BB, B, A };
+		E e;
+
+		try {
+			for ( 3 ) {									// N rows
+				for ( countof( E ) ) {					// eums in input
+					try {
+						sin | e;
+					} catch( missing_data * ) {
+						sout | "missing data";
+						continue;						// try again
+					} // try
+					sout | e | nonl;
+				} // for
+				sout | nl;
+			} // for
+		} catch( end_of_file * ) {
+			abort( "enum test failure" );
+		} // try
+		sout | nl;
+	}
+	{ // general, end of file
+		enum(int) E { BBB = 3, AAA, AA, AB, B, CB, AC };
+		E e;
+
+		try {
+			for () {
+				try {
+					sin | e;
+				} catch( missing_data * ) {
+					sout | "missing data";
+					continue;							// try again
+				} // try
+				sout | e | "= " | value( e ) | nonl;
+			} // for
+		} catch( end_of_file * ) {
+		} // try
+	}
 } // main

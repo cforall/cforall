@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 14 20:42:53 2025
-// Update Count     : 767
+// Last Modified On : Mon May 12 17:29:29 2025
+// Update Count     : 769
 //
 
 #pragma once
@@ -316,7 +316,9 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	OSTYPE_VOID( _Ostream_Manip(const char *) ); \
 } // ?|?
 
+
 // *********************************** istream ***********************************
+
 
 forall( istype & )
 struct basic_istream_data {
@@ -527,6 +529,16 @@ INPUT_FMT_DECL( float _Complex )
 INPUT_FMT_DECL( double _Complex )
 INPUT_FMT_DECL( long double _Complex )
 
+// *********************************** enumerations ***********************************
+
+forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial(E) )
+istype & ?|?( istype &, E & );
+
+forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
+	ostype & ?|?( ostype &, E );
+	OSTYPE_VOID( E );
+}
+
 // *********************************** time ***********************************
 
 #include <time_t.hfa>									// Duration (constructors) / Time (constructors)
@@ -537,14 +549,6 @@ forall( ostype & | ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, Time time );
 	OSTYPE_VOID( Time );
 } // distribution
-
-forall( istype & | istream( istype ), E | CfaEnum( E ) | Serial(E) )
-istype & ?|?( istype &, E & );
-
-forall( ostype & | ostream( ostype ), E | CfaEnum( E ) ) {
-	ostype & ?|?( ostype &, E );
-	OSTYPE_VOID( E );
-}
 
 // Local Variables: //
 // tab-width: 4 //
