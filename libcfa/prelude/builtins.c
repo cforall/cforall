@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Jul 21 16:21:03 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 12 18:22:26 2024
-// Update Count     : 150
+// Last Modified On : Wed May 21 18:40:14 2025
+// Update Count     : 151
 //
 
 #define __cforall_builtins__
@@ -60,7 +60,7 @@ struct generator$ {
 	inline int;
 };
 
-inline void  ?{}( generator$ & this ) { ((int&)this) = 0; }
+inline void  ?{}( generator$ & this ) { ((int &)this) = 0; }
 inline void ^?{}( generator$ & ) {}
 
 forall( T & )
@@ -80,12 +80,12 @@ inline T & resume( T & gen ) {
 // Many cases of
 //     forall( T ...
 // can be "simplified" to
-//     forall( T& | is_value(T) ...
+//     forall( T & | is_value(T) ...
 forall( T * )
 trait is_value {
-	void ?{}( T&, T );
-	T ?=?( T&, T );
-	void ^?{}( T& );
+	void ?{}( T &, T );
+	T ?=?( T &, T );
+	void ^?{}( T & );
 };
 
 // implicit increment, decrement if += defined, and implicit not if != defined
@@ -93,19 +93,19 @@ trait is_value {
 // C11 reference manual Section 6.5.16 (page 101): "An assignment expression has the value of the left operand after the
 // assignment, but is not an lvalue." Hence, return a value not a reference.
 inline {
-	forall( T& | is_value(T) | { T ?+=?( T &, one_t ); } )
+	forall( T & | is_value(T) | { T ?+=?( T &, one_t ); } )
 	T ++?( T & x ) { return x += 1; }
 
-	forall( T& | is_value(T) | { T ?+=?( T &, one_t ); } )
+	forall( T & | is_value(T) | { T ?+=?( T &, one_t ); } )
 	T ?++( T & x ) { T tmp = x; x += 1; return tmp; }
 
-	forall( T& | is_value(T) | { T ?-=?( T &, one_t ); } )
+	forall( T & | is_value(T) | { T ?-=?( T &, one_t ); } )
 	T --?( T & x ) { return x -= 1; }
 
-	forall( T& | is_value(T) | { T ?-=?( T &, one_t ); } )
+	forall( T & | is_value(T) | { T ?-=?( T &, one_t ); } )
 	T ?--( T & x ) { T tmp = x; x -= 1; return tmp; }
 
-	forall( T& | is_value(T) | { int ?!=?( T, zero_t ); } )
+	forall( T & | is_value(T) | { int ?!=?( T, zero_t ); } )
 	int !?( T & x ) { return !( x != 0 ); }
 } // distribution
 

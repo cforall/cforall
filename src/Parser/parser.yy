@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 18 15:23:42 2025
-// Update Count     : 7283
+// Last Modified On : Wed May 21 18:44:44 2025
+// Update Count     : 7296
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -154,7 +154,7 @@ void distExt( DeclarationNode * declaration ) {
 
 void distInl( DeclarationNode * declaration ) {
 	// distribute INLINE across all declarations
-	for ( DeclarationNode *decl = declaration ; decl != nullptr ; decl = decl->next ) {
+	for ( DeclarationNode * decl = declaration ; decl != nullptr ; decl = decl->next ) {
 		decl->set_inLine( true );
 	} // for
 } // distInl
@@ -776,17 +776,11 @@ generic_association:									// C11
 
 postfix_expression:
 	primary_expression
-	| postfix_expression '[' assignment_expression ',' tuple_expression_list ']'
+	| postfix_expression '[' tuple_expression_list ']' // CFA
 		// Historic, transitional: Disallow commas in subscripts.
 		// Switching to this behaviour may help check if a C compatibilty case uses comma-exprs in subscripts.
 		// Current: Commas in subscripts make tuples.
-		{ $$ = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, $1, new ExpressionNode( build_tuple( yylloc, $3->set_last( $5 ) ) ) ) ); }
-	| postfix_expression '[' assignment_expression ']'
-		// CFA, comma_expression disallowed in this context because it results in a common user error: subscripting a
-		// matrix with x[i,j] instead of x[i][j]. While this change is not backwards compatible, there seems to be
-		// little advantage to this feature and many disadvantages. It is possible to write x[(i,j)] in CFA, which is
-		// equivalent to the old x[i,j].
-		{ $$ = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, $1, $3 ) ); }
+		{ $$ = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, $1, new ExpressionNode( build_tuple( yylloc, $3 ) ) ) ); }
 	| constant '[' assignment_expression ']'			// 3[a], 'a'[a], 3.5[a]
 		{ $$ = new ExpressionNode( build_binary_val( yylloc, OperKinds::Index, $1, $3 ) ); }
 	| string_literal '[' assignment_expression ']'		// "abc"[3], 3["abc"]
@@ -3131,10 +3125,10 @@ type_parameter:											// CFA
 		{ typedefTable.addToScope( *$1, TYPEDEFname, "type_parameter 2" ); }
 	  type_initializer_opt assertion_list_opt
 		{ $$ = DeclarationNode::newTypeParam( $2, $1 )->addTypeInitializer( $4 )->addAssertions( $5 ); }
-	| '[' identifier_or_type_name ']'
+	| '[' identifier_or_type_name ']' assertion_list_opt
 		{
 			typedefTable.addToScope( *$2, TYPEDIMname, "type_parameter 3" );
-			$$ = DeclarationNode::newTypeParam( ast::TypeDecl::Dimension, $2 );
+			$$ = DeclarationNode::newTypeParam( ast::TypeDecl::Dimension, $2 )->addAssertions( $4 );
 		}
 	// | type_specifier identifier_parameter_declarator
 	| assertion_list
@@ -4034,9 +4028,12 @@ array_dimension:
 	| '[' ']' multi_array_dimension
 		{ $$ = DeclarationNode::newArray( nullptr, nullptr, false )->addArray( $3 ); }
 		// Cannot use constant_expression because of tuples => semantic check
+	| '[' assignment_expression ',' ']'					// CFA
+		{ SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
+		// { $$ = DeclarationNode::newArray( $2, nullptr, false ); }
 	| '[' assignment_expression ',' comma_expression ']' // CFA
-		{ $$ = DeclarationNode::newArray( $2, nullptr, false )->addArray( DeclarationNode::newArray( $4, nullptr, false ) ); }
-		// { SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "New array dimension is currently unimplemented." ); $$ = nullptr; }
+		// { $$ = DeclarationNode::newArray( $2, nullptr, false )->addArray( DeclarationNode::newArray( $4, nullptr, false ) ); }
 
 		// If needed, the following parses and does not use comma_expression, so the array structure can be built.
 	// | '[' push assignment_expression pop ',' push array_dimension_list pop ']' // CFA
