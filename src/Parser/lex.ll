@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Fri Apr 18 15:23:40 2025
- * Update Count     : 884
+ * Last Modified On : Thu Jun  5 22:38:35 2025
+ * Update Count     : 885
  */
 
 %option yylineno
@@ -239,7 +239,6 @@ auto			{ KEYWORD_RETURN(AUTO); }
 __auto_type		{ KEYWORD_RETURN(AUTO_TYPE); }
 basetypeof		{ KEYWORD_RETURN(BASETYPEOF); }			// CFA
 _Bool			{ KEYWORD_RETURN(BOOL); }				// C99
-__SVBool_t		{ KEYWORD_RETURN(BOOL); }				// gcc (ARM)
 break			{ KEYWORD_RETURN(BREAK); }
 case			{ KEYWORD_RETURN(CASE); }
 catch			{ QKEYWORD_RETURN(CATCH); }				// CFA
@@ -286,10 +285,6 @@ _Float64		{ FLOATXX(FLOAT64); }					// GCC
 _Float64x		{ FLOATXX(FLOAT64X); }					// GCC
 _Float128		{ FLOATXX(FLOAT128); }					// GCC
 _Float128x		{ FLOATXX(FLOAT128X); }					// GCC
-__Float32x4_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
-__Float64x2_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
-__SVFloat32_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
-__SVFloat64_t	{ FLOATXX(FLOAT128); }					// GCC (ARM)
 for				{ KEYWORD_RETURN(FOR); }
 forall			{ KEYWORD_RETURN(FORALL); }				// CFA
 fortran			{ KEYWORD_RETURN(FORTRAN); }

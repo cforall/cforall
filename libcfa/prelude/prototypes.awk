@@ -9,8 +9,8 @@
 # Author           : Peter A. Buhr
 # Created On       : Sat May 16 07:57:37 2015
 # Last Modified By : Peter A. Buhr
-# Last Modified On : Mon Mar 10 17:52:39 2025
-# Update Count     : 73
+# Last Modified On : Thu Jun  5 22:35:57 2025
+# Update Count     : 74
 #
 
 # http://llvm.org/svn/llvm-project/cfe/trunk/include/clang/Basic/Builtins.def
@@ -161,12 +161,15 @@ END {
 	printf( "long double _Complex __builtin_complex( long double, long double );\n" );
 
 	# assorted gcc builltin types
-	# ARM vector floating-point types, strip off text "__builtin.*__"
-	printf( "struct __builtin__Float32x4_t__ {};\n" );
-	printf( "struct __builtin__Float64x2_t__ {};\n" );
-	printf( "struct __builtin__SVFloat32_t__ {};\n" );
-	printf( "struct __builtin__SVFloat64_t__ {};\n" );
-	printf( "struct __builtin__SVBool_t__ {};\n" );
+	# ARM vector floating-point types
+	"uname -p" | getline processor					# get processor architecture
+	if ( processor == "aarch64" ) {
+		printf( "struct __Float32x4_t;\n" );
+		printf( "struct __Float64x2_t;\n" );
+		printf( "struct __SVFloat32_t;\n" );
+		printf( "struct __SVFloat64_t;\n" );
+		printf( "struct __SVBool_t;\n" );
+	} # if
 } # END
 
 # Local Variables: #
