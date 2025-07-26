@@ -37,10 +37,10 @@ extern "C" {
 	#define verifyfail(...)
 	#define warnf( expr, fmt, ... ) ({ static bool check_once##__LINE__ = false; if( false == check_once##__LINE__ && false == (expr)) { check_once##__LINE__ = true; __assert_warn_f(__VSTRINGIFY__(expr), __FILE__, __LINE__, __PRETTY_FUNCTION__, fmt, ## __VA_ARGS__ ); } })
 #else
-	#define verify(x)
-	#define verifyf(x, ...)
-	#define verifyfail(...)
-	#define warnf( expr, fmt, ... )
+	#define verify(x) 0
+	#define verifyf(x, ...) 0
+	#define verifyfail(...) 0
+	#define warnf( expr, fmt, ... ) 0
 #endif
 
 #ifdef __cforall
