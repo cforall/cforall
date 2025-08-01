@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Aug  7 10:14:47 2024
-// Update Count     : 1646
+// Last Modified On : Thu May 15 16:47:35 2025
+// Update Count     : 1647
 //
 
 #include <stdio.h>
@@ -973,6 +973,7 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 
 	if ( likely( tsize < heapMaster.mmapStart ) ) {		// small size => sbrk
 		size_t bucket;
+		// Find smallest bucket that is >= the allocation side.
 		#ifdef FASTLOOKUP
 		if ( likely( tsize < LookupSizes ) ) bucket = lookup[tsize];
 		else
