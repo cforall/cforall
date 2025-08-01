@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Mon Jun 10 17:45:00 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jul  2 18:15:51 2024
-// Update Count     : 5
+// Last Modified On : Thu Jul 31 18:04:31 2025
+// Update Count     : 6
 //
 
 #include "SatisfyAssertions.hpp"
@@ -455,7 +455,7 @@ void satisfyAssertions(
 
 			// should a limit be imposed? worst case here is O(n^2) but very unlikely to happen.
 
-			for (unsigned resetCount = 0; ; ++resetCount) {
+			for ( ;; ) {
 				ast::AssertionList next;
 				// make initial pass at matching assertions
 				for ( auto & assn : sat.need ) {
@@ -474,7 +474,6 @@ void satisfyAssertions(
 						goto nextSat;
 					} else if ( result == AssertionResult::Skip ) {
 						next.emplace_back(assn);
-						// goto nextSat;
 					}
 				}
 				// success
