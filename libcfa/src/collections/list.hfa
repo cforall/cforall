@@ -9,8 +9,8 @@
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 24 18:12:59 2025
-// Update Count     : 72
+// Last Modified On : Thu Aug  7 10:46:08 2025
+// Update Count     : 75
 //
 
 #pragma once
@@ -153,13 +153,9 @@ static inline tytagref(void, T) ?`inner ( T & this ) { tytagref( void, T ) ret =
 #endif
 
 
-
-
-
 forall( tE & ) {
 	struct dlink{
-		tE * next;
-		tE * prev;
+		tE * next, * prev;
 	};
 
 	static inline void ?{}( dlink( tE ) & this ) {
@@ -168,23 +164,24 @@ forall( tE & ) {
 	  )
 	}
 
-	forall( tLinks & = dlink( tE ) )
-	struct dlist {
-		inline dlink( tE );
-	};
+	forall( tLinks & = dlink( tE ) ) {
+		struct dlist {
+			inline dlink( tE );
+		};
 
-	forall( tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
-		static inline tE * $get_list_origin_addr( dlist( tE, tLinks ) & list ) {
-			dlink( tE ) & link_from_null = (*(tE *)0p)`inner;
-			ptrdiff_t link_offset = (ptrdiff_t)&link_from_null;
-			size_t origin_addr = ((size_t)&list) - link_offset;
-			size_t preResult = ORIGIN_TAG_SET( origin_addr );
-			return (tE *)preResult;
-		}
+		forall( | embedded( tE, tLinks, dlink( tE ) ) ) {
+			static inline tE * $get_list_origin_addr( dlist( tE, tLinks ) & list ) {
+				dlink( tE ) & link_from_null = (*(tE *)0p)`inner;
+				ptrdiff_t link_offset = (ptrdiff_t)&link_from_null;
+				size_t origin_addr = ((size_t)&list) - link_offset;
+				size_t preResult = ORIGIN_TAG_SET( origin_addr );
+				return (tE *)preResult;
+			}
 
-		static inline void ?{}( dlist( tE, tLinks ) & this ) {
-			tE * listOrigin = $get_list_origin_addr( this );
-			((dlink( tE ) &)this){ listOrigin, listOrigin };
+			static inline void ?{}( dlist( tE, tLinks ) & this ) {
+				tE * listOrigin = $get_list_origin_addr( this );
+				((dlink( tE ) &)this){ listOrigin, listOrigin };
+			}
 		}
 	}
 }

@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.5.1.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_YY_PARSER_PARSER_HH_INCLUDED
 # define YY_YY_PARSER_PARSER_HH_INCLUDED
@@ -44,177 +45,186 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    TYPEDEF = 258,
-    EXTERN = 259,
-    STATIC = 260,
-    AUTO = 261,
-    REGISTER = 262,
-    THREADLOCALGCC = 263,
-    THREADLOCALC11 = 264,
-    INLINE = 265,
-    FORTRAN = 266,
-    NORETURN = 267,
-    CONST = 268,
-    VOLATILE = 269,
-    RESTRICT = 270,
-    ATOMIC = 271,
-    FORALL = 272,
-    MUTEX = 273,
-    VIRTUAL = 274,
-    VTABLE = 275,
-    COERCE = 276,
-    VOID = 277,
-    CHAR = 278,
-    SHORT = 279,
-    INT = 280,
-    LONG = 281,
-    FLOAT = 282,
-    DOUBLE = 283,
-    SIGNED = 284,
-    UNSIGNED = 285,
-    BOOL = 286,
-    COMPLEX = 287,
-    IMAGINARY = 288,
-    INT128 = 289,
-    UINT128 = 290,
-    FLOAT80 = 291,
-    uuFLOAT128 = 292,
-    FLOAT16 = 293,
-    FLOAT32 = 294,
-    FLOAT32X = 295,
-    FLOAT64 = 296,
-    FLOAT64X = 297,
-    FLOAT128 = 298,
-    FLOAT128X = 299,
-    FLOAT32X4 = 300,
-    FLOAT64X2 = 301,
-    SVFLOAT32 = 302,
-    SVFLOAT64 = 303,
-    SVBOOL = 304,
-    DECIMAL32 = 305,
-    DECIMAL64 = 306,
-    DECIMAL128 = 307,
-    ZERO_T = 308,
-    ONE_T = 309,
-    SIZEOF = 310,
-    TYPEOF = 311,
-    VA_LIST = 312,
-    VA_ARG = 313,
-    AUTO_TYPE = 314,
-    COUNTOF = 315,
-    OFFSETOF = 316,
-    BASETYPEOF = 317,
-    TYPEID = 318,
-    ENUM = 319,
-    STRUCT = 320,
-    UNION = 321,
-    EXCEPTION = 322,
-    GENERATOR = 323,
-    COROUTINE = 324,
-    MONITOR = 325,
-    THREAD = 326,
-    OTYPE = 327,
-    FTYPE = 328,
-    DTYPE = 329,
-    TTYPE = 330,
-    TRAIT = 331,
-    LABEL = 332,
-    SUSPEND = 333,
-    ATTRIBUTE = 334,
-    EXTENSION = 335,
-    IF = 336,
-    ELSE = 337,
-    SWITCH = 338,
-    CASE = 339,
-    DEFAULT = 340,
-    DO = 341,
-    WHILE = 342,
-    FOR = 343,
-    BREAK = 344,
-    CONTINUE = 345,
-    GOTO = 346,
-    RETURN = 347,
-    CHOOSE = 348,
-    FALLTHROUGH = 349,
-    WITH = 350,
-    WHEN = 351,
-    WAITFOR = 352,
-    WAITUNTIL = 353,
-    CORUN = 354,
-    COFOR = 355,
-    DISABLE = 356,
-    ENABLE = 357,
-    TRY = 358,
-    THROW = 359,
-    THROWRESUME = 360,
-    AT = 361,
-    ASM = 362,
-    ALIGNAS = 363,
-    ALIGNOF = 364,
-    GENERIC = 365,
-    STATICASSERT = 366,
-    IDENTIFIER = 367,
-    TYPEDIMname = 368,
-    TYPEDEFname = 369,
-    TYPEGENname = 370,
-    TIMEOUT = 371,
-    WAND = 372,
-    WOR = 373,
-    CATCH = 374,
-    RECOVER = 375,
-    CATCHRESUME = 376,
-    FIXUP = 377,
-    FINALLY = 378,
-    INTEGERconstant = 379,
-    CHARACTERconstant = 380,
-    STRINGliteral = 381,
-    DIRECTIVE = 382,
-    C23_ATTRIBUTE = 383,
-    FLOATING_DECIMALconstant = 384,
-    FLOATING_FRACTIONconstant = 385,
-    FLOATINGconstant = 386,
-    ARROW = 387,
-    ICR = 388,
-    DECR = 389,
-    LS = 390,
-    RS = 391,
-    LE = 392,
-    GE = 393,
-    EQ = 394,
-    NE = 395,
-    ANDAND = 396,
-    OROR = 397,
-    ATTR = 398,
-    ELLIPSIS = 399,
-    EXPassign = 400,
-    MULTassign = 401,
-    DIVassign = 402,
-    MODassign = 403,
-    PLUSassign = 404,
-    MINUSassign = 405,
-    LSassign = 406,
-    RSassign = 407,
-    ANDassign = 408,
-    ERassign = 409,
-    ORassign = 410,
-    ErangeUpLt = 411,
-    ErangeUpLe = 412,
-    ErangeEq = 413,
-    ErangeNe = 414,
-    ErangeDownGt = 415,
-    ErangeDownGe = 416,
-    ErangeDownEq = 417,
-    ErangeDownNe = 418,
-    ATassign = 419,
-    THEN = 420
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    TYPEDEF = 258,                 /* TYPEDEF  */
+    EXTERN = 259,                  /* EXTERN  */
+    STATIC = 260,                  /* STATIC  */
+    AUTO = 261,                    /* AUTO  */
+    REGISTER = 262,                /* REGISTER  */
+    THREADLOCALGCC = 263,          /* THREADLOCALGCC  */
+    THREADLOCALC11 = 264,          /* THREADLOCALC11  */
+    INLINE = 265,                  /* INLINE  */
+    FORTRAN = 266,                 /* FORTRAN  */
+    NORETURN = 267,                /* NORETURN  */
+    CONST = 268,                   /* CONST  */
+    VOLATILE = 269,                /* VOLATILE  */
+    RESTRICT = 270,                /* RESTRICT  */
+    ATOMIC = 271,                  /* ATOMIC  */
+    FORALL = 272,                  /* FORALL  */
+    MUTEX = 273,                   /* MUTEX  */
+    VIRTUAL = 274,                 /* VIRTUAL  */
+    VTABLE = 275,                  /* VTABLE  */
+    COERCE = 276,                  /* COERCE  */
+    VOID = 277,                    /* VOID  */
+    CHAR = 278,                    /* CHAR  */
+    SHORT = 279,                   /* SHORT  */
+    INT = 280,                     /* INT  */
+    LONG = 281,                    /* LONG  */
+    FLOAT = 282,                   /* FLOAT  */
+    DOUBLE = 283,                  /* DOUBLE  */
+    SIGNED = 284,                  /* SIGNED  */
+    UNSIGNED = 285,                /* UNSIGNED  */
+    BOOL = 286,                    /* BOOL  */
+    COMPLEX = 287,                 /* COMPLEX  */
+    IMAGINARY = 288,               /* IMAGINARY  */
+    INT128 = 289,                  /* INT128  */
+    UINT128 = 290,                 /* UINT128  */
+    FLOAT80 = 291,                 /* FLOAT80  */
+    uuFLOAT128 = 292,              /* uuFLOAT128  */
+    FLOAT16 = 293,                 /* FLOAT16  */
+    FLOAT32 = 294,                 /* FLOAT32  */
+    FLOAT32X = 295,                /* FLOAT32X  */
+    FLOAT64 = 296,                 /* FLOAT64  */
+    FLOAT64X = 297,                /* FLOAT64X  */
+    FLOAT128 = 298,                /* FLOAT128  */
+    FLOAT128X = 299,               /* FLOAT128X  */
+    FLOAT32X4 = 300,               /* FLOAT32X4  */
+    FLOAT64X2 = 301,               /* FLOAT64X2  */
+    SVFLOAT32 = 302,               /* SVFLOAT32  */
+    SVFLOAT64 = 303,               /* SVFLOAT64  */
+    SVBOOL = 304,                  /* SVBOOL  */
+    DECIMAL32 = 305,               /* DECIMAL32  */
+    DECIMAL64 = 306,               /* DECIMAL64  */
+    DECIMAL128 = 307,              /* DECIMAL128  */
+    ZERO_T = 308,                  /* ZERO_T  */
+    ONE_T = 309,                   /* ONE_T  */
+    SIZEOF = 310,                  /* SIZEOF  */
+    TYPEOF = 311,                  /* TYPEOF  */
+    VA_LIST = 312,                 /* VA_LIST  */
+    VA_ARG = 313,                  /* VA_ARG  */
+    AUTO_TYPE = 314,               /* AUTO_TYPE  */
+    COUNTOF = 315,                 /* COUNTOF  */
+    OFFSETOF = 316,                /* OFFSETOF  */
+    BASETYPEOF = 317,              /* BASETYPEOF  */
+    TYPEID = 318,                  /* TYPEID  */
+    ENUM = 319,                    /* ENUM  */
+    STRUCT = 320,                  /* STRUCT  */
+    UNION = 321,                   /* UNION  */
+    EXCEPTION = 322,               /* EXCEPTION  */
+    GENERATOR = 323,               /* GENERATOR  */
+    COROUTINE = 324,               /* COROUTINE  */
+    MONITOR = 325,                 /* MONITOR  */
+    THREAD = 326,                  /* THREAD  */
+    OTYPE = 327,                   /* OTYPE  */
+    FTYPE = 328,                   /* FTYPE  */
+    DTYPE = 329,                   /* DTYPE  */
+    TTYPE = 330,                   /* TTYPE  */
+    TRAIT = 331,                   /* TRAIT  */
+    LABEL = 332,                   /* LABEL  */
+    SUSPEND = 333,                 /* SUSPEND  */
+    ATTRIBUTE = 334,               /* ATTRIBUTE  */
+    EXTENSION = 335,               /* EXTENSION  */
+    IF = 336,                      /* IF  */
+    ELSE = 337,                    /* ELSE  */
+    SWITCH = 338,                  /* SWITCH  */
+    CASE = 339,                    /* CASE  */
+    DEFAULT = 340,                 /* DEFAULT  */
+    DO = 341,                      /* DO  */
+    WHILE = 342,                   /* WHILE  */
+    FOR = 343,                     /* FOR  */
+    BREAK = 344,                   /* BREAK  */
+    CONTINUE = 345,                /* CONTINUE  */
+    GOTO = 346,                    /* GOTO  */
+    RETURN = 347,                  /* RETURN  */
+    CHOOSE = 348,                  /* CHOOSE  */
+    FALLTHROUGH = 349,             /* FALLTHROUGH  */
+    WITH = 350,                    /* WITH  */
+    WHEN = 351,                    /* WHEN  */
+    WAITFOR = 352,                 /* WAITFOR  */
+    WAITUNTIL = 353,               /* WAITUNTIL  */
+    CORUN = 354,                   /* CORUN  */
+    COFOR = 355,                   /* COFOR  */
+    DISABLE = 356,                 /* DISABLE  */
+    ENABLE = 357,                  /* ENABLE  */
+    TRY = 358,                     /* TRY  */
+    THROW = 359,                   /* THROW  */
+    THROWRESUME = 360,             /* THROWRESUME  */
+    AT = 361,                      /* AT  */
+    ASM = 362,                     /* ASM  */
+    ALIGNAS = 363,                 /* ALIGNAS  */
+    ALIGNOF = 364,                 /* ALIGNOF  */
+    GENERIC = 365,                 /* GENERIC  */
+    STATICASSERT = 366,            /* STATICASSERT  */
+    IDENTIFIER = 367,              /* IDENTIFIER  */
+    TYPEDIMname = 368,             /* TYPEDIMname  */
+    TYPEDEFname = 369,             /* TYPEDEFname  */
+    TYPEGENname = 370,             /* TYPEGENname  */
+    TIMEOUT = 371,                 /* TIMEOUT  */
+    WAND = 372,                    /* WAND  */
+    WOR = 373,                     /* WOR  */
+    CATCH = 374,                   /* CATCH  */
+    RECOVER = 375,                 /* RECOVER  */
+    CATCHRESUME = 376,             /* CATCHRESUME  */
+    FIXUP = 377,                   /* FIXUP  */
+    FINALLY = 378,                 /* FINALLY  */
+    INTEGERconstant = 379,         /* INTEGERconstant  */
+    CHARACTERconstant = 380,       /* CHARACTERconstant  */
+    STRINGliteral = 381,           /* STRINGliteral  */
+    DIRECTIVE = 382,               /* DIRECTIVE  */
+    C23_ATTRIBUTE = 383,           /* C23_ATTRIBUTE  */
+    FLOATING_DECIMALconstant = 384, /* FLOATING_DECIMALconstant  */
+    FLOATING_FRACTIONconstant = 385, /* FLOATING_FRACTIONconstant  */
+    FLOATINGconstant = 386,        /* FLOATINGconstant  */
+    ARROW = 387,                   /* ARROW  */
+    ICR = 388,                     /* ICR  */
+    DECR = 389,                    /* DECR  */
+    LS = 390,                      /* LS  */
+    RS = 391,                      /* RS  */
+    LE = 392,                      /* LE  */
+    GE = 393,                      /* GE  */
+    EQ = 394,                      /* EQ  */
+    NE = 395,                      /* NE  */
+    ANDAND = 396,                  /* ANDAND  */
+    OROR = 397,                    /* OROR  */
+    ATTR = 398,                    /* ATTR  */
+    ELLIPSIS = 399,                /* ELLIPSIS  */
+    EXPassign = 400,               /* EXPassign  */
+    MULTassign = 401,              /* MULTassign  */
+    DIVassign = 402,               /* DIVassign  */
+    MODassign = 403,               /* MODassign  */
+    PLUSassign = 404,              /* PLUSassign  */
+    MINUSassign = 405,             /* MINUSassign  */
+    LSassign = 406,                /* LSassign  */
+    RSassign = 407,                /* RSassign  */
+    ANDassign = 408,               /* ANDassign  */
+    ERassign = 409,                /* ERassign  */
+    ORassign = 410,                /* ORassign  */
+    ErangeUpLt = 411,              /* ErangeUpLt  */
+    ErangeUpLe = 412,              /* ErangeUpLe  */
+    ErangeEq = 413,                /* ErangeEq  */
+    ErangeNe = 414,                /* ErangeNe  */
+    ErangeDownGt = 415,            /* ErangeDownGt  */
+    ErangeDownGe = 416,            /* ErangeDownGe  */
+    ErangeDownEq = 417,            /* ErangeDownEq  */
+    ErangeDownNe = 418,            /* ErangeDownNe  */
+    ATassign = 419,                /* ATassign  */
+    THEN = 420                     /* THEN  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define TYPEDEF 258
 #define EXTERN 259
 #define STATIC 260
@@ -416,7 +426,7 @@ union YYSTYPE
 	ast::WaitUntilStmt::ClauseNode * wucn;
 	ast::GenericExpr * genexpr;
 
-#line 420 "Parser/parser.hh"
+#line 430 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -441,6 +451,8 @@ struct YYLTYPE
 
 extern YYSTYPE yylval;
 extern YYLTYPE yylloc;
+
 int yyparse (void);
+
 
 #endif /* !YY_YY_PARSER_PARSER_HH_INCLUDED  */
