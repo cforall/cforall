@@ -1,7 +1,7 @@
 #include <string.hfa>
 #include <string_sharectx.hfa>
 #include <fstream.hfa>
-
+#include <ctype.h>										// isxdigit, ispunct, isupper
 
 // Purpose: call each function in string.hfa, top to bottom
 
@@ -406,4 +406,24 @@ int main () {
         | (return string)exclude( alphabet, cc_onml )  // "abcdefghijk"
         | (return string)include( alphabet, cc_alphabet )  // "abcdefghijklmnopqrstuvwxyz"
         | (return string)exclude( alphabet, cc_alphabet ); // ""
+
+	sout
+		| (return size_t)include( "1FeC34aB", isxdigit )
+		| (return size_t)include( ".,;’!\"", ispunct )
+		| (return size_t)include( "XXXx", isupper );
+
+	sout
+		| (return string)include( "1FeC34aB", isxdigit )
+		| (return string)include( ".,;’!\"", ispunct )
+		| (return string)include( "XXXx", isupper );
+
+	sout
+		| (return size_t)exclude( "1FeC34aB", isdigit )
+		| (return size_t)exclude( ".,;’!\"", ispunct )
+		| (return size_t)exclude( "XXXx", islower );
+
+	sout
+		| (return string)exclude( "1FeC34aB", isalpha )
+		| (return string)exclude( ".,;’!\"", ispunct )
+		| (return string)exclude( "XXXx", islower );
 }

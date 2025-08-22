@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 13 21:03:35 2025
-// Update Count     : 284
+// Last Modified On : Thu Aug 21 09:07:28 2025
+// Update Count     : 308
 //
 
 #pragma once
@@ -277,33 +277,64 @@ void ?{}( charclass &, const char * chars, size_t charssize );
 void ^?{}( charclass & );
 
 size_t include( const string & s, const charclass & mask );
-static inline size_t include( const char * cs, const charclass & mask ) { const string s = cs; return include( s, mask ); }
+static inline size_t include( const string & s, const char * mask ) { return include( s, (charclass){ mask } ); }
+static inline size_t include( const string & s, const string & mask ) { return include( s, (charclass){ mask } ); }
+static inline size_t include( const char * cs, const charclass & mask ) { return include( (string){ cs }, mask ); }
+static inline size_t include( const char * cs, const char * mask ) { return include( (string){ cs }, (charclass){ mask } ); }
+static inline size_t include( const char * cs, const string & mask ) { return include( (string){ cs }, (charclass){ mask } ); }
+
 static inline string include( const string & s, const charclass & mask ) { return s( 0, include( s, mask ) ); }
+static inline string include( const string & s, const char * mask ) { return s( 0, include( s, (charclass){ mask } ) ); }
+static inline string include( const string & s, const string & mask ) { return s( 0, include( s, (charclass){ mask } ) ); }
 static inline string include( const char * cs, const charclass & mask ) { const string s = cs; return s( 0, include( s, mask ) ); }
+static inline string include( const char * cs, const char * mask ) { const string s = cs; return s( 0, include( s, (charclass){ mask } ) ); }
+static inline string include( const char * cs, const string & mask ) { const string s = cs; return s( 0, include( s, (charclass){ mask } ) ); }
 
 size_t exclude( const string & s, const charclass & mask );
-static inline size_t exclude( const char * cs, const charclass & mask ) { const string s = cs; return exclude( s, mask ); }
+static inline size_t exclude( const string & s, const char * mask ) { return exclude( s, (charclass){ mask } ); }
+static inline size_t exclude( const string & s, const string & mask ) { return exclude( s, (charclass){ mask } ); }
+static inline size_t exclude( const char * cs, const charclass & mask ) { return exclude( (string){ cs }, mask ); }
+static inline size_t exclude( const char * cs, const string & mask ) { return exclude( (string){ cs }, (charclass){ mask } ); }
+static inline size_t exclude( const char * cs, const char * mask ) { return exclude( (string){ cs }, (charclass){ mask } ); }
+
 static inline string exclude( const string & s, const charclass & mask ) { return s( 0, exclude( s, mask ) ); }
+static inline string exclude( const string & s, const char * mask ) { return s( 0, exclude( s, (charclass){ mask } ) ); }
+static inline string exclude( const string & s, const string & mask ) { return s( 0, exclude( s, (charclass){ mask } ) ); }
 static inline string exclude( const char * cs, const charclass & mask ) { const string s = cs; return s( 0, exclude( s, mask ) ); }
+static inline string exclude( const char * cs, const string & mask ) { const string s = cs; return s( 0, exclude( s, (charclass){ mask } ) ); }
+static inline string exclude( const char * cs, const char * mask ) { const string s = cs; return s( 0, exclude( s, (charclass){ mask } ) ); }
 
-size_t include( const string & s, int (*f)( int ) );
-static inline size_t include( const char * cs, int (*f)( int ) ) { const string S = cs; return include( S, f ); }
-static inline string include( const string & s, int (*f)( int ) ) { return s( 0, include( s, f ) ); }
-static inline string include( const char * cs, int (*f)( int ) ) { const string s = cs; return s( 0, include( s, f ) ); }
+size_t include( const string & s, int (* f)( int ) );	// for C character-class functions, e.g., isdigit
+static inline size_t include( const char * cs, int (* f)( int ) ) { return include( (string){ cs }, f ); }
+static inline string include( const string & s, int (* f)( int ) ) { return s( 0, include( s, f ) ); }
+static inline string include( const char * cs, int (* f)( int ) ) { const string s = cs; return s( 0, include( s, f ) ); }
 
-size_t exclude( const string & s, int (*f)( int ) );
-static inline size_t exclude( const char * cs, int (*f)( int ) ) { const string s = cs; return exclude( s, f ); }
-static inline string exclude( const string & s, int (*f)( int ) ) { return s( 0, exclude( s, f ) ); }
-static inline string exclude( const char * cs, int (*f)( int ) ) { const string s = cs; return s( 0, exclude( s, f ) ); }
+static inline size_t include( const string & s, bool (* f)( char ) ) { return include( s, (int (*)( int ))f ); }
+static inline size_t include( const char * cs, bool (* f)( char ) ) { return include( (string){ cs }, f ); }
+static inline string include( const string & s, bool (* f)( char ) ) { return s( 0, include( s, f ) ); }
+static inline string include( const char * cs, bool (* f)( char ) ) { const string s = cs; return s( 0, include( s, f ) ); }
+
+size_t exclude( const string & s, int (* f)( int ) );	// for C character-class functions, e.g., isdigit
+static inline size_t exclude( const char * cs, int (* f)( int ) ) { return exclude( (string){ cs }, f ); }
+static inline string exclude( const string & s, int (* f)( int ) ) { return s( 0, exclude( s, f ) ); }
+static inline string exclude( const char * cs, int (* f)( int ) ) { const string s = cs; return s( 0, exclude( s, f ) ); }
+
+static inline size_t exclude( const string & s, bool (* f)( char ) ) { return exclude( s, (int (*)( int ))f ); }
+static inline size_t exclude( const char * cs, bool (* f)( char ) ) { return exclude( (string){ cs }, f ); }
+static inline string exclude( const string & s, bool (* f)( char ) ) { return s( 0, exclude( s, f ) ); }
+static inline string exclude( const char * cs, bool (* f)( char ) ) { const string s = cs; return s( 0, exclude( s, f ) ); }
 
 string replace( const string & s, const string & from, const string & to );
-static inline string replace( const char * s, const char * from, const char * to ) { string S = s, From = from, To = to; return replace( S, From, To ); }
-static inline string replace( const string & s, const char * from, const char * to ) { const string From = from, To = to; return replace( s, From, To ); }
-static inline string replace( const string & s, const char * from, const string & to ) { const string From = from; return replace( s, From, to ); }
-static inline string replace( const string & s, string & from, const char * to ) { const string To = to; return replace( s, from, To ); }
+static inline string replace( const char * s, const char * from, const char * to ) { return replace( (string){ s }, (string){ from }, (string){ to } ); }
+static inline string replace( const string & s, const char * from, const char * to ) { return replace( s, (string){ from }, (string){ to } ); }
+static inline string replace( const string & s, const char * from, const string & to ) { return replace( s, (string){ from }, to ); }
+static inline string replace( const string & s, string & from, const char * to ) { return replace( s, from, (string){ to } ); }
 
-string translate( const string & s, int (*f)( int ) );
-static inline string translate( const char * c, int (*f)( int ) ) { const string S = c; return translate( S, f ); }
+string translate( const string & s, int (* f)( int ) );	// for C character-class functions, e.g., isdigit
+static inline string translate( const char * cs, int (* f)( int ) ) { return translate( (string){ cs }, f ); }
+
+static inline string translate( const string & s, bool (* f)( char ) ) { return translate( s, (int (*)( int ))f ); }
+static inline string translate( const char * cs, bool (* f)( char ) ) { return translate( (string){ cs }, f ); }
 
 #ifndef _COMPILING_STRING_CFA_
 #undef PBOOST

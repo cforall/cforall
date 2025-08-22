@@ -85,3 +85,7 @@ true true false true true true true true false
 true false true false true true true false true false
 3 0 0 11 26 0
 abc   abcdefghijk abcdefghijklmnopqrstuvwxyz 
+8 3 3
+1FeC34aB .,; XXX
+0 0 3
+1  XXX
