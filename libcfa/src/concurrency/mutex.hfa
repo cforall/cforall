@@ -11,8 +11,8 @@
 // Author           : Thierry Delisle
 // Created On       : Fri May 25 01:24:09 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:46:08 2023
-// Update Count     : 2
+// Last Modified On : Thu Aug 21 22:35:23 2025
+// Update Count     : 3
 //
 
 #pragma once
@@ -78,7 +78,7 @@ trait is_lock {
 //-----------------------------------------------------------------------------
 // Condition variables
 
-struct condition_variable {
+struct cond_lock {
 	// Spin lock used for mutual exclusion
 	__spinlock_t lock;
 
@@ -86,16 +86,16 @@ struct condition_variable {
 	__queue_t(struct thread$) blocked_threads;
 };
 
-void ?{}(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
-void ^?{}(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void ?{}(cond_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void ^?{}(cond_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
 
-void notify_one(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
-void notify_all(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void notify_one(cond_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void notify_all(cond_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
 
-void wait(condition_variable & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void wait(cond_lock & this) __attribute__((deprecated("use concurrency/locks.hfa instead")));
 
 forall(L & | is_lock(L))
-void wait(condition_variable & this, L & l) __attribute__((deprecated("use concurrency/locks.hfa instead")));
+void wait(cond_lock & this, L & l) __attribute__((deprecated("use concurrency/locks.hfa instead")));
 
 //-----------------------------------------------------------------------------
 // Scopes

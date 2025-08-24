@@ -6,16 +6,16 @@
 const unsigned int num_times = 20_000;
 
 multiple_acquisition_lock m;
-condition_variable( multiple_acquisition_lock ) c_m;
+cond_lock( multiple_acquisition_lock ) c_m;
 
 single_acquisition_lock s;
-condition_variable( single_acquisition_lock ) c_s;
+cond_lock( single_acquisition_lock ) c_s;
 
 owner_lock o;
-condition_variable( owner_lock ) c_o;
+cond_lock( owner_lock ) c_o;
 
 exp_backoff_then_block_lock l;
-condition_variable( exp_backoff_then_block_lock ) c_l;
+cond_lock( exp_backoff_then_block_lock ) c_l;
 
 fast_block_lock f;
 fast_cond_var( fast_block_lock ) f_c_f;

@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 25 07:14:16 2025
-// Update Count     : 22
+// Last Modified On : Thu Aug 21 22:36:44 2025
+// Update Count     : 23
 //
 
 #pragma once
@@ -796,7 +796,7 @@ forall( L & | is_blocking_lock( L ) ) {
 forall( L & | is_blocking_lock( L ) ) {
 
 	//-----------------------------------------------------------------------------
-	// condition_variable
+	// cond_lock
 
 	// The multi-tool condition variable
 	// - can pass timeouts to wait for either a signal or timeout
@@ -804,7 +804,7 @@ forall( L & | is_blocking_lock( L ) ) {
 	// - can have waiters reacquire different locks while waiting on the same cond var
 	// - has shadow queue
 	// - can be signalled outside of critical sections with no locks held
-	struct condition_variable {
+	struct cond_lock {
 		// Spin lock used for mutual exclusion
 		__spinlock_t lock;
 
@@ -815,26 +815,26 @@ forall( L & | is_blocking_lock( L ) ) {
 		int count;
 	};
 
-	void ?{}( condition_variable( L ) & this );
-	void ^?{}( condition_variable( L ) & this );
+	void ?{}( cond_lock( L ) & this );
+	void ^?{}( cond_lock( L ) & this );
 
-	bool notify_one( condition_variable( L ) & this );
-	bool notify_all( condition_variable( L ) & this );
+	bool notify_one( cond_lock( L ) & this );
+	bool notify_all( cond_lock( L ) & this );
 
-	uintptr_t front( condition_variable( L ) & this );
+	uintptr_t front( cond_lock( L ) & this );
 
-	bool empty  ( condition_variable( L ) & this );
-	int  counter( condition_variable( L ) & this );
+	bool empty  ( cond_lock( L ) & this );
+	int  counter( cond_lock( L ) & this );
 
-	void wait( condition_variable( L ) & this );
-	void wait( condition_variable( L ) & this, uintptr_t info );
-	bool wait( condition_variable( L ) & this, Duration duration );
-	bool wait( condition_variable( L ) & this, uintptr_t info, Duration duration );
+	void wait( cond_lock( L ) & this );
+	void wait( cond_lock( L ) & this, uintptr_t info );
+	bool wait( cond_lock( L ) & this, Duration duration );
+	bool wait( cond_lock( L ) & this, uintptr_t info, Duration duration );
 
-	void wait( condition_variable( L ) & this, L & l );
-	void wait( condition_variable( L ) & this, L & l, uintptr_t info );
-	bool wait( condition_variable( L ) & this, L & l, Duration duration );
-	bool wait( condition_variable( L ) & this, L & l, uintptr_t info, Duration duration );
+	void wait( cond_lock( L ) & this, L & l );
+	void wait( cond_lock( L ) & this, L & l, uintptr_t info );
+	bool wait( cond_lock( L ) & this, L & l, Duration duration );
+	bool wait( cond_lock( L ) & this, L & l, uintptr_t info, Duration duration );
 
 	//-----------------------------------------------------------------------------
 	// fast_cond_var

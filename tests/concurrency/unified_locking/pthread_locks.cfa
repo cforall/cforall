@@ -11,7 +11,7 @@ simple_owner_lock l;
 pthread_cond_var( simple_owner_lock ) c;
 
 owner_lock l2;
-condition_variable( owner_lock ) c2;
+cond_lock( owner_lock ) c2;
 
 volatile int counter = 0;
 

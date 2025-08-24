@@ -6,7 +6,7 @@
 #include <kernel.hfa>
 
 multiple_acquisition_lock m, n;
-condition_variable( multiple_acquisition_lock ) c_m, c_n;
+cond_lock( multiple_acquisition_lock ) c_m, c_n;
 
 const unsigned int NoOfTimes = 20;
 
@@ -72,10 +72,10 @@ void main( T2 & ) {
 int main() {
 	processor p[2];
 	printf("Start Test 1: surface testing condition variable timeout routines\n");
-	wait( c_m, 1`ns );														// bool wait( condition_variable(L) & this, Duration duration );
-	wait( c_m, 10, 1`ns );													// bool wait( condition_variable(L) & this, uintptr_t info, Duration duration );
-	lock(m); wait( c_m, m, 1`ns ); unlock(m); 								// bool wait( condition_variable(L) & this, L & l, Duration duration );
-	lock(m); wait( c_m, m, 10, 1`ns ); unlock(m);							// bool wait( condition_variable(L) & this, L & l, uintptr_t info, Duration duration );
+	wait( c_m, 1`ns );														// bool wait( cond_lock(L) & this, Duration duration );
+	wait( c_m, 10, 1`ns );													// bool wait( cond_lock(L) & this, uintptr_t info, Duration duration );
+	lock(m); wait( c_m, m, 1`ns ); unlock(m); 								// bool wait( cond_lock(L) & this, L & l, Duration duration );
+	lock(m); wait( c_m, m, 10, 1`ns ); unlock(m);							// bool wait( cond_lock(L) & this, L & l, uintptr_t info, Duration duration );
 	printf("Done Test 1\n");
 
 	printf("Start Test 2: testing timeout vs signalling with varying timeout durations\n");

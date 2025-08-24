@@ -245,11 +245,11 @@ bool on_selected( blocking_lock & this, select_node & node ) { return true; }
 forall(L & | is_blocking_lock(L)) {
 	struct alarm_node_wrap {
 		alarm_node_t alarm_node;
-		condition_variable(L) * cond;
+		cond_lock(L) * cond;
 		info_thread(L) * info_thd;
 	};
 
-	void ?{}( alarm_node_wrap(L) & this, Duration alarm, Duration period, Alarm_Callback callback, condition_variable(L) * c, info_thread(L) * i ) {
+	void ?{}( alarm_node_wrap(L) & this, Duration alarm, Duration period, Alarm_Callback callback, cond_lock(L) * c, info_thread(L) * i ) {
 		this.alarm_node{ callback, alarm, period };
 		this.cond = c;
 		this.info_thd = i;
@@ -258,7 +258,7 @@ forall(L & | is_blocking_lock(L)) {
 	void ^?{}( alarm_node_wrap(L) & this ) { }
 
 	static void timeout_handler ( alarm_node_wrap(L) & this ) with( this ) {
-		// This condition_variable member is called from the kernel, and therefore, cannot block, but it can spin.
+		// This cond_lock member is called from the kernel, and therefore, cannot block, but it can spin.
 		lock( cond->lock __cfaabi_dbg_ctx2 );
 
 		// this check is necessary to avoid a race condition since this timeout handler
@@ -322,15 +322,15 @@ forall(L & | is_blocking_lock(L)) {
 
 	//-----------------------------------------------------------------------------
 	// condition variable
-	void ?{}( condition_variable(L) & this ){
+	void ?{}( cond_lock(L) & this ){
 		this.lock{};
 		this.blocked_threads{};
 		this.count = 0;
 	}
 
-	void ^?{}( condition_variable(L) & this ){ }
+	void ^?{}( cond_lock(L) & this ){ }
 
-	static void process_popped( condition_variable(L) & this, info_thread(L) & popped ) with( this ) {
+	static void process_popped( cond_lock(L) & this, info_thread(L) & popped ) with( this ) {
 		if (&popped != 0p) {
 			popped.signalled = true;
 			count--;
@@ -344,7 +344,7 @@ forall(L & | is_blocking_lock(L)) {
 		}
 	}
 
-	bool notify_one( condition_variable(L) & this ) with( this ) {
+	bool notify_one( cond_lock(L) & this ) with( this ) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		bool ret = ! isEmpty( blocked_threads );
 		process_popped(this, remove_first( blocked_threads ));
@@ -352,7 +352,7 @@ forall(L & | is_blocking_lock(L)) {
 		return ret;
 	}
 
-	bool notify_all( condition_variable(L) & this ) with(this) {
+	bool notify_all( cond_lock(L) & this ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		bool ret = ! isEmpty( blocked_threads );
 		while( ! isEmpty( blocked_threads ) ) {
@@ -362,20 +362,20 @@ forall(L & | is_blocking_lock(L)) {
 		return ret;
 	}
 
-	uintptr_t front( condition_variable(L) & this ) with(this) {
+	uintptr_t front( cond_lock(L) & this ) with(this) {
 		return isEmpty( blocked_threads ) ? NULL : first( blocked_threads ).info;
 	}
 
-	bool empty( condition_variable(L) & this ) with(this) {
+	bool empty( cond_lock(L) & this ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		bool ret = isEmpty( blocked_threads );
 		unlock( lock );
 		return ret;
 	}
 
-	int counter( condition_variable(L) & this ) with(this) { return count; }
+	int counter( cond_lock(L) & this ) with(this) { return count; }
 
-	static void enqueue_thread( condition_variable(L) & this, info_thread(L) * i ) with(this) {
+	static void enqueue_thread( cond_lock(L) & this, info_thread(L) * i ) with(this) {
 		// add info_thread to waiting queue
 		insert_last( blocked_threads, *i );
 		count++;
@@ -392,7 +392,7 @@ forall(L & | is_blocking_lock(L)) {
 	static size_t block_and_get_recursion( info_thread(L) & i ) { return block_and_get_recursion( i, pre_park_noop, 0p ); }
 
 	// helper for wait()'s' with no timeout
-	static void queue_info_thread( condition_variable(L) & this, info_thread(L) & i ) with(this) {
+	static void queue_info_thread( cond_lock(L) & this, info_thread(L) & i ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		enqueue_thread( this, &i );
 		unlock( lock );
@@ -411,7 +411,7 @@ forall(L & | is_blocking_lock(L)) {
 	static void cond_alarm_register( void * node_ptr ) { register_self( (alarm_node_t *)node_ptr ); }
 
 	// helper for wait()'s' with a timeout
-	static void queue_info_thread_timeout( condition_variable(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
+	static void queue_info_thread_timeout( cond_lock(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
 		enqueue_thread( this, &info );
 		alarm_node_wrap(L) node_wrap = { t, 0`s, callback, &this, &info };
@@ -433,15 +433,15 @@ forall(L & | is_blocking_lock(L)) {
 		queue_info_thread_timeout(this, i, t, alarm_node_wrap_cast ); \
 		return i.signalled;
 
-	void wait( condition_variable(L) & this ) with(this) { WAIT( 0, 0p ) }
-	void wait( condition_variable(L) & this, uintptr_t info ) with(this) { WAIT( info, 0p ) }
-	void wait( condition_variable(L) & this, L & l  ) with(this) { WAIT( 0, &l ) }
-	void wait( condition_variable(L) & this, L & l, uintptr_t info ) with(this) { WAIT( info, &l ) }
+	void wait( cond_lock(L) & this ) with(this) { WAIT( 0, 0p ) }
+	void wait( cond_lock(L) & this, uintptr_t info ) with(this) { WAIT( info, 0p ) }
+	void wait( cond_lock(L) & this, L & l  ) with(this) { WAIT( 0, &l ) }
+	void wait( cond_lock(L) & this, L & l, uintptr_t info ) with(this) { WAIT( info, &l ) }
 
-	bool wait( condition_variable(L) & this, Duration duration ) with(this) { WAIT_TIME( 0 , 0p , duration ) }
-	bool wait( condition_variable(L) & this, uintptr_t info, Duration duration ) with(this) { WAIT_TIME( info, 0p , duration ) }
-	bool wait( condition_variable(L) & this, L & l, Duration duration  ) with(this) { WAIT_TIME( 0 , &l , duration ) }
-	bool wait( condition_variable(L) & this, L & l, uintptr_t info, Duration duration ) with(this) { WAIT_TIME( info, &l , duration ) }
+	bool wait( cond_lock(L) & this, Duration duration ) with(this) { WAIT_TIME( 0 , 0p , duration ) }
+	bool wait( cond_lock(L) & this, uintptr_t info, Duration duration ) with(this) { WAIT_TIME( info, 0p , duration ) }
+	bool wait( cond_lock(L) & this, L & l, Duration duration  ) with(this) { WAIT_TIME( 0 , &l , duration ) }
+	bool wait( cond_lock(L) & this, L & l, uintptr_t info, Duration duration ) with(this) { WAIT_TIME( info, &l , duration ) }
 
 	//-----------------------------------------------------------------------------
 	// fast_cond_var

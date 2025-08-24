@@ -449,7 +449,7 @@ extern "C" {
 	//--------------------
 	// Condition
 	struct cfathread_condition {
-		condition_variable(exp_backoff_then_block_lock) impl;
+		cond_lock(exp_backoff_then_block_lock) impl;
 	};
 	int cfathread_cond_init(cfathread_cond_t *restrict cond, const cfathread_condattr_t *restrict) __attribute__((nonnull (1))) { *cond = new(); return 0; }
 	int cfathread_cond_signal(cfathread_cond_t *cond) __attribute__((nonnull (1)))  { notify_one( (*cond)->impl ); return 0; }
