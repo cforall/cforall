@@ -1,6 +1,0 @@
-start 1: blocking path future test
-done 1
-start 2: nonblocking path future test
-done 2
-start 3: try_get future test
-done 3

@@ -10,8 +10,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 14:59:41 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  6 11:38:39 2025
-// Update Count     : 434
+// Last Modified On : Sat Apr 19 13:01:31 2025
+// Update Count     : 436
 //
 
 #include "StatementNode.hpp"
@@ -118,8 +118,7 @@ ast::Stmt * build_expr( CodeLocation const & location, ExpressionNode * ctrl ) {
 	}
 } // build_expr
 
-static ast::Expr * build_if_control( CondCtrl * ctrl,
-		std::vector<ast::ptr<ast::Stmt>> & inits ) {
+static ast::Expr * build_if_control( CondCtrl * ctrl, std::vector<ast::ptr<ast::Stmt>> & inits ) {
 	assert( inits.empty() );
 	if ( nullptr != ctrl->init ) {
 		buildMoveList( ctrl->init, inits );
@@ -148,9 +147,7 @@ ast::Stmt * build_if( const CodeLocation & location, CondCtrl * ctrl, StatementN
 	ast::Stmt const * astthen = buildMoveSingle( then );
 	ast::Stmt const * astelse = buildMoveOptional( else_ );
 
-	return new ast::IfStmt( location, astcond, astthen, astelse,
-		std::move( astinit )
-	);
+	return new ast::IfStmt( location, astcond, astthen, astelse, std::move( astinit ) );
 } // build_if
 
 ast::Stmt * build_switch( const CodeLocation & location, bool isSwitch, ExpressionNode * ctrl, ClauseNode * stmt ) {
@@ -192,13 +189,8 @@ ast::Stmt * build_while( const CodeLocation & location, CondCtrl * ctrl, Stateme
 	std::vector<ast::ptr<ast::Stmt>> astinit;			// maybe empty
 	ast::Expr * astcond = build_if_control( ctrl, astinit ); // ctrl deleted, cond/init set
 
-	return new ast::WhileDoStmt( location,
-		astcond,
-		buildMoveSingle( stmt ),
-		buildMoveOptional( else_ ),
-		std::move( astinit ),
-		ast::While
-	);
+	return new ast::WhileDoStmt( location, astcond, buildMoveSingle( stmt ), buildMoveOptional( else_ ),
+								 std::move( astinit ), ast::While );
 } // build_while
 
 ast::Stmt * build_do_while( const CodeLocation & location, ExpressionNode * ctrl, StatementNode * stmt, StatementNode * else_ ) {

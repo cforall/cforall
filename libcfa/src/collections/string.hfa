@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 21 09:07:28 2025
-// Update Count     : 308
+// Last Modified On : Fri Sep  5 15:51:08 2025
+// Update Count     : 310
 //
 
 #pragma once
@@ -186,7 +186,7 @@ void ?*=?( string & s, strmul_factor_t factor );
 string ?*?( char c, strmul_factor_t factor );					// not backwards compatible
 PBOOST string ?*?( string s, strmul_factor_t factor );
 string ?*?( const char * s, strmul_factor_t factor );
-static inline string ?*?( strmul_factor_t factor, char s ) { return s * factor; }
+static inline string ?*?( strmul_factor_t factor, char c ) { return c * factor; }
 PBOOST static inline string ?*?( strmul_factor_t factor, string s ) { return s * factor; }
 static inline string ?*?( strmul_factor_t factor, const char * s ) { return s * factor; }
 
