@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 13 07:58:55 2025
-// Update Count     : 390
+// Last Modified On : Mon Sep 15 10:26:35 2025
+// Update Count     : 394
 //
 
 #define _COMPILING_STRING_CFA_
@@ -96,36 +96,6 @@ void ?{}( string & s, long double _Complex rhs ) {
 	?{}( *s.inner, rhs );
 }
 
-string str( ssize_t rhs ) {
-	string s = rhs;
-	return s;
-}
-
-string str( size_t rhs ) {
-	string s = rhs;
-	return s;
-}
-
-string str( double rhs ) {
-	string s = rhs;
-	return s;
-}
-
-string str( long double rhs ) {
-	string s = rhs;
-	return s;
-}
-
-string str( double _Complex rhs ) {
-	string s = rhs;
-	return s;
-}
-
-string str( long double _Complex rhs ) {
-	string s = rhs;
-	return s;
-}
-
 void ^?{}( string & s ) {
 	^(*s.inner){};
 	free( s.inner );
@@ -203,7 +173,26 @@ string & ?=?( string & s, long double _Complex rhs ) {
 }
 
 ////////////////////////////////////////////////////////
-// Getter
+// C-style
+
+// safe conversion from string to char *
+char * strncpy( char * dst, string & src, size_t n ) {
+	size_t l = min( n - 1, len( src ) );				// ensure null terminated
+	for ( i; l ) dst[i] = src[i];
+	dst[l] = '\0';
+	return dst;
+}
+char * ?=?( char *& dst, string & src ) {
+	dst = aalloc( len( src ) + 1 );					// ensure null terminated
+	for ( i; len( src ) ) dst[i] = src[i];
+	dst[len(src)] = '\0';
+	return dst;
+}
+void ?{}( char *& dst, string & src ) {
+	dst = aalloc( len( src ) + 1 );					// ensure null terminated
+	for ( i; len( src ) ) dst[i] = src[i];
+	dst[len(src)] = '\0';
+}
 
 size_t strnlen( const string & s, size_t maxlen ) { return min( len( s ), maxlen ); }
 
@@ -254,9 +243,9 @@ forall( istype & | basic_istream( istype ) ) {
 // Slicing
 
 string ?()( string & s, ssize_t start, ssize_t len ) {
-	if ( start < 0 ) { start += len( s ); }
-	if ( len < 0 ) { len = -len; start -= len; }
-	if ( start >= len( s ) ) return (string){ "" };
+	if ( start < 0 ) start += len( s );
+	if ( len < 0 ) { len = -len; start -= len - 1; }
+	if ( start < 0 || start >= len( s ) ) return (string){ "" };
 	if ( start + len > len( s ) ) len = len( s ) - start;
 	string ret = { *s.inner, start, len };
 	return ret`share;

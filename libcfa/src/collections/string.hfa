@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Sep  5 15:51:08 2025
-// Update Count     : 310
+// Last Modified On : Sun Sep 14 10:58:28 2025
+// Update Count     : 311
 //
 
 #pragma once
@@ -43,13 +43,6 @@ void ?{}( string & s, double _Complex rhs );
 void ?{}( string & s, long double _Complex rhs );
 static inline void ?{}( string & s, int rhs ) { (s){(signed long int) rhs}; }
 
-// string str( ssize_t rhs );
-// string str( size_t rhs );
-// string str( double rhs );
-// string str( long double rhs );
-// string str( double _Complex rhs );
-// string str( long double _Complex rhs );
-
 PBOOST string & ?=?( string & s, string c );
 string & ?=?( string & s, const char * c );				// copy from "literal"
 string & ?=?( string & s, char c );						// copy from 'l'
@@ -67,6 +60,9 @@ static inline string & strcpy( string & s, const char * c ) { s = c; return s; }
 static inline string & strncpy( string & s, const char * c, size_t n ) { assign( s, c, n ); return s; }
 static inline string & strcpy( string & s, const string & c ) { s = c; return s; }
 static inline string & strncpy( string & s, const string & c, size_t n ) { assign( s, c, n ); return s; }
+char * strncpy( char * dst, string & src, size_t n );
+char * ?=?( char *& dst, string & src );
+void ?{}( char *& dst, string & src );
 
 // Alternate construction: request shared edits
 struct string_Share {
