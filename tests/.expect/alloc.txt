@@ -75,6 +75,36 @@ CFA new initialize
 CFA array new initialize
 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 
 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 42 42.5, 
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+ctor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
+dtor
 
 pointer arithmetic 0
 CFA deep malloc 0xdeadbeef

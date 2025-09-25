@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Feb  3 07:56:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr 23 14:04:11 2024
-// Update Count     : 492
+// Last Modified On : Wed Sep 24 18:21:09 2025
+// Update Count     : 493
 //
 
 #include <assert.h>
@@ -360,6 +360,14 @@ int main( void ) {
 	sout | nl;
 	adelete( stp, stp1 );
 	assert( const_count == 2 + 2 * dim && dest_count == 2 + 2 * dim); // assertion for testing
+
+	struct Empty {};
+	void ?{}( Empty & ) { sout | "ctor"; }
+	void ^?{}( Empty & ) { sout | "dtor"; }
+	Empty * ea1 = anew( 5 );
+	Empty * ea2 = anew( 5 );
+	Empty * ea3 = anew( 5 );
+	adelete( ea1, ea2, ea3 );
 
 	// extras
 	sout | nl;

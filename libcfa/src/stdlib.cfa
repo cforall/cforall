@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:10:29 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 21 16:17:22 2024
-// Update Count     : 700
+// Last Modified On : Wed Sep 24 18:14:20 2025
+// Update Count     : 760
 //
 
 #include "stdlib.hfa"
@@ -32,7 +32,11 @@
 
 forall( T & | sized(T), Parms ... | { void ?{}( T &, Parms ); } )
 T * anew( size_t dim, Parms p ) {
-	T * arr = alloc( dim );
+	T * arr;
+	if ( sizeof( T ) == 0 ) {							// empty element size ?
+		arr = (T *)(size_t *)alloc();					// create fake array
+		*((size_t *)arr) = dim;							// remember dimension
+	} else arr = alloc( dim );
 	for ( i; dim ) {
 		(arr[i]){ p };									// run constructor
 	} // for
@@ -41,24 +45,17 @@ T * anew( size_t dim, Parms p ) {
 
 forall( T & | sized(T) | { void ^?{}( T & ); } )
 void adelete( T arr[] ) {
-	if ( arr ) {										// ignore null
-		size_t dim = malloc_size( arr ) / sizeof( T );
-		for ( i; 0 -~= dim - 1 ) {						// reverse allocation order, must be unsigned
-			^(arr[i]){};								// run destructor
-		} // for
-		free( arr );
-	} // if
+  if ( arr == 0p ) return;								// 0p ? special case
+	size_t dim = sizeof( T ) == 0 ? (size_t)(*(size_t *)arr) : malloc_size( arr ) / sizeof( T ); // compute dimension
+	for ( i; 0 -~= dim - 1 ) {							// reverse allocation order, must be signed
+		^(arr[i]){};									// run destructor
+	} // for
+	if ( sizeof( T ) == 0 ) free( (size_t *)arr ); else free( arr );
 } // adelete
 
 forall( T & | sized(T) | { void ^?{}( T & ); }, List ... | { void adelete( List ); } )
 void adelete( T arr[], List rest ) {
-	if ( arr ) {										// ignore null
-		size_t dim = malloc_size( arr ) / sizeof( T );
-		for ( i; 0 -~= dim - 1 ) {						// reverse allocation order, must be unsigned
-			^(arr[i]){};								// run destructor
-		} // for
-		free( arr );
-	} // if
+	adelete( arr );
 	adelete( rest );
 } // adelete
 
@@ -67,17 +64,17 @@ void adelete( T arr[], List rest ) {
 // Check if all string characters are a specific kind, e.g., checkif( s, isblank )
 
 bool checkif( const char s[], int (* kind)( int ) ) {
-	for () {
-		if ( *s == '\0' ) return true;
-		if ( ! kind( *s ) ) return false;
+	for () {											// at least 1 character '\0'
+	  if ( *s == '\0' ) return true;
+	  if ( ! kind( *s ) ) return false;
 		s += 1;
 	} // for
 } // checkif
 
 bool checkif( const char s[], int (* kind)( int, locale_t ), locale_t locale ) {
-	for () {
-		if ( *s == '\0' ) return true;
-		if ( ! kind( *s, locale ) ) return false;
+	for () {											// at least 1 character '\0'
+	  if ( *s == '\0' ) return true;
+	  if ( ! kind( *s, locale ) ) return false;
 		s += 1;
 	} // for
 } // checkif
