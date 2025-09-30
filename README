@@ -71,8 +71,8 @@ mangling of C names, it is necessary to wrap C declarations in an extern "C"
 block, as for C++.  For example:
 
   extern "C" {
-  #include <curses.h>
-  #include <getopt.h>
+    #include <curses.h>
+    #include <getopt.h>
   }
 
 The extern "C" turns off name mangling for functions and objects declared
@@ -91,6 +91,16 @@ promises regarding support.
 
 Also, the Cforall features web-page https://cforall.uwaterloo.ca/features lists
 small syntactic and semantic differences with standard C.
+
+
+Can I contribute to Cforall?
+-------------------------
+
+Not at the moment. Cforall is a research project that is not stable enough to
+have outside contributes adding or making significant changes. You can help us
+my trying Cforall to get a flavour for what we are trying to accomplish. Please
+identify design problems and small issues or errors, which we will try to
+incorporate/fix. However, we are a small team, so nothing happens quickly.
 
 
 Who is responsible for cfa-cc?

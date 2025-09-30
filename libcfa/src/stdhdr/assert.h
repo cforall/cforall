@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jul  4 23:25:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Oct  9 21:28:22 2022
-// Update Count     : 16
+// Last Modified On : Mon Sep 29 13:45:46 2025
+// Update Count     : 20
 //
 
 #ifdef __cforall
@@ -37,10 +37,10 @@ extern "C" {
 	#define verifyfail(...)
 	#define warnf( expr, fmt, ... ) ({ static bool check_once##__LINE__ = false; if( false == check_once##__LINE__ && false == (expr)) { check_once##__LINE__ = true; __assert_warn_f(__VSTRINGIFY__(expr), __FILE__, __LINE__, __PRETTY_FUNCTION__, fmt, ## __VA_ARGS__ ); } })
 #else
-	#define verify(x) 0
-	#define verifyf(x, ...) 0
-	#define verifyfail(...) 0
-	#define warnf( expr, fmt, ... ) 0
+	#define verify(x) (void)0
+	#define verifyf(x, ...) (void)0
+	#define verifyfail(...) (void)0
+	#define warnf( expr, fmt, ... ) (void)0
 #endif
 
 #ifdef __cforall

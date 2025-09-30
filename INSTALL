@@ -1,24 +1,25 @@
 cfa-cc: Cforall to C Trans-compiler
 ======================================
 
-Cforall is built using GNU Make and the GNU Autoconf system.  It also requires
-g++ version >= 6, bison and flex.  On systems where GNU Make is the default
-make, the system is built by entering the commands:
+Cforall is built on Linux using GNU Make and the GNU Autoconf system, which
+includes Windows WSL.  It also requires g++ version >= 9, bison and flex.  On
+systems where GNU Make is the default make, the system is built by entering the
+commands:
 
-For developers using the root git:
+1. For developers using the root git:
 
-  $ ./autogen.sh
-  $ ./configure [ --prefix=/some/directory ]
-  $ make -j 8 install
-  $ cfa
+   $ ./autogen.sh
+   $ ./configure [ --prefix=/some/directory ]
+   $ make -j 8 install
+   $ cfa
 
-For users using the distributed tarball / github:
+2. For users using the distributed tarball/github:
 
-  $ ./configure
-  $ make -j 8 install
-  $ cfa
+   $ ./configure
+   $ make -j 8 install
+   $ cfa
 
-where 8 is the number of CPUs on your computer.
+where 8 or greater is the number of CPUs on your computer.
 
 The above instructions produce an in-tree, installed build, where intermediate
 binaries share the same folders as their sources, and where the final result
@@ -27,34 +28,34 @@ preferring an isolated side-by-side build, where all binaries are separated
 from sources, where it is possible to build multiple configurations from a
 common set of sources, and where no "official" CFA version is designated:
 
-  $ ./autogen.sh
-  $ mkdir ../build
-  $ cd ../build
-  $ ../cfa-cc/configure
-  $ make -j 8
-  $ ./driver/cfa
+   $ ./autogen.sh
+   $ mkdir ../build
+   $ cd ../build
+   $ ../cfa-cc/configure
+   $ make -j 8
+   $ ./driver/cfa
 
 
 Options for configure
 ======================================
 The script 'configure' accepts many command-line arguments.  Run
 
-  $ ./configure --help
+   $ ./configure --help
 
 to list them.  The most common argument is:
 
-  --prefix=/some/directory controls the path prefix common to all installed
-    cfa-cc components.  Components are installed in directories bin and lib.
-    If unspecified, prefix defaults to /usr/local.  To use (a subdirectory of)
-    your home directory, ${HOME}/some/dir, but do not put quotes around the
-    directory path; Cforall may appear to build, but the installed version may
-    not work properly.
+   --prefix=/some/directory controls the path prefix common to all installed
+     cfa-cc components.  Components are installed in directories bin and lib.
+     If unspecified, prefix defaults to /usr/local.  To use (a subdirectory of)
+     your home directory, ${HOME}/some/dir, but do not put quotes around the
+     directory path; Cforall may appear to build, but the installed version may
+     not work properly.
 
 
 Build Test
 ======================================
 
-  $ cd ./tests
-  $ make -j 8 all-local
+   $ cd ./tests
+   $ make -j 8 all-local
 
 The tests take about 2-5 minutes and can be stopped at any time.
