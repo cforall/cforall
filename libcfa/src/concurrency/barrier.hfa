@@ -10,36 +10,59 @@
 // Author           : Peter A. Buhr
 // Created On       : Sun Nov 10 08:07:35 2024
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Apr 24 22:41:11 2025
-// Update Count     : 12
+// Last Modified On : Fri Oct 31 09:22:14 2025
+// Update Count     : 69
 // 
 
 #pragma once
 
+#include <locks.hfa>
 #include <monitor.hfa>
 
 // Plan 9 inheritance does not work with monitors. Two monitor locks are created.
 
+typedef void (* barrier_fptr_t)( ... );					// like C++, () => void and ... => C ()
+
 monitor barrier {
-	unsigned int group, arrivals;						// group size, arrival counter
-	condition c;										// wait for group to form
+	size_t group$, arrivals$;							// group size, arrival counter (backward)
+	condition c$;										// wait for group to form
+	barrier_fptr_t callback$;							// global callback
+	void * arg$;										// global callback argument
 };
 
-static inline void ?{}( barrier & b, unsigned int group ) {
-	b.group = b.arrivals = group;						// arrivals count backward
+static inline void ?{}( barrier & b, ssize_t group, barrier_fptr_t callback, void * arg ) with ( b ) {
+	[group$, arrivals$] = group;
+	[callback$, arg$] = [callback, arg];
 }
 
-// Returns a value indicating the reverse order the threads arrived, i.e. last thread returns 0 (and does not block)
-// hook is an optional hook that is called by the Gth thread before unblocking the other threads.
-static inline unsigned int block( barrier & mutex b, fptr_t hook = (fptr_t)0 ) with( b ) {
-	arrivals -= 1;										// prefix decrement so last is 0 not 1
-	unsigned arrived = b.arrivals;						// note arrival order
-	if ( arrivals != 0 ) {								// wait for group to form
-		wait( b.c );
+static inline void ?{}( barrier & b, ssize_t group ) { (b){ group, 0p, 0p }; }	// call base constructor
+static inline ssize_t waiters( barrier & b ) with( b ) { return group$ - arrivals$; }
+static inline ssize_t total( barrier & b ) with( b ) { return group$; }
+
+// Returns a value indicating the reverse order the threads arrived, i.e., the Gth thread returns 0 (and does not
+// block).  olock is an optional mutex lock held by the called and atomically released and block. callback is an
+// optional function that is called by the Gth thread before unblocking the other threads. arg is an optional (void *)
+// argument passed to the callback.
+
+// Barrier is a monitor => implicit mutual exclusion.
+static inline ssize_t block( barrier & mutex b, owner_lock & olock, barrier_fptr_t callback, void * arg ) with( b ) {
+	arrivals$ -= 1;										// prefix decrement so last is 0 not 1
+	typeof( arrivals$ ) arrived = arrivals$;			// note arrival order
+	if ( arrivals$ != 0 ) {								// wait for group to form
+		if ( &olock != 0p ) unlock( olock );			// if lock specified, release it
+		wait( c$ );
+		// DO NOT REACQUIRE LOCK TO ALLOW BARGING PREVENTION 
 	} else {											// group formed
-		if ( hook ) hook();								// safe to call
-		signal_all( c );								// unblock group
-		arrivals = group;								// reset
+		if ( callback ) callback( arg );				// if callback specified, safe to call with argument
+		else if ( callback$ ) callback$( arg$ );		// if callback specified, safe to call with argument
+		signal_all( c$ );								// unblock group
+		arrivals$ = group$;								// reset
 	} // if
 	return arrived;										// return arrival order
 }
+
+static inline ssize_t block( barrier & b ) { return block( b, *0p, 0p, 0p ); }
+static inline ssize_t block( barrier & b, owner_lock & olock ) { return block( b, olock, 0p, 0p ); }
+static inline ssize_t block( barrier & b, barrier_fptr_t callback ) { return block( b, *0p, callback, 0p ); }
+static inline ssize_t block( barrier & b, barrier_fptr_t callback, void * arg ) { return block( b, *0p, callback, arg ); }
+static inline ssize_t block( barrier & b, owner_lock & olock, barrier_fptr_t callback ) { return block( b, olock, callback, 0p ); }

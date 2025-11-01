@@ -16,7 +16,7 @@
 // Test validates that processors running out of work repeatedly won't deadlock
 // Processors and thread are removed in an interleaved fashion for a weirder case.
 
-#include <concurrency/barrier.hfa>
+#include <barrier.hfa>
 #include <fstream.hfa>
 #include <time.hfa>
 #include <thread.hfa>

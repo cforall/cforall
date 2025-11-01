@@ -12,8 +12,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thu Nov  9 13:24:10 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Oct 24 10:53:15 2020
-// Update Count     : 21
+// Last Modified On : Mon Oct 27 22:40:05 2025
+// Update Count     : 23
 //
 
 #pragma once
@@ -24,7 +24,7 @@
 #define likely(x)   __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-typedef void (*fptr_t)();
+typedef void (* fptr_t)();
 typedef int_fast16_t __lock_size_t;
 
 #ifdef __cforall

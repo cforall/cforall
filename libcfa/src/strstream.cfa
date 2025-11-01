@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:24:35 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 14 20:45:00 2025
-// Update Count     : 116
+// Last Modified On : Sat Oct 11 15:10:56 2025
+// Update Count     : 119
 //
 
 #include "strstream.hfa"
@@ -147,6 +147,7 @@ ostrstream & write( ostrstream & os, FILE * stream ) {
 		write( STDERR_FILENO, ostrwritemsg, sizeof(ostrwritemsg) - 1 );
 		abort();
 	} // if
+	os.cursor$ = 0;
 	return os;
 } // write
 
@@ -154,6 +155,9 @@ ostrstream & write( ostrstream & os ) {
 	return write( os, stdout );
 } // write
 
+void clear( ostrstream & os ) {
+	os.cursor$ = 0;
+} // clear
 
 // *********************************** istrstream ***********************************
 

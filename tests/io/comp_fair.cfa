@@ -15,7 +15,7 @@
 //
 
 
-#include <concurrency/barrier.hfa>
+#include <barrier.hfa>
 #include <fstream.hfa>
 #include <iofwd.hfa>
 #include <kernel.hfa>

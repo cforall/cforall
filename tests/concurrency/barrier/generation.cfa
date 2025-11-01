@@ -19,7 +19,7 @@
 unsigned NUM_THREADS = 9;
 unsigned NUM_LAPS = 53;
 
-#include <concurrency/barrier.hfa>
+#include <barrier.hfa>
 #include <fstream.hfa>
 #include <mutex_stmt.hfa>
 #include <thread.hfa>
@@ -44,7 +44,7 @@ void main( Tester & this ) {
 			yield( prng(this, 10) );
 
 			// Block on the barrier
-			block(bar);
+			block( bar );
 		}
 }
 

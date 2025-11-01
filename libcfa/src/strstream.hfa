@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Apr 22 22:20:59 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 14 20:57:15 2025
-// Update Count     : 61
+// Last Modified On : Sat Oct 11 15:11:06 2025
+// Update Count     : 62
 // 
 
 #pragma once
@@ -73,6 +73,8 @@ ostrstream & write( ostrstream & os, FILE * stream ); // FIX ME: use default = s
 ostrstream & write( ostrstream & os );
 
 void ?{}( ostrstream &, char buf[], size_t size );
+
+void clear( ostrstream & os );
 
 
 // *********************************** istrstream ***********************************

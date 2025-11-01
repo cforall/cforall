@@ -8,7 +8,7 @@ once_flag global;
 
 volatile int check;
 
-void reset() {
+void reset( ... ) {
 	(global){};
 	check = 0;
 }

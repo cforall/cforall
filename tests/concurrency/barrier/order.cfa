@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Fri Apr 01 11:39:09 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 10 11:22:56 2024
-// Update Count     : 20
+// Last Modified On : Mon Oct 27 22:44:36 2025
+// Update Count     : 22
 //
 
 #include <concurrency/barrier.hfa>
@@ -23,7 +23,7 @@ enum { NUM_LAPS = 173, NUM_THREADS = 11 };
 barrier bar = { NUM_THREADS };
 
 volatile unsigned generation = 0;						// count laps
-void last() {
+void last( ... ) {
 	generation += 1;									// last thread at barrier advances
 }
 volatile unsigned * generations;						// global array pointer

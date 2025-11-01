@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 21 22:36:44 2025
-// Update Count     : 23
+// Last Modified On : Fri Oct 31 09:20:22 2025
+// Update Count     : 59
 //
 
 #pragma once
@@ -80,21 +80,43 @@ static inline void pre_park_then_park( __cfa_pre_park pp_fn, void * pp_datum ) {
 	static inline void on_wakeup( lock_type & /*this*/, size_t /*recursion*/ ) {}
 
 
-
 //-----------------------------------------------------------------------------
-// Semaphore
+// Semaphore, counting
+
 struct semaphore {
-	__spinlock_t lock;
-	int count;
-	__queue_t( thread$) waiting;
+	// PRIVATE
+	ssize_t count$;										 // - => # waiting threads, 0 => block, + => acquire
+	__spinlock_t lock$;									 // protect blocking-lock critical sections
+	__queue_t( thread$ ) waiting$;						 // waiting threads
 };
 
-void ?{}( semaphore & this, int count = 1 );
-void ^?{}( semaphore & this );
-bool P( semaphore & this );
-bool V( semaphore & this );
-bool V( semaphore & this, unsigned count );
-thread$ * V( semaphore & this, bool );
+// PRIVATE
+//thread$ * V( semaphore & sem, bool );
+
+// PUBLIC
+void ?{}( semaphore & sem, ssize_t count = 1 );
+// Return values are used for composition. Calling threads know if a thread is unblocked, which can be useful for
+// debugging, performance instrumentation and other metadata tracking purposes.
+bool P( semaphore & sem );
+static inline bool P( semaphore & sem, uintptr_t shadow ) { active_thread()->shadow$ = shadow; return P( sem ); }
+bool P( semaphore & sem, semaphore & lock );			// atomic block and release
+bool try_P( semaphore & sem );
+static inline bool P( semaphore & sem, semaphore & lock, uintptr_t shadow ) { active_thread()->shadow$ = shadow; return P( sem, lock ); }
+bool V( semaphore & sem );
+bool V( semaphore & sem, size_t count );
+static inline uintptr_t front( semaphore & sem ) with( sem ) { // return shadow information for first waiting thread
+	#ifdef __CFA_DEBUG__
+	if ( waiting$ ) {									// condition queue must not be empty
+		abort( "Attempt to access user data on an empty semaphore lock.\n"
+			   "Possible cause is not checking if the condition lock is empty before reading stored data." );
+	} // if
+	#endif // __CFA_DEBUG__
+	return waiting$.head->shadow$;						// return condition information stored with blocked task
+}
+static inline ssize_t counter( semaphore & sem ) with( sem ) { return count$; } // - => # waiting threads, 0 => block, + => acquire
+//static inline int ?!=?( semaphore & sem, zero_t ) with( sem ) { return count$ != 0; } // empty waiting queue
+static inline bool empty( semaphore & sem ) with( sem ) { return count$ == 0; } // empty waiting queue
+
 
 //----------
 struct single_acquisition_lock {

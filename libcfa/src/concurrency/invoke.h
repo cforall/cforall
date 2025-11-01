@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 23 15:27:18 2025
-// Update Count     : 61
+// Last Modified On : Fri Oct 31 08:46:59 2025
+// Update Count     : 67
 //
 
 // No not use #pragma once was this file is included twice in some places. It has its own guard system.
@@ -235,6 +235,8 @@ extern "C" {
         // main use case is wait-morphing to allow a different node to be used to block on condvar vs lock
         void * link_node;
 
+		// extra fields supporting task related features 
+		uintptr_t shadow$;								// user information for shadow queue
 		PRNG_STATE_T random_state;						// fast random numbers
 
 		#if defined( __CFA_WITH_VERIFY__ )

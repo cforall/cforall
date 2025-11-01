@@ -16,7 +16,7 @@
 // Test validates barrier correctly blocks threads, and that the last
 // function is called at the appropriate time.
 
-#include <concurrency/barrier.hfa>
+#include <barrier.hfa>
 #include <fstream.hfa>
 #include <mutex_stmt.hfa>
 #include <thread.hfa>
@@ -33,7 +33,7 @@ volatile unsigned * generation;
 // Check that validate is actually getting called as expected;
 volatile unsigned validate_calls = 0;
 
-void validate() {
+void validate(...) {
 	unsigned vc = validate_calls;
 	unsigned expected = generation[0];
 	for(i; 1 ~ NUM_THREADS) {

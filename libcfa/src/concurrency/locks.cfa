@@ -582,65 +582,96 @@ forall(L & | is_blocking_lock(L)) {
 		PTHREAD_WAIT_TIME( info, &l , getDuration( t ) )
 	}
 }
+
 //-----------------------------------------------------------------------------
-// Semaphore
-void ?{}( semaphore & this, int count = 1 ) {
-	(this.lock){};
-	this.count = count;
-	(this.waiting){};
-}
-void ^?{}(semaphore & this) {}
+// Semaphore, counting
 
-bool P(semaphore & this) with( this ){
-	lock( lock __cfaabi_dbg_ctx2 );
-	count -= 1;
-	if ( count < 0 ) {
-		// queue current task
-		append( waiting, active_thread() );
+// PRIVATE
 
-		// atomically release spin lock and block
-		unlock( lock );
-		park();
-		return true;
-	} else {
-		unlock( lock );
-		return false;
-	}
-}
-
-thread$ * V (semaphore & this, const bool doUnpark ) with( this ) {
+thread$ * V( semaphore & sem, const bool doUnpark ) with( sem ) {
 	thread$ * thrd = 0p;
-	lock( lock __cfaabi_dbg_ctx2 );
-	count += 1;
-	if ( count <= 0 ) {
-		// remove task at head of waiting list
-		thrd = pop_head( waiting );
+	lock( lock$ __cfaabi_dbg_ctx2 );
+	count$ += 1;
+	if ( count$ <= 0 ) {
+		thrd = pop_head( waiting$ );						// remove task at head of waiting list
 	}
-
-	unlock( lock );
-
-	// make new owner
-	if ( doUnpark ) unpark( thrd );
-
+	unlock( lock$ );
+	if ( doUnpark ) unpark( thrd );						// make new owner
 	return thrd;
 }
 
-bool V(semaphore & this) with( this ) {
-	thread$ * thrd = V(this, true);
-	return thrd != 0p;
+// PUBLIC
+
+void ?{}( semaphore & sem, ssize_t count = 1 ) with( sem ) {
+	count$ = count;
+	(lock$){};
+	(waiting$){};
 }
 
-bool V(semaphore & this, unsigned diff) with( this ) {
+bool P( semaphore & sem ) with( sem ) {
+	lock( lock$ __cfaabi_dbg_ctx2 );
+	count$ -= 1;
+	if ( count$ < 0 ) {									// in use ?
+		append( waiting$, active_thread() );				// queue current task
+		unlock( lock$ );									// atomically release spin lock and block
+		park();
+		return false;
+	} // if
+	unlock( lock$ );
+	return true;
+}
+
+bool P( semaphore & sem, semaphore & lock ) with( sem ) {
+	lock( lock$ __cfaabi_dbg_ctx2 );
+	if ( &sem == &lock ) {								// perform operation on self ?
+		if ( count$ < 0 ) {								// V my semaphore
+			unpark( pop_head( waiting$ ) );				// unblock task at head of waiting list
+		} // if
+	} else {
+		V( sem );										// V other semaphore
+		count$ -= 1;
+	} // if
+
+	if ( count$ < 0 ) {									// in use ?
+		append( waiting$, active_thread() );			// queue current task
+		unlock( lock$ );								// atomically release spin lock and block
+		park();
+		return false;
+	} // if
+	unlock( lock$ );
+	return true;
+}
+
+bool try_P( semaphore & sem ) with( sem ) {
+	lock( lock$ __cfaabi_dbg_ctx2 );
+	if ( count$ <= 0 ) {								// in use ?
+		unlock( lock$ );
+		return false;
+	} // if
+	count$ -= 1;										// acquire
+	unlock( lock$ );
+	return true;
+}
+
+bool V( semaphore & sem ) with( sem ) {
 	thread$ * thrd = 0p;
-	lock( lock __cfaabi_dbg_ctx2 );
-	int release = max(-count, (int)diff);
-	count += diff;
-	for(release) {
-		unpark( pop_head( waiting ) );
+	lock( lock$ __cfaabi_dbg_ctx2 );
+	count$ += 1;
+	if ( count$ <= 0 ) {
+		thrd = pop_head( waiting$ );					// remove task at head of waiting list
 	}
-
-	unlock( lock );
-
+	unlock( lock$ );
+	if ( true ) unpark( thrd );						// make new owner
+//	thread$ * thrd = V(sem, true);
 	return thrd != 0p;
 }
 
+bool V( semaphore & sem, size_t diff ) with( sem ) {
+	thread$ * thrd = 0p;
+	lock( lock$ __cfaabi_dbg_ctx2 );
+	size_t release = max( (size_t)-count$, diff );
+	count$ += diff;
+	for ( release ) unpark( pop_head( waiting$ ) );
+	unlock( lock$ );
+	return thrd != 0p;
+}
