@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Oct 30 12:56:20 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep 27 15:42:25 2020
-// Update Count     : 40
+// Last Modified On : Tue Nov  4 21:58:29 2025
+// Update Count     : 41
 //
 
 #include <stdlib.hfa>									// random
@@ -27,7 +27,7 @@ monitor DatingService {
 }; // DatingService
 
 unsigned int girl( DatingService & mutex ds, unsigned int PhoneNo, unsigned int ccode ) with( ds ) {
-	if ( is_empty( Boys[ccode] ) ) {					// no compatible boy ?
+	if ( empty( Boys[ccode] ) ) {						// no compatible boy ?
 		wait( Girls[ccode] );							// wait for boy
 		GirlPhoneNo = PhoneNo;							// make phone number available
 	} else {
@@ -39,7 +39,7 @@ unsigned int girl( DatingService & mutex ds, unsigned int PhoneNo, unsigned int 
 } // DatingService girl
 
 unsigned int boy( DatingService & mutex ds, unsigned int PhoneNo, unsigned int ccode ) with( ds ) {
-	if ( is_empty( Girls[ccode] ) ) {					// no compatible girl ?
+	if ( empty( Girls[ccode] ) ) {						// no compatible girl ?
 		wait( Boys[ccode] );							// wait for girl
 		BoyPhoneNo = PhoneNo;							// make phone number available
 	} else {

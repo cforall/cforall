@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 25 07:20:22 2025
-// Update Count     : 80
+// Last Modified On : Tue Nov  4 22:03:41 2025
+// Update Count     : 82
 //
 
 #define __cforall_thread__
@@ -493,7 +493,7 @@ void wait( condition & this, uintptr_t user_info = 0 ) libcfa_public {
 }
 
 bool signal( condition & this ) libcfa_public {
-	if ( is_empty( this ) ) { return false; }
+	if ( empty( this ) ) { return false; }
 
 	//Check that everything is as expected
 	verify( this.monitors );
@@ -580,7 +580,7 @@ bool signal_block( condition & this ) libcfa_public {
 
 // Access the user_info of the thread waiting at the front of the queue
 uintptr_t front( condition & this ) libcfa_public {
-	verifyf( ! is_empty(this),
+	verifyf( ! empty( this ),
 		"Attempt to access user data on an empty condition.\n"
 		"Possible cause is not checking if the condition is empty before reading stored data."
 	);

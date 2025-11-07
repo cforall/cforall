@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Apr 23 22:41:10 2025
-// Update Count     : 22
+// Last Modified On : Tue Nov  4 22:04:42 2025
+// Update Count     : 23
 //
 
 #pragma once
@@ -297,7 +297,7 @@ forall( T ) {
 		// Reset future back to original state
 		void reset(multi_future(T) & mutex this) {
 			if ( this.has_first != false ) abort("Attempting to reset a multi_future with at least one blocked threads");
-			if ( !is_empty(this.blocked) ) abort("Attempting to reset a multi_future with multiple blocked threads");
+			if ( ! empty( this.blocked ) ) abort("Attempting to reset a multi_future with multiple blocked threads");
 			reset( (future_t&)*(future_t*)((uintptr_t)&this + sizeof(monitor$)) );
 		}
 

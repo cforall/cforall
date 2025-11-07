@@ -586,22 +586,6 @@ forall(L & | is_blocking_lock(L)) {
 //-----------------------------------------------------------------------------
 // Semaphore, counting
 
-// PRIVATE
-
-thread$ * V( semaphore & sem, const bool doUnpark ) with( sem ) {
-	thread$ * thrd = 0p;
-	lock( lock$ __cfaabi_dbg_ctx2 );
-	count$ += 1;
-	if ( count$ <= 0 ) {
-		thrd = pop_head( waiting$ );						// remove task at head of waiting list
-	}
-	unlock( lock$ );
-	if ( doUnpark ) unpark( thrd );						// make new owner
-	return thrd;
-}
-
-// PUBLIC
-
 void ?{}( semaphore & sem, ssize_t count = 1 ) with( sem ) {
 	count$ = count;
 	(lock$){};
@@ -612,8 +596,8 @@ bool P( semaphore & sem ) with( sem ) {
 	lock( lock$ __cfaabi_dbg_ctx2 );
 	count$ -= 1;
 	if ( count$ < 0 ) {									// in use ?
-		append( waiting$, active_thread() );				// queue current task
-		unlock( lock$ );									// atomically release spin lock and block
+		append( waiting$, active_thread() );			// queue current task
+		unlock( lock$ );								// atomically release spin lock and block
 		park();
 		return false;
 	} // if
@@ -628,7 +612,7 @@ bool P( semaphore & sem, semaphore & lock ) with( sem ) {
 			unpark( pop_head( waiting$ ) );				// unblock task at head of waiting list
 		} // if
 	} else {
-		V( sem );										// V other semaphore
+		V( lock );										// V mutex semaphore
 		count$ -= 1;
 	} // if
 
@@ -653,7 +637,7 @@ bool try_P( semaphore & sem ) with( sem ) {
 	return true;
 }
 
-bool V( semaphore & sem ) with( sem ) {
+thread$ * V( semaphore & sem, const bool doUnpark ) with( sem ) {
 	thread$ * thrd = 0p;
 	lock( lock$ __cfaabi_dbg_ctx2 );
 	count$ += 1;
@@ -661,9 +645,8 @@ bool V( semaphore & sem ) with( sem ) {
 		thrd = pop_head( waiting$ );					// remove task at head of waiting list
 	}
 	unlock( lock$ );
-	if ( true ) unpark( thrd );						// make new owner
-//	thread$ * thrd = V(sem, true);
-	return thrd != 0p;
+	if ( doUnpark ) unpark( thrd );						// make new owner
+	return thrd;
 }
 
 bool V( semaphore & sem, size_t diff ) with( sem ) {

@@ -79,7 +79,7 @@ void signal_op( global_data_t & mutex a, global_data_t & mutex b ) {
 
 	[a.last_thread, b.last_thread, a.last_signaller, b.last_signaller] = active_thread();
 
-	if( !is_empty( cond ) ) {
+	if( ! empty( cond ) ) {
 
 		thread$ * next = ( thread$ * ) front( cond );
 

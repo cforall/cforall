@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Feb  2 11:29:21 2023
-// Update Count     : 12
+// Last Modified On : Tue Nov  4 21:56:17 2025
+// Update Count     : 16
 //
 
 #pragma once
@@ -145,12 +145,18 @@ static inline void ^?{}( condition & this ) {
 	free( this.monitors );
 }
 
-              void wait        ( condition & this, uintptr_t user_info = 0 );
-static inline bool is_empty    ( condition & this ) { return this.blocked.head == 1p; }
-              bool signal      ( condition & this );
-              bool signal_block( condition & this );
-static inline bool signal_all  ( condition & this ) { bool ret = false; while(!is_empty(this)) { ret = signal(this) || ret; } return ret; }
-         uintptr_t front       ( condition & this );
+void wait( condition & this, uintptr_t user_info = 0 );
+static inline bool empty( condition & this ) { return this.blocked.head == 1p; }
+bool signal ( condition & this );
+bool signal_block( condition & this );
+static inline bool signal_all( condition & this ) {
+	bool ret = false;
+	while ( !empty( this ) ) {
+		ret = signal(this) || ret;
+	}
+	return ret;
+}
+uintptr_t front( condition & this );
 
 //-----------------------------------------------------------------------------
 // External scheduling

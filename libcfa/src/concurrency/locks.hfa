@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct 31 09:20:22 2025
-// Update Count     : 59
+// Last Modified On : Wed Nov  5 10:27:45 2025
+// Update Count     : 61
 //
 
 #pragma once
@@ -90,10 +90,6 @@ struct semaphore {
 	__queue_t( thread$ ) waiting$;						 // waiting threads
 };
 
-// PRIVATE
-//thread$ * V( semaphore & sem, bool );
-
-// PUBLIC
 void ?{}( semaphore & sem, ssize_t count = 1 );
 // Return values are used for composition. Calling threads know if a thread is unblocked, which can be useful for
 // debugging, performance instrumentation and other metadata tracking purposes.
@@ -102,7 +98,8 @@ static inline bool P( semaphore & sem, uintptr_t shadow ) { active_thread()->sha
 bool P( semaphore & sem, semaphore & lock );			// atomic block and release
 bool try_P( semaphore & sem );
 static inline bool P( semaphore & sem, semaphore & lock, uintptr_t shadow ) { active_thread()->shadow$ = shadow; return P( sem, lock ); }
-bool V( semaphore & sem );
+thread$ * V( semaphore & sem, const bool doUnpark = true );
+static inline bool V( semaphore & sem ) with( sem ) { return V( sem, true ) != 0p; }
 bool V( semaphore & sem, size_t count );
 static inline uintptr_t front( semaphore & sem ) with( sem ) { // return shadow information for first waiting thread
 	#ifdef __CFA_DEBUG__
