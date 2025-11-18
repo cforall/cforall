@@ -6,11 +6,11 @@
 //
 // concurrency/future.hfa --
 //
-// Author           : Thierry Delisle & Peiran Hong & Colby Parsons
+// Author           : Thierry Delisle & Peiran Hong & Colby Parsons & Peter Buhr
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov  4 22:04:42 2025
-// Update Count     : 23
+// Last Modified On : Mon Nov 17 08:58:38 2025
+// Update Count     : 164
 //
 
 #pragma once
@@ -20,10 +20,11 @@
 #include "select.hfa"
 #include "locks.hfa"
 
-//----------------------------------------------------------------------------
-// future
-// I don't use future_t here as I need to use a lock for this future since it supports multiple consumers.
-// future_t is lockfree and uses atomics which aren't needed given we use locks here
+//--------------------------------------------------------------------------------------------------------
+// future does not use future_t as it needs a lock to support multiple consumers.  future_t is lockfree
+// and uses atomics which are not needed.
+//--------------------------------------------------------------------------------------------------------
+
 forall( T ) {
 	enum { FUTURE_EMPTY = 0, FUTURE_FULFILLED = 1 };
 
@@ -42,21 +43,20 @@ forall( T ) {
 	};
 
 	static inline {
-
 		void ?{}( future_node(T) & this, thread$ * blocked_thread, T * my_result ) {
 			((select_node &)this){ blocked_thread };
 			this.my_result = my_result;
 		}
 
-		void ?{}( future(T) & this ) {
-			this.waiters{};
-			this.except = 0p;
-			this.state = FUTURE_EMPTY;
-			this.lock{};
-		}
+ 		void ?{}( future(T) & this ) with( this ) {
+ 			waiters{};
+ 			except = 0p;
+ 			state = FUTURE_EMPTY;
+ 			lock{};
+ 		}
 
-		void ^?{}( future(T) & this ) {
-			free( this.except );
+		void ^?{}( future(T) & this ) with( this ) {
+			free( except );
 		}
 
 		// Reset future back to original state
@@ -76,7 +76,7 @@ forall( T ) {
 
 
 		// memcpy wrapper to help copy values
-		void copy_T( T & from, T & to ) {
+		void copy_T$( T & from, T & to ) {
 			memcpy((void *)&to, (void *)&from, sizeof(T));
 		}
 
@@ -89,7 +89,7 @@ forall( T ) {
 				select_node &s = remove_first( waiters );
 
 				if ( s.clause_status == 0p )			// poke in result so that woken threads do not need to reacquire any locks
-					copy_T( result, *(((future_node(T) &)s).my_result) );
+					copy_T$( result, *(((future_node(T) &)s).my_result) );
 
 				wake_one( waiters, s );
 			}
@@ -103,7 +103,7 @@ forall( T ) {
 			if ( state != FUTURE_EMPTY )
 				abort("Attempting to fulfil a future that has already been fulfilled");
 
-			copy_T( val, result );
+			copy_T$( val, result );
 			return fulfil$( this );
 		}
 
@@ -142,7 +142,7 @@ forall( T ) {
 			T ret_val;
 			if ( state == FUTURE_FULFILLED ) {
 				exceptCheck();
-				copy_T( result, ret_val );
+				copy_T$( result, ret_val );
 				unlock( lock );
 				return [ret_val, false];
 			}
@@ -174,12 +174,11 @@ forall( T ) {
 			lock( lock );
 			T ret_val;
 			if ( state == FUTURE_FULFILLED ) {
-				copy_T( result, ret_val );
+				copy_T$( result, ret_val );
 				unlock( lock );
 				return [ret_val, true];
 			}
 			unlock( lock );
-
 			return [ret_val, false];
 		}
 
@@ -219,12 +218,109 @@ forall( T ) {
 }
 
 //--------------------------------------------------------------------------------------------------------
-// These futures below do not support select statements so they may not have as many features as 'future'
+// future_rc uses reference counting to eliminate explicit storage-management and support the waituntil
+// statement.
+//--------------------------------------------------------------------------------------------------------
+
+forall( T ) {
+	struct future_rc_impl$ {
+		futex_mutex lock;								// concurrent protection
+		size_t refCnt;									// number of references to future
+		future(T) fut;									// underlying future
+	}; // future_rc_impl$
+
+	static inline {
+		void incRef$( future_rc_impl$( T ) & impl ) with( impl ) {
+			__atomic_fetch_add( &refCnt, 1, __ATOMIC_RELAXED );
+//			lock( lock );
+//			refCnt += 1;
+//			unlock( lock );
+		} // incRef$
+
+		bool decRef$( future_rc_impl$( T ) & impl ) with( impl ) {
+			return __atomic_fetch_add( &refCnt, -1, __ATOMIC_RELAXED ) == 1;
+			// lock( lock );
+			// refCnt -= 1;
+			// bool ret = refCnt == 0;
+			// unlock( lock );
+			// return ret;
+		} // decRef$
+
+		void ?{}( future_rc_impl$( T ) & frc ) with( frc ) {
+			lock{};										// intialization
+			refCnt = 1;
+		} // ?{}
+
+		void ^?{}( future_rc_impl$( T ) & frc ) with( frc ) {
+			decRef$( frc );
+		} // ^?{}
+	} // static inline
+	
+	struct future_rc {
+		future_rc_impl$(T) * impl;		
+	}; // future_rc
+	__CFA_SELECT_GET_TYPE( future_rc(T) );
+		
+	static inline {
+		void ?{}( future_rc( T ) & frc ) with( frc ) {
+			impl = new();
+		} // ?{}
+
+		void ?{}( future_rc( T ) & to, future_rc( T ) & from ) with( to ) {
+			impl = from.impl;							// point at new impl
+			incRef$( *impl );
+		} // ?{}
+
+		void ^?{}( future_rc( T ) & frc ) with( frc ) {
+			if ( decRef$( *impl ) ) { delete( impl ); impl = 0p; }
+		} // ^?{}
+
+		future_rc( T ) & ?=?( future_rc( T ) & lhs, future_rc( T ) & rhs ) with( lhs ) {
+		  if ( impl == rhs.impl ) return lhs;			// self assignment ?
+			if ( decRef$( *impl ) ) { delete( impl ); impl = 0p; } // no references => delete current impl
+			impl = rhs.impl;							// point at new impl
+			incRef$( *impl );							//   and increment reference count
+			return lhs;
+		} // ?+?
+
+		bool register_select( future_rc(T) & this, select_node & s ) with( this ) {
+			return register_select( this.impl->fut, s );
+		}
+
+		bool unregister_select( future_rc(T) & this, select_node & s ) with( this ) {
+			return unregister_select( this.impl->fut, s );
+		}
+
+		bool on_selected( future_rc(T) &, select_node & ) { return true; }
+
+		// USED BY CLIENT
+
+		bool available( future_rc( T ) & frc ) { return available( frc.impl->fut ); } // future result available ?
+
+		bool fulfil( future_rc(T) & frc, T val ) with( frc ) { return fulfil( impl->fut, val ); }
+		bool ?()( future_rc(T) & frc, T val ) { return fulfil( frc, val ); } // alternate interface
+
+		int ?==?( future_rc( T ) & lhs, future_rc( T ) & rhs ) { return lhs.impl == rhs.impl; } // referential equality
+
+		// USED BY SERVER
+
+		T get( future_rc(T) & frc ) with( frc ) { return get( impl->fut ); }
+		T ?()( future_rc(T) & frc ) with( frc ) { return get( frc ); } // alternate interface
+
+		bool fulfil( future_rc(T) & frc, exception_t * ex ) with( frc ) { return fulfil( impl->fut, ex ); }
+		bool ?()( future_rc(T) & frc, exception_t * ex ) { return fulfil( frc, ex ); } // alternate interface
+
+		void reset( future_rc(T) & frc ) with( frc ) { reset( impl->fut ); } // mark future as empty (for reuse)
+	} // static inline
+} // forall( T )
+
+//--------------------------------------------------------------------------------------------------------
+// These futures below do not support waituntil statements so they may not have as many features as 'future'
 //  however the 'single_future' is cheap and cheerful and is most likely more performant than 'future'
 //  since it uses raw atomics and no locks
 //
 // As far as 'multi_future' goes I can't see many use cases as it will be less performant than 'future'
-//  since it is monitor based and also is not compatible with select statements
+//  since it is monitor based and also is not compatible with waituntil statement.
 //--------------------------------------------------------------------------------------------------------
 
 forall( T ) {

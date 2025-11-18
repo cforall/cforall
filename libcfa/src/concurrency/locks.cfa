@@ -637,7 +637,7 @@ bool try_P( semaphore & sem ) with( sem ) {
 	return true;
 }
 
-thread$ * V( semaphore & sem, const bool doUnpark ) with( sem ) {
+bool V( semaphore & sem ) with( sem ) {
 	thread$ * thrd = 0p;
 	lock( lock$ __cfaabi_dbg_ctx2 );
 	count$ += 1;
@@ -645,16 +645,15 @@ thread$ * V( semaphore & sem, const bool doUnpark ) with( sem ) {
 		thrd = pop_head( waiting$ );					// remove task at head of waiting list
 	}
 	unlock( lock$ );
-	if ( doUnpark ) unpark( thrd );						// make new owner
-	return thrd;
+	if ( true ) unpark( thrd );						// make new owner
+	return thrd != 0p;
 }
 
-bool V( semaphore & sem, size_t diff ) with( sem ) {
-	thread$ * thrd = 0p;
+size_t V( semaphore & sem, size_t count ) with( sem ) {
 	lock( lock$ __cfaabi_dbg_ctx2 );
-	size_t release = max( (size_t)-count$, diff );
-	count$ += diff;
+	size_t release = max( (size_t)-count$, count );
+	count$ += count;
 	for ( release ) unpark( pop_head( waiting$ ) );
 	unlock( lock$ );
-	return thrd != 0p;
+	return release;
 }

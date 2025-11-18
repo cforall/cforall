@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov  5 10:27:45 2025
-// Update Count     : 61
+// Last Modified On : Mon Nov 17 20:48:55 2025
+// Update Count     : 63
 //
 
 #pragma once
@@ -84,7 +84,6 @@ static inline void pre_park_then_park( __cfa_pre_park pp_fn, void * pp_datum ) {
 // Semaphore, counting
 
 struct semaphore {
-	// PRIVATE
 	ssize_t count$;										 // - => # waiting threads, 0 => block, + => acquire
 	__spinlock_t lock$;									 // protect blocking-lock critical sections
 	__queue_t( thread$ ) waiting$;						 // waiting threads
@@ -98,9 +97,8 @@ static inline bool P( semaphore & sem, uintptr_t shadow ) { active_thread()->sha
 bool P( semaphore & sem, semaphore & lock );			// atomic block and release
 bool try_P( semaphore & sem );
 static inline bool P( semaphore & sem, semaphore & lock, uintptr_t shadow ) { active_thread()->shadow$ = shadow; return P( sem, lock ); }
-thread$ * V( semaphore & sem, const bool doUnpark = true );
-static inline bool V( semaphore & sem ) with( sem ) { return V( sem, true ) != 0p; }
-bool V( semaphore & sem, size_t count );
+bool V( semaphore & sem );
+size_t V( semaphore & sem, size_t count );
 static inline uintptr_t front( semaphore & sem ) with( sem ) { // return shadow information for first waiting thread
 	#ifdef __CFA_DEBUG__
 	if ( waiting$ ) {									// condition queue must not be empty
