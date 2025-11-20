@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons & Peter Buhr
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 17 08:58:38 2025
-// Update Count     : 164
+// Last Modified On : Wed Nov 19 09:26:38 2025
+// Update Count     : 204
 //
 
 #pragma once
@@ -26,167 +26,39 @@
 //--------------------------------------------------------------------------------------------------------
 
 forall( T ) {
-	enum { FUTURE_EMPTY = 0, FUTURE_FULFILLED = 1 };
+	// PRIVATE
 
-	struct future {
-		int state;
-		T result;
-		exception_t * except;
-		dlist( select_node ) waiters;
-		futex_mutex lock;
-	};
-	__CFA_SELECT_GET_TYPE( future(T) );
-
-	struct future_node {
+	struct future_node$ {
 		inline select_node;
 		T * my_result;
 	};
 
 	static inline {
-		void ?{}( future_node(T) & this, thread$ * blocked_thread, T * my_result ) {
-			((select_node &)this){ blocked_thread };
-			this.my_result = my_result;
-		}
-
- 		void ?{}( future(T) & this ) with( this ) {
- 			waiters{};
- 			except = 0p;
- 			state = FUTURE_EMPTY;
- 			lock{};
- 		}
-
-		void ^?{}( future(T) & this ) with( this ) {
-			free( except );
-		}
-
-		// Reset future back to original state
-		void reset( future(T) & this ) with(this) {
-			lock( lock );
-			if ( ! isEmpty( waiters ) )
-				abort("Attempting to reset a future with blocked waiters");
-			state = FUTURE_EMPTY;
-			free( except );
-			except = 0p;
-			unlock( lock );
-		}
-
-		// check if the future is available
-		// currently no mutual exclusion because I can't see when you need this call to be synchronous or protected
-		bool available( future(T) & this ) { return __atomic_load_n( &this.state, __ATOMIC_RELAXED ); }
-
-
 		// memcpy wrapper to help copy values
-		void copy_T$( T & from, T & to ) {
-			memcpy((void *)&to, (void *)&from, sizeof(T));
-		}
+		void copy_T$( T & to, T & from ) { memcpy( (void *)&to, (void *)&from, sizeof(T) ); }
+	} // distribution
 
-		bool fulfil$( future(T) & this ) with(this) {	// helper
-			bool ret_val = ! isEmpty( waiters );
-			state = FUTURE_FULFILLED;
-			while ( ! isEmpty( waiters ) ) {
-				if ( !__handle_waituntil_OR( waiters ) ) // handle special waituntil OR case
-					break; // if handle_OR returns false then waiters is empty so break
-				select_node &s = remove_first( waiters );
+	enum { FUTURE_EMPTY$ = 0, FUTURE_FULFILLED$ = 1 };
 
-				if ( s.clause_status == 0p )			// poke in result so that woken threads do not need to reacquire any locks
-					copy_T$( result, *(((future_node(T) &)s).my_result) );
+	// PUBLIC
 
-				wake_one( waiters, s );
-			}
-			unlock( lock );
-			return ret_val;
-		}
+	struct future {
+		int state;
+		T result;
+		exception_t * except;
+		futex_mutex lock;
+		dlist( select_node ) waiters;
+	};
+	__CFA_SELECT_GET_TYPE( future(T) );					// magic
 
-		// Fulfil the future, returns whether or not someone was unblocked
-		bool fulfil( future(T) & this, T val ) with(this) {
-			lock( lock );
-			if ( state != FUTURE_EMPTY )
-				abort("Attempting to fulfil a future that has already been fulfilled");
+	static inline {
+		// PRIVATE
 
-			copy_T$( val, result );
-			return fulfil$( this );
-		}
-
-		bool ?()( future(T) & this, T val ) {			// alternate interface
-			return fulfil( this, val );
-		}
-
-		// Load an exception to the future, returns whether or not someone was unblocked
-		bool fulfil( future(T) & this, exception_t * ex ) with(this) {
-			lock( lock );
-			if ( state != FUTURE_EMPTY )
-				abort("Attempting to fulfil a future that has already been fulfilled");
-
-			except = ( exception_t * ) malloc( ex->virtual_table->size );
-			ex->virtual_table->copy( except, ex );
-			return fulfil$( this );
-		}
-
-		bool ?()( future(T) & this, exception_t * ex ) { // alternate interface
-			return fulfil( this, ex );
-		}
-
-		// Wait for the future to be fulfilled
-		// Also return whether the thread had to block or not
-		[T, bool] get( future(T) & this ) with( this ) {
-			void exceptCheck() {						// helper
-				if ( except ) {
-					exception_t * ex = ( exception_t * ) alloca( except->virtual_table->size );
-					except->virtual_table->copy( ex, except );
-					unlock( lock );
-					throwResume * ex;
-				}
-			}
-
-			lock( lock );
-			T ret_val;
-			if ( state == FUTURE_FULFILLED ) {
-				exceptCheck();
-				copy_T$( result, ret_val );
-				unlock( lock );
-				return [ret_val, false];
-			}
-
-			future_node(T) node = { active_thread(), &ret_val };
-			insert_last( waiters, ((select_node &)node) );
-			unlock( lock );
-			park( );
-			exceptCheck();
-
-			return [ret_val, true];
-		}
-
-		// Wait for the future to be fulfilled
-		T get( future(T) & this ) {
-			[T, bool] tt;
-			tt = get(this);
-			return tt.0;
-		}
-
-		T ?()( future(T) & this ) {						// alternate interface
-			return get( this );
-		}
-
-		// Gets value if it is available and returns [ val, true ]
-		// otherwise returns [ default_val, false]
-		// will not block
-		[T, bool] try_get( future(T) & this ) with(this) {
-			lock( lock );
-			T ret_val;
-			if ( state == FUTURE_FULFILLED ) {
-				copy_T$( result, ret_val );
-				unlock( lock );
-				return [ret_val, true];
-			}
-			unlock( lock );
-			return [ret_val, false];
-		}
-
-		bool register_select( future(T) & this, select_node & s ) with(this) {
+		bool register_select( future(T) & fut, select_node & s ) with( fut ) { // for waituntil statement
 			lock( lock );
 
 			// check if we can complete operation. If so race to establish winner in special OR case
-			if ( !s.park_counter && state != FUTURE_EMPTY ) {
+			if ( !s.park_counter && state != FUTURE_EMPTY$ ) {
 				if ( !__make_select_node_available( s ) ) { // we didn't win the race so give up on registering
 					unlock( lock );
 					return false;
@@ -194,7 +66,7 @@ forall( T ) {
 			}
 
 			// future not ready -> insert select node and return
-			if ( state == FUTURE_EMPTY ) {
+		  if ( state == FUTURE_EMPTY$ ) {
 				insert_last( waiters, s );
 				unlock( lock );
 				return false;
@@ -205,17 +77,149 @@ forall( T ) {
 			return true;
 		}
 
-		bool unregister_select( future(T) & this, select_node & s ) with(this) {
-			if ( ! isListed( s ) ) return false;
+		bool unregister_select( future(T) & fut, select_node & s ) with( fut ) { // for waituntil statement
+		  if ( ! isListed( s ) ) return false;
 			lock( lock );
 			if ( isListed( s ) ) remove( s );
 			unlock( lock );
 			return false;
 		}
 
-		bool on_selected( future(T) &, select_node & ) { return true; }
-	}
-}
+		bool on_selected( future(T) &, select_node & ) { return true; } // for waituntil statement
+
+		// PUBLIC
+
+		// General
+
+		void ?{}( future_node$(T) & fut, thread$ * blocked_thread, T * my_result ) {
+			((select_node &)fut){ blocked_thread };
+			fut.my_result = my_result;
+		}
+
+ 		void ?{}( future(T) & fut ) with( fut ) {
+// 			waiters{};
+ 			except = 0p;
+ 			state = FUTURE_EMPTY$;
+ 			lock{};
+ 		}
+
+		void ^?{}( future(T) & fut ) with( fut ) {
+			free( except );
+		}
+
+		// Used by Client
+
+		// PRIVATE
+
+		// Return a value/exception from the future.
+		T get$( future(T) & fut ) with( fut ) {			// helper
+			void exceptCheck() {						// helper
+				if ( except ) {
+					exception_t * ex = ( exception_t * ) alloca( except->virtual_table->size );
+					except->virtual_table->copy( ex, except );
+					unlock( lock );
+					throwResume * ex;
+				}
+			}
+			T ret_val;
+
+			// LOCK ACQUIRED IN PUBLIC get
+			if ( state == FUTURE_FULFILLED$ ) {
+				exceptCheck();
+				copy_T$( ret_val, result );
+				unlock( lock );
+				return ret_val;
+			}
+
+			future_node$(T) node = { active_thread(), &ret_val };
+			insert_last( waiters, ((select_node &)node) );
+			unlock( lock );
+			park( );
+			exceptCheck();
+			return ret_val;
+		}
+
+		// PUBLIC
+
+		bool available( future( T ) & fut ) { return __atomic_load_n( &fut.state, __ATOMIC_RELAXED ); } // future result available ?
+
+		// Return a value/exception from the future.
+		[T, bool] get( future(T) & fut ) with( fut ) {
+			lock( lock );
+			bool ret = state == FUTURE_EMPTY$;
+			return [ get$( fut ), ret ];
+		}
+
+		T get( future(T) & fut ) with( fut ) {
+			lock( lock );
+			return get$( fut );
+		}
+		T ?()( future(T) & fut ) { return get( fut ); }	// alternate interface
+
+		// Non-blocking get: true => return defined value, false => value return undefined.
+		[T, bool] try_get( future(T) & fut ) with( fut ) {
+			lock( lock );
+			T ret_val;
+			if ( state == FUTURE_FULFILLED$ ) {
+				copy_T$( ret_val, result );
+				unlock( lock );
+				return [ret_val, true];
+			}
+			unlock( lock );
+			return [ret_val, false];
+		}
+
+		// Used by Server
+
+		// PRIVATE
+
+		bool fulfil$( future(T) & fut ) with( fut ) {	// helper
+			bool ret_val = ! isEmpty( waiters );
+			state = FUTURE_FULFILLED$;
+			while ( ! isEmpty( waiters ) ) {
+				if ( !__handle_waituntil_OR( waiters ) ) // handle special waituntil OR case
+					break; // if handle_OR returns false then waiters is empty so break
+				select_node &s = remove_first( waiters );
+
+				if ( s.clause_status == 0p )			// poke in result so that woken threads do not need to reacquire any locks
+					copy_T$( *(((future_node$(T) &)s).my_result), result );
+
+				wake_one( waiters, s );
+			}
+			unlock( lock );
+			return ret_val;
+		}
+
+		// PUBLIC
+
+		// Load a value/exception into the future, returns whether or not waiting threads.
+		bool fulfil( future(T) & fut, T val ) with( fut ) {
+			lock( lock );
+		  if ( state != FUTURE_EMPTY$ ) abort("Attempting to fulfil a future that has already been fulfilled");
+			copy_T$( result, val );
+			return fulfil$( fut );
+		}
+		bool ?()( future(T) & fut, T val ) { return fulfil( fut, val ); } // alternate interface
+
+		bool fulfil( future(T) & fut, exception_t * ex ) with( fut ) {
+			lock( lock );
+		  if ( state != FUTURE_EMPTY$ ) abort( "Attempting to fulfil a future that has already been fulfilled" );
+			except = ( exception_t * ) malloc( ex->virtual_table->size );
+			ex->virtual_table->copy( except, ex );
+			return fulfil$( fut );
+		}
+		bool ?()( future(T) & fut, exception_t * ex ) { return fulfil( fut, ex ); } // alternate interface
+
+		void reset( future(T) & fut ) with( fut ) {		// mark future as empty (for reuse)
+			lock( lock );
+		  if ( ! isEmpty( waiters ) ) abort( "Attempting to reset a future with blocked waiters" );
+			state = FUTURE_EMPTY$;
+			free( except );
+			except = 0p;
+			unlock( lock );
+		}
+	} // static inline
+} // forall( T )
 
 //--------------------------------------------------------------------------------------------------------
 // future_rc uses reference counting to eliminate explicit storage-management and support the waituntil
@@ -223,6 +227,8 @@ forall( T ) {
 //--------------------------------------------------------------------------------------------------------
 
 forall( T ) {
+	// PRIVATE
+
 	struct future_rc_impl$ {
 		futex_mutex lock;								// concurrent protection
 		size_t refCnt;									// number of references to future
@@ -230,84 +236,83 @@ forall( T ) {
 	}; // future_rc_impl$
 
 	static inline {
-		void incRef$( future_rc_impl$( T ) & impl ) with( impl ) {
-			__atomic_fetch_add( &refCnt, 1, __ATOMIC_RELAXED );
-//			lock( lock );
-//			refCnt += 1;
-//			unlock( lock );
+		size_t incRef$( future_rc_impl$( T ) & impl ) with( impl ) {
+			return __atomic_fetch_add( &refCnt, 1, __ATOMIC_SEQ_CST );
 		} // incRef$
 
-		bool decRef$( future_rc_impl$( T ) & impl ) with( impl ) {
-			return __atomic_fetch_add( &refCnt, -1, __ATOMIC_RELAXED ) == 1;
-			// lock( lock );
-			// refCnt -= 1;
-			// bool ret = refCnt == 0;
-			// unlock( lock );
-			// return ret;
+		size_t decRef$( future_rc_impl$( T ) & impl ) with( impl ) {
+			return __atomic_fetch_add( &refCnt, -1, __ATOMIC_SEQ_CST );
 		} // decRef$
 
 		void ?{}( future_rc_impl$( T ) & frc ) with( frc ) {
-			lock{};										// intialization
-			refCnt = 1;
+			refCnt = 1;									// count initial object
 		} // ?{}
-
-		void ^?{}( future_rc_impl$( T ) & frc ) with( frc ) {
-			decRef$( frc );
-		} // ^?{}
 	} // static inline
 	
+	// PUBLIC
+
 	struct future_rc {
 		future_rc_impl$(T) * impl;		
 	}; // future_rc
-	__CFA_SELECT_GET_TYPE( future_rc(T) );
+	__CFA_SELECT_GET_TYPE( future_rc(T) );				// magic
 		
 	static inline {
-		void ?{}( future_rc( T ) & frc ) with( frc ) {
+		// PRIVATE
+
+		bool register_select( future_rc(T) & frc, select_node & s ) with( frc ) { // for waituntil statement
+			return register_select( frc.impl->fut, s );
+		}
+
+		bool unregister_select( future_rc(T) & frc, select_node & s ) with( frc ) { // for waituntil statement
+			return unregister_select( frc.impl->fut, s );
+		}
+
+		bool on_selected( future_rc(T) &, select_node & ) { return true; } // for waituntil statement
+
+		// PUBLIC
+
+		// General
+
+		void ?{}( future_rc( T ) & frc ) with( frc ) {	// default constructor
 			impl = new();
 		} // ?{}
 
-		void ?{}( future_rc( T ) & to, future_rc( T ) & from ) with( to ) {
+		void ?{}( future_rc( T ) & to, future_rc( T ) & from ) with( to ) { // copy constructor
 			impl = from.impl;							// point at new impl
 			incRef$( *impl );
 		} // ?{}
 
 		void ^?{}( future_rc( T ) & frc ) with( frc ) {
-			if ( decRef$( *impl ) ) { delete( impl ); impl = 0p; }
+			if ( decRef$( *impl ) == 1 ) { delete( impl ); impl = 0p; }
 		} // ^?{}
 
 		future_rc( T ) & ?=?( future_rc( T ) & lhs, future_rc( T ) & rhs ) with( lhs ) {
 		  if ( impl == rhs.impl ) return lhs;			// self assignment ?
-			if ( decRef$( *impl ) ) { delete( impl ); impl = 0p; } // no references => delete current impl
+			if ( decRef$( *impl ) == 1 ) { delete( impl ); impl = 0p; } // no references ? => delete current impl
 			impl = rhs.impl;							// point at new impl
 			incRef$( *impl );							//   and increment reference count
 			return lhs;
 		} // ?+?
 
-		bool register_select( future_rc(T) & this, select_node & s ) with( this ) {
-			return register_select( this.impl->fut, s );
-		}
-
-		bool unregister_select( future_rc(T) & this, select_node & s ) with( this ) {
-			return unregister_select( this.impl->fut, s );
-		}
-
-		bool on_selected( future_rc(T) &, select_node & ) { return true; }
-
-		// USED BY CLIENT
+		// Used by Client
 
 		bool available( future_rc( T ) & frc ) { return available( frc.impl->fut ); } // future result available ?
 
-		bool fulfil( future_rc(T) & frc, T val ) with( frc ) { return fulfil( impl->fut, val ); }
-		bool ?()( future_rc(T) & frc, T val ) { return fulfil( frc, val ); } // alternate interface
+		// Return a value/exception from the future.
+		[T, bool] get( future_rc(T) & frc ) with( frc ) { return get( impl->fut ); } // return future value
+		T get( future_rc(T) & frc ) with( frc ) { return get( impl->fut ); } // return future value
+		T ?()( future_rc(T) & frc ) with( frc ) { return get( frc ); } // alternate interface
+		[T, bool] try_get( future_rc(T) & frc ) with( frc ) { return try_get( impl->fut ); }
 
 		int ?==?( future_rc( T ) & lhs, future_rc( T ) & rhs ) { return lhs.impl == rhs.impl; } // referential equality
 
-		// USED BY SERVER
+		// Used by Server
 
-		T get( future_rc(T) & frc ) with( frc ) { return get( impl->fut ); }
-		T ?()( future_rc(T) & frc ) with( frc ) { return get( frc ); } // alternate interface
+		// Load a value/exception into the future, returns whether or not waiting threads.
+		bool fulfil( future_rc(T) & frc, T val ) with( frc ) { return fulfil( impl->fut, val ); } // copy-in future value
+		bool ?()( future_rc(T) & frc, T val ) { return fulfil( frc, val ); } // alternate interface
 
-		bool fulfil( future_rc(T) & frc, exception_t * ex ) with( frc ) { return fulfil( impl->fut, ex ); }
+		bool fulfil( future_rc(T) & frc, exception_t * ex ) with( frc ) { return fulfil( impl->fut, ex ); } // insert future exception
 		bool ?()( future_rc(T) & frc, exception_t * ex ) { return fulfil( frc, ex ); } // alternate interface
 
 		void reset( future_rc(T) & frc ) with( frc ) { reset( impl->fut ); } // mark future as empty (for reuse)
@@ -356,7 +361,7 @@ forall( T ) {
 		// Wait for the future to be fulfilled
 		T wait( single_future(T) & this ) {
 			[T, bool] tt;
-			tt = wait(this);
+			tt = wait( this );
 			return tt.0;
 		}
 	}
@@ -418,7 +423,7 @@ forall( T ) {
 
 		// Wait for the future to be fulfilled
 		T wait( multi_future(T) & this ) {
-			return wait(this).0;
+			return wait( this ).0;
 		}
 	}
 }
