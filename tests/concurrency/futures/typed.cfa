@@ -7,75 +7,74 @@ thread Server {
 	single_future(int) * requests[NFUTURES];
 };
 
-void ?{}( Server & this ) {
-	this.cnt = 0;
-	for(i; NFUTURES) {
-		this.requests[i] = 0p;
+void ?{}( Server & server ) with( server ) {
+	cnt = 0;
+	for ( i; NFUTURES ) {
+		requests[i] = 0p;
 	}
 }
 
-void ^?{}( Server & mutex this ) {
-	assert(this.cnt == 0);
-	for(i; NFUTURES) {
-		this.requests[i] = 0p;
+void ^?{}( Server & mutex server ) with( server )  {
+	assert( cnt == 0 );
+	for ( i; NFUTURES ) {
+		requests[i] = 0p;
 	}
 }
 
-void process( Server & this, int i ) {
-	if( this.requests[i] == 0p ) return;
-	single_future(int) * f = this.requests[i];
-	this.requests[i] = 0p;
-	this.cnt--;
-	fulfil( *f , i);
+void process( Server & server, int i ) with( server )  {
+  if ( requests[i] == 0p ) return;
+	single_future(int) * f = requests[i];
+	requests[i] = 0p;
+	cnt--;
+	(*f)( i );											// fulfil
 }
 
-void call( Server & mutex this, single_future(int) & f ) {
-	for(i; NFUTURES) {
-		if( this.requests[i] == 0p ) {
-			this.requests[i] = &f;
-			this.cnt++;
+void call( Server & mutex server, single_future(int) & f ) with( server ) {
+	for ( i; NFUTURES ) {
+		if ( requests[i] == 0p ) {
+			requests[i] = &f;
+			cnt++;
 			return;
 		}
 	}
 	abort("Monitor Error");
 }
 
-void main( Server & this ) {
+void main( Server & server ) {
 	unsigned i = 0;
-	for() {
-		waitfor( ^?{} : this ) {
+	for () {
+		waitfor ( ^?{} : server ) {
 			break;
-		}
-		or when( this.cnt < NFUTURES ) waitfor( call: this ) {}
+		} or when( server.cnt < NFUTURES ) waitfor( call : server ) {}
 		or else {
-			process( this, i % NFUTURES );
+			process( server, i % NFUTURES );
 			i++;
 		}
 	}
 
-	for(i; NFUTURES) {
-		process( this, i );
+	for ( i; NFUTURES ) {
+		process( server, i );
 	}
 }
 
 Server * the_server;
 thread Worker {};
 
-void thrash(void) {
+void thrash() {
 	volatile int locals[250];
-	for(i; 250) {
+	for ( i; 250 ) {
 		locals[i] = 0xdeadbeef;
 	}
 }
 
-void work(void) {
+void work() {
 	single_future(int) mine;
 	call( *the_server, mine );
-	wait( mine );
+	mine();												// get
 }
 
 void main( Worker & ) {
-	for(150) {
+	for ( 150 ) {
 		thrash();
 		work();
 		thrash();
@@ -83,7 +82,7 @@ void main( Worker & ) {
 }
 
 int main() {
-	printf( "start\n" );				// non-empty .expect file
+	printf( "start\n" );								// non-empty .expect file
 	processor procs[2];
 	{
 		Server server;
@@ -92,6 +91,5 @@ int main() {
 			Worker workers[17];
 		}
 	}
-	printf( "done\n" );				// non-empty .expect file
-
+	printf( "done\n" );									// non-empty .expect file
 }

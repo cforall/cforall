@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 17 20:48:55 2025
-// Update Count     : 63
+// Last Modified On : Sun Nov 23 22:38:45 2025
+// Update Count     : 67
 //
 
 #pragma once
@@ -126,9 +126,9 @@ static inline void unlock( single_acquisition_lock & this ) { unlock( (blocking_
 static inline size_t on_wait( single_acquisition_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { return on_wait ( (blocking_lock &)this, pp_fn, pp_datum ); }
 static inline void on_wakeup( single_acquisition_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
 static inline void on_notify( single_acquisition_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
-static inline bool register_select( single_acquisition_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
-static inline bool unregister_select( single_acquisition_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
-static inline bool on_selected( single_acquisition_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
+static inline bool register_select$( single_acquisition_lock & this, select_node & node ) { return register_select$( (blocking_lock &)this, node ); }
+static inline bool unregister_select$( single_acquisition_lock & this, select_node & node ) { return unregister_select$( (blocking_lock &)this, node ); }
+static inline bool on_selected$( single_acquisition_lock & this, select_node & node ) { return on_selected$( (blocking_lock &)this, node ); }
 __CFA_SELECT_GET_TYPE( single_acquisition_lock );
 
 //----------
@@ -144,9 +144,9 @@ static inline void unlock( owner_lock & this ) { unlock( (blocking_lock &)this )
 static inline size_t on_wait( owner_lock & this, __cfa_pre_park pp_fn, void * pp_datum ) { return on_wait ( (blocking_lock &)this, pp_fn, pp_datum ); }
 static inline void on_wakeup( owner_lock & this, size_t v ) { on_wakeup ( (blocking_lock &)this, v ); }
 static inline void on_notify( owner_lock & this, struct thread$ * t ) { on_notify( (blocking_lock &)this, t ); }
-static inline bool register_select( owner_lock & this, select_node & node ) { return register_select( (blocking_lock &)this, node ); }
-static inline bool unregister_select( owner_lock & this, select_node & node ) { return unregister_select( (blocking_lock &)this, node ); }
-static inline bool on_selected( owner_lock & this, select_node & node ) { return on_selected( (blocking_lock &)this, node ); }
+static inline bool register_select$( owner_lock & this, select_node & node ) { return register_select$( (blocking_lock &)this, node ); }
+static inline bool unregister_select$( owner_lock & this, select_node & node ) { return unregister_select$( (blocking_lock &)this, node ); }
+static inline bool on_selected$( owner_lock & this, select_node & node ) { return on_selected$( (blocking_lock &)this, node ); }
 __CFA_SELECT_GET_TYPE( owner_lock );
 
 //-----------------------------------------------------------------------------
@@ -610,7 +610,7 @@ static inline size_t on_wait( simple_owner_lock & this, __cfa_pre_park pp_fn, vo
 static inline void on_wakeup( simple_owner_lock & this, size_t recursion ) with( this ) { recursion_count = recursion; }
 
 // waituntil() support
-static inline bool register_select( simple_owner_lock & this, select_node & node ) with( this ) {
+static inline bool register_select$( simple_owner_lock & this, select_node & node ) with( this ) {
 	lock( lock __cfaabi_dbg_ctx2 );
 
 	// check if we can complete operation. If so race to establish winner in special OR case
@@ -642,7 +642,7 @@ static inline bool register_select( simple_owner_lock & this, select_node & node
 	return true;
 }
 
-static inline bool unregister_select( simple_owner_lock & this, select_node & node ) with( this ) {
+static inline bool unregister_select$( simple_owner_lock & this, select_node & node ) with( this ) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	if ( isListed( node ) ) {
 		remove( node );
@@ -660,7 +660,7 @@ static inline bool unregister_select( simple_owner_lock & this, select_node & no
 	return false;
 }
 
-static inline bool on_selected( simple_owner_lock & /*this*/, select_node & /*node*/ ) { return true; }
+static inline bool on_selected$( simple_owner_lock & /*this*/, select_node & /*node*/ ) { return true; }
 __CFA_SELECT_GET_TYPE( simple_owner_lock );
 
 //-----------------------------------------------------------------------------

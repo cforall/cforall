@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Fri May 27 10:31:00 2022
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Jun 13 13:30:00 2022
-// Update Count     : 0
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Nov 23 22:37:39 2025
+// Update Count     : 3
 //
 
 #include "Waituntil.hpp"
@@ -605,7 +605,7 @@ void GenerateWaitUntilCore::setUpClause( const WhenClause * clause, ClauseData *
 	));
 
 	// Generates: register_select(A, clause1);
-	currBody->push_back( new ExprStmt( loc, genSelectTraitCall( clause, data, "register_select" ) ) );
+	currBody->push_back( new ExprStmt( loc, genSelectTraitCall( clause, data, "register_select$" ) ) );
 
 	// generates: if ( when_cond ) { ... currBody ... }
 	if ( clause->when_cond )
@@ -637,7 +637,7 @@ CompoundStmt * GenerateWaitUntilCore::genStmtBlock( const WhenClause * clause, c
 	return new CompoundStmt( cLoc,
 		{
 			new IfStmt( cLoc,
-				genSelectTraitCall( clause, data, "on_selected" ),
+				genSelectTraitCall( clause, data, "on_selected$" ),
 				ast::deepCopy( clause->stmt )
 			)
 		}
@@ -714,7 +714,7 @@ CompoundStmt * GenerateWaitUntilCore::genStatusCheckFor( const WaitUntilStmt * s
 				                                    }
 				                                )
 				                            ),
-				                            new ExprStmt( loc, genSelectTraitCall( clause, clauseData.at(idx), "unregister_select" ) )
+				                            new ExprStmt( loc, genSelectTraitCall( clause, clauseData.at(idx), "unregister_select$" ) )
 				                        }
 				                    )
 				                )
@@ -1016,7 +1016,7 @@ Stmt * GenerateWaitUntilCore::recursiveOrIfGen( const WaitUntilStmt * stmt, vect
 	}
 	const CodeLocation & cLoc = stmt->clauses.at(idx)->location;
 
-	Expr * baseCond = genSelectTraitCall( stmt->clauses.at(idx), data.at(idx), "register_select" );
+	Expr * baseCond = genSelectTraitCall( stmt->clauses.at(idx), data.at(idx), "register_select$" );
 	Expr * ifCond;
 
 	// If we have a when_cond make the register call conditional on it
@@ -1149,7 +1149,7 @@ Stmt * GenerateWaitUntilCore::genAllOr( const WaitUntilStmt * stmt ) {
 		unregisters->push_back(
 			new IfStmt( cLoc,
 				ifCond,
-				new ExprStmt( cLoc, genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "unregister_select" ) )
+				new ExprStmt( cLoc, genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "unregister_select$" ) )
 			)
 		);
 	}
@@ -1342,7 +1342,7 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
 				new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast
 			),
 			new CastExpr( cLoc,
-				genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "unregister_select" ),
+				genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "unregister_select$" ),
 				new BasicType( BasicKind::Bool ), GeneratedFlag::ExplicitCast
 			),
 			LogicalFlag::AndExpr
@@ -1371,7 +1371,7 @@ Stmt * GenerateWaitUntilCore::postvisit( const WaitUntilStmt * stmt ) {
 				new CompoundStmt( cLoc,
 				    {
 				        new IfStmt( cLoc,
-				            genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "on_selected" ),
+				            genSelectTraitCall( stmt->clauses.at(i), clauseData.at(i), "on_selected$" ),
 				            ast::deepCopy( stmt->clauses.at(i)->stmt )
 				        )
 				    }

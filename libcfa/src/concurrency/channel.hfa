@@ -410,7 +410,7 @@ static inline forall( T ) {
 	    __make_select_node_available( node );
 	}
 
-	bool register_select( chan_read(T) & this, select_node & node ) with(*this.chan, this) {
+	bool register_select$( chan_read(T) & this, select_node & node ) with(*this.chan, this) {
 	    lock( mutex_lock );
 	    node.extra = ret; // set .extra so that if it == 0p later in on_selected it is due to channel close
 
@@ -475,8 +475,8 @@ static inline forall( T ) {
 	    __set_avail_then_unlock( node, mutex_lock );
 	    return true;
 	}
-	bool unregister_select( chan_read(T) & this, select_node & node ) { return unregister_chan( *this.chan, node ); }
-	bool on_selected( chan_read(T) & this, select_node & node ) with(this) {
+	bool unregister_select$( chan_read(T) & this, select_node & node ) { return unregister_chan( *this.chan, node ); }
+	bool on_selected$( chan_read(T) & this, select_node & node ) with(this) {
 	    if ( unlikely(node.extra == 0p) ) {
 	        if ( ! exception_in_flight() ) __closed_remove( *chan, *ret ); // check if woken up due to closed channel
 	        else return false;
@@ -490,12 +490,12 @@ static inline forall( T ) {
 	}
 
 	chan_read_no_ret(T) remove( channel(T) & chan ) { chan_read_no_ret(T) c_read{ chan }; return c_read; }
-	bool register_select( chan_read_no_ret(T) & this, select_node & node ) { 
+	bool register_select$( chan_read_no_ret(T) & this, select_node & node ) { 
 	    this.c_read.ret = &this.retval;
-	    return register_select( this.c_read, node );
+	    return register_select$( this.c_read, node );
 	}
-	bool unregister_select( chan_read_no_ret(T) & this, select_node & node ) { return unregister_select( this.c_read, node ); }
-	bool on_selected( chan_read_no_ret(T) & this, select_node & node ) { return on_selected( this.c_read, node ); }
+	bool unregister_select$( chan_read_no_ret(T) & this, select_node & node ) { return unregister_select$( this.c_read, node ); }
+	bool on_selected$( chan_read_no_ret(T) & this, select_node & node ) { return on_selected$( this.c_read, node ); }
 
 	void ?{}( chan_write(T) & cw, channel(T) * chan, T elem ) {
 	    cw.chan = chan;
@@ -510,7 +510,7 @@ static inline forall( T ) {
 	    __make_select_node_available( node );
 	}
 
-	bool register_select( chan_write(T) & this, select_node & node ) with(*this.chan, this) {
+	bool register_select$( chan_write(T) & this, select_node & node ) with(*this.chan, this) {
 	    lock( mutex_lock );
 	    node.extra = &elem; // set .extra so that if it == 0p later in on_selected it is due to channel close
 	
@@ -576,9 +576,9 @@ static inline forall( T ) {
 		__set_avail_then_unlock( node, mutex_lock );
 		return true;
 	}
-	bool unregister_select( chan_write(T) & this, select_node & node ) { return unregister_chan( *this.chan, node ); }
+	bool unregister_select$( chan_write(T) & this, select_node & node ) { return unregister_chan( *this.chan, node ); }
 
-	bool on_selected( chan_write(T) & this, select_node & node ) with(this) { 
+	bool on_selected$( chan_write(T) & this, select_node & node ) with(this) { 
 		if ( unlikely(node.extra == 0p) ) {
 			if ( ! exception_in_flight() ) __closed_insert( *chan, elem ); // check if woken up due to closed channel
 			else return false;

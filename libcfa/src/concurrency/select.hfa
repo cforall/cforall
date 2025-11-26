@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 25 07:31:26 2025
-// Update Count     : 5
+// Last Modified On : Sun Nov 23 22:38:36 2025
+// Update Count     : 8
 //
 
 #pragma once
@@ -86,15 +86,15 @@ forall(T & | sized(T))
 trait is_selectable {
 	// For registering a select stmt on a selectable concurrency primitive
 	// Returns bool that indicates if operation is already SAT
-	bool register_select( T &, select_node & );
+	bool register_select$( T &, select_node & );
 
 	// For unregistering a select stmt on a selectable concurrency primitive
 	// If true is returned then the corresponding code block is run (only in non-special OR case and only if node status is not RUN)
-	bool unregister_select( T &, select_node & );
+	bool unregister_select$( T &, select_node & );
 
 	// This routine is run on the selecting thread prior to executing the statement corresponding to the select_node
 	//	passed as an arg to this routine. If true is returned proceed as normal, if false is returned the statement is skipped
-	bool on_selected( T &, select_node & );
+	bool on_selected$( T &, select_node & );
 };
 // Used inside the compiler to allow for overloading on return type for operations such as '?<<?' for channels
 // YOU MUST USE THIS MACRO OR INCLUDE AN EQUIVALENT DECL FOR YOUR TYPE TO SUPPORT WAITUNTIL
@@ -208,9 +208,9 @@ void ^?{}( select_timeout_node & this );
 void timeout_handler_select_cast( alarm_node_t & node );
 
 // Selectable trait routines
-bool register_select( select_timeout_node & this, select_node & node );
-bool unregister_select( select_timeout_node & this, select_node & node );
-bool on_selected( select_timeout_node & this, select_node & node );
+bool register_select$( select_timeout_node & this, select_node & node );
+bool unregister_select$( select_timeout_node & this, select_node & node );
+bool on_selected$( select_timeout_node & this, select_node & node );
 select_timeout_node __CFA_select_get_type( select_timeout_node this );
 
 // Timer macro for waituntil

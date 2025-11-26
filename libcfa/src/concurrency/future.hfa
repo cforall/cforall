@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons & Peter Buhr
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Nov 19 09:26:38 2025
-// Update Count     : 204
+// Last Modified On : Mon Nov 24 16:08:52 2025
+// Update Count     : 222
 //
 
 #pragma once
@@ -54,7 +54,7 @@ forall( T ) {
 	static inline {
 		// PRIVATE
 
-		bool register_select( future(T) & fut, select_node & s ) with( fut ) { // for waituntil statement
+		bool register_select$( future(T) & fut, select_node & s ) with( fut ) { // for waituntil statement
 			lock( lock );
 
 			// check if we can complete operation. If so race to establish winner in special OR case
@@ -77,7 +77,7 @@ forall( T ) {
 			return true;
 		}
 
-		bool unregister_select( future(T) & fut, select_node & s ) with( fut ) { // for waituntil statement
+		bool unregister_select$( future(T) & fut, select_node & s ) with( fut ) { // for waituntil statement
 		  if ( ! isListed( s ) ) return false;
 			lock( lock );
 			if ( isListed( s ) ) remove( s );
@@ -85,7 +85,7 @@ forall( T ) {
 			return false;
 		}
 
-		bool on_selected( future(T) &, select_node & ) { return true; } // for waituntil statement
+		bool on_selected$( future(T) &, select_node & ) { return true; } // for waituntil statement
 
 		// PUBLIC
 
@@ -97,10 +97,8 @@ forall( T ) {
 		}
 
  		void ?{}( future(T) & fut ) with( fut ) {
-// 			waiters{};
  			except = 0p;
  			state = FUTURE_EMPTY$;
- 			lock{};
  		}
 
 		void ^?{}( future(T) & fut ) with( fut ) {
@@ -259,15 +257,15 @@ forall( T ) {
 	static inline {
 		// PRIVATE
 
-		bool register_select( future_rc(T) & frc, select_node & s ) with( frc ) { // for waituntil statement
-			return register_select( frc.impl->fut, s );
+		bool register_select$( future_rc(T) & frc, select_node & s ) with( frc ) { // for waituntil statement
+			return register_select$( frc.impl->fut, s );
 		}
 
-		bool unregister_select( future_rc(T) & frc, select_node & s ) with( frc ) { // for waituntil statement
-			return unregister_select( frc.impl->fut, s );
+		bool unregister_select$( future_rc(T) & frc, select_node & s ) with( frc ) { // for waituntil statement
+			return unregister_select$( frc.impl->fut, s );
 		}
 
-		bool on_selected( future_rc(T) &, select_node & ) { return true; } // for waituntil statement
+		bool on_selected$( future_rc(T) &, select_node & ) { return true; } // for waituntil statement
 
 		// PUBLIC
 
@@ -320,110 +318,36 @@ forall( T ) {
 } // forall( T )
 
 //--------------------------------------------------------------------------------------------------------
-// These futures below do not support waituntil statements so they may not have as many features as 'future'
-//  however the 'single_future' is cheap and cheerful and is most likely more performant than 'future'
-//  since it uses raw atomics and no locks
-//
-// As far as 'multi_future' goes I can't see many use cases as it will be less performant than 'future'
-//  since it is monitor based and also is not compatible with waituntil statement.
+// This future does not support waituntil statements so it does not have as many features as 'future'.
+// However, it is cheap and cheerful and is more performant than 'future' since it uses raw atomics
+// and no locks
 //--------------------------------------------------------------------------------------------------------
 
 forall( T ) {
+	// PUBLIC
+
 	struct single_future {
 		inline future_t;
 		T result;
 	};
 
 	static inline {
-		// Reset future back to original state
-		void reset(single_future(T) & this) { reset( (future_t&)this ); }
+		// PUBLIC
 
-		// check if the future is available
-		bool available( single_future(T) & this ) { return available( (future_t&)this ); }
+		bool available( single_future(T) & fut ) { return available( (future_t &)fut ); } // future result available ?
 
-		// Mark the future as abandoned, meaning it will be deleted by the server
-		// This doesn't work beause of the potential need for a destructor
-		// void abandon( single_future(T) & this );
+		// Return a value/exception from the future.
+		[T, bool] get( single_future(T) & fut ) { return [fut.result, wait( fut )]; }
+		T get( single_future(T) & fut ) { wait( fut ); return fut.result; }
+		T ?()( single_future(T) & fut ) { return get( fut ); }	// alternate interface
 
-		// Fulfil the future, returns whether or not someone was unblocked
-		thread$ * fulfil( single_future(T) & this, T result ) {
-			this.result = result;
-			return fulfil( (future_t&)this );
+		// Load a value into the future, returns whether or not waiting threads.
+		bool fulfil( single_future(T) & fut, T result ) {
+			fut.result = result;
+			return fulfil( (future_t &)fut ) != 0p;
 		}
+		bool ?()( single_future(T) & fut, T val ) { return fulfil( fut, val ); } // alternate interface
 
-		// Wait for the future to be fulfilled
-		// Also return whether the thread had to block or not
-		[T, bool] wait( single_future(T) & this ) {
-			bool r = wait( (future_t&)this );
-			return [this.result, r];
-		}
-
-		// Wait for the future to be fulfilled
-		T wait( single_future(T) & this ) {
-			[T, bool] tt;
-			tt = wait( this );
-			return tt.0;
-		}
-	}
-}
-
-forall( T ) {
-	monitor multi_future {
-		inline future_t;
-		condition blocked;
-		bool has_first;
-		T result;
-	};
-
-	static inline {
-		void ?{}(multi_future(T) & this) {
-			this.has_first = false;
-		}
-
-		bool $first( multi_future(T) & mutex this ) {
-			if ( this.has_first ) {
-				wait( this.blocked );
-				return false;
-			}
-
-			this.has_first = true;
-			return true;
-		}
-
-		void $first_done( multi_future(T) & mutex this ) {
-			this.has_first = false;
-			signal_all( this.blocked );
-		}
-
-		// Reset future back to original state
-		void reset(multi_future(T) & mutex this) {
-			if ( this.has_first != false ) abort("Attempting to reset a multi_future with at least one blocked threads");
-			if ( ! empty( this.blocked ) ) abort("Attempting to reset a multi_future with multiple blocked threads");
-			reset( (future_t&)*(future_t*)((uintptr_t)&this + sizeof(monitor$)) );
-		}
-
-		// Fulfil the future, returns whether or not someone was unblocked
-		bool fulfil( multi_future(T) & this, T result ) {
-			this.result = result;
-			return fulfil( (future_t&)*(future_t*)((uintptr_t)&this + sizeof(monitor$)) ) != 0p;
-		}
-
-		// Wait for the future to be fulfilled
-		// Also return whether the thread had to block or not
-		[T, bool] wait( multi_future(T) & this ) {
-			bool sw = $first( this );
-			bool w = !sw;
-			if ( sw ) {
-				w = wait( (future_t&)*(future_t*)((uintptr_t)&this + sizeof(monitor$)) );
-				$first_done( this );
-			}
-
-			return [this.result, w];
-		}
-
-		// Wait for the future to be fulfilled
-		T wait( multi_future(T) & this ) {
-			return wait( this ).0;
-		}
-	}
-}
+		void reset( single_future(T) & fut ) { reset( (future_t &)fut ); } // mark future as empty (for reuse)
+	} // static inline
+} // forall( T )

@@ -185,7 +185,7 @@ void on_wakeup( blocking_lock & this, size_t recursion ) with( this ) {
 }
 
 // waituntil() support
-bool register_select( blocking_lock & this, select_node & node ) with(this) {
+bool register_select$( blocking_lock & this, select_node & node ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	thread$ * thrd = active_thread();
 
@@ -217,7 +217,7 @@ bool register_select( blocking_lock & this, select_node & node ) with(this) {
 	return true;
 }
 
-bool unregister_select( blocking_lock & this, select_node & node ) with(this) {
+bool unregister_select$( blocking_lock & this, select_node & node ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
 	if ( isListed( node ) ) {
 		remove( node );
@@ -238,7 +238,7 @@ bool unregister_select( blocking_lock & this, select_node & node ) with(this) {
 	return false;
 }
 
-bool on_selected( blocking_lock & this, select_node & node ) { return true; }
+bool on_selected$( blocking_lock & this, select_node & node ) { return true; }
 
 //-----------------------------------------------------------------------------
 // alarm node wrapper
