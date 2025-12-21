@@ -230,44 +230,83 @@ void test_latticeCoverage( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
     }
 }
 
+// common function body, working on parameter wxyz, but for wxyz being different types
+#define CHECK_NUM_SUBSCR_TYPE_COMPAT                                         \
+    valExpected = getMagicNumber(2, 3, 4, 5);                                \
+    assert(( wxyz[2] [3] [4] [5] == valExpected ));                          \
+    assert(( wxyz[2,  3] [4] [5] == valExpected ));                          \
+    assert(( wxyz[2] [3,  4] [5] == valExpected ));                          \
+    assert(( wxyz[2] [3] [4,  5] == valExpected ));                          \
+    assert(( wxyz[2,  3,  4] [5] == valExpected ));                          \
+    assert(( wxyz[2] [3,  4,  5] == valExpected ));                          \
+    assert(( wxyz[2,  3,  4,  5] == valExpected ));                          \
+    for ( i; Nw ) {                                                          \
+        assert(( wxyz[ i, 3, 4, 5 ] == getMagicNumber(i, 3, 4, 5) ));        \
+    }                                                                        \
+    for ( i; Nx ) {                                                          \
+        assert(( wxyz[ 2, i, 4, 5 ] == getMagicNumber(2, i, 4, 5) ));        \
+    }                                                                        \
+    for ( i; Ny ) {                                                          \
+        assert(( wxyz[ 2, 3, i, 5 ] == getMagicNumber(2, 3, i, 5) ));        \
+    }                                                                        \
+    for ( i; Nz ) {                                                          \
+        assert(( wxyz[ 2, 3, 4, i ] == getMagicNumber(2, 3, 4, i) ));        \
+    }
+#define CHECK_NUM_SUBSCR_TYPE_COMPAT_ADDENDUM_RESHAPE                        \
+    for ( i; Nw ) {                                                          \
+        assert(( wxyz[ i, all, 4, 5 ][3] == getMagicNumber(i, 3, 4, 5) ));   \
+    }                                                                        \
+    for ( i; Nw ) {                                                          \
+        assert(( wxyz[ all, 3, 4, 5 ][i] == getMagicNumber(i, 3, 4, 5) ));   \
+    }
+
+// Low abstraction: simple declaration, cannot send a slice, can make a slice, runs fast
+forall( [Nw], [Nx], [Ny], [Nz] )
+void test_numSubscrTypeCompatibility_lo( array( float, Nw, Nx, Ny, Nz ) & wxyz ) {
+    CHECK_NUM_SUBSCR_TYPE_COMPAT
+    CHECK_NUM_SUBSCR_TYPE_COMPAT_ADDENDUM_RESHAPE
+}
+
+// Medium abstraction: complex declaration, can send or make a slice, runs fast
+forall( [Nw], Sw*
+      , [Nx], Sx*
+      , [Ny], Sy*
+      , [Nz], Sz* )
+void test_numSubscrTypeCompatibility_mid( 
+        arpk( Nw, Sw,
+        arpk( Nx, Sx,
+        arpk( Ny, Sy,
+        arpk( Nz, Sz, float, float)
+                           , float)
+                           , float)
+                           , float) & wxyz
+    ) {
+    CHECK_NUM_SUBSCR_TYPE_COMPAT
+    CHECK_NUM_SUBSCR_TYPE_COMPAT_ADDENDUM_RESHAPE
+}
+
+// High abstraction: mid-complexity declaration, can send a slice or a non-arpk, cannot make a slice, may not run fast
+forall( [Nw], Awxyz &
+      , [Nx], Axyz &
+      , [Ny], Ayz &
+      , [Nz], Az &
+      | ar( Awxyz, Axyz, Nw )
+      | ar( Axyz, Ayz, Nx )
+      | ar( Ayz, Az, Ny )
+      | ar( Az, float, Nz ) )
+void test_numSubscrTypeCompatibility_hi( Awxyz & wxyz ) {
+    CHECK_NUM_SUBSCR_TYPE_COMPAT
+}
+
 forall( [Nw], [Nx], [Ny], [Nz] )
 void test_numSubscrTypeCompatibility( tag(Nw), tag(Nx), tag(Ny), tag(Nz) ) {
 
     array( float, Nw, Nx, Ny, Nz ) wxyz;
     fillHelloData(wxyz);
 
-    valExpected = getMagicNumber(2, 3, 4, 5);
-    assert(( wxyz [2] [3] [4] [5]  == valExpected ));
-    assert(( wxyz[2,  3][4] [5]  == valExpected ));
-    assert(( wxyz [2][3,  4][5]  == valExpected ));
-    assert(( wxyz [2] [3][4,  5] == valExpected ));
-    assert(( wxyz[2,  3,  4][5]  == valExpected ));
-    assert(( wxyz [2][3,  4,  5] == valExpected ));
-    assert(( wxyz[2,  3,  4,  5] == valExpected ));
-
-    for ( i; Nw ) {
-        assert(( wxyz[ i, 3, 4, 5 ] == getMagicNumber(i, 3, 4, 5) ));
-    }
-
-    for ( i; Nx ) {
-        assert(( wxyz[ 2, i, 4, 5 ] == getMagicNumber(2, i, 4, 5) ));
-    }
-
-    for ( i; Ny ) {
-        assert(( wxyz[ 2, 3, i, 5 ] == getMagicNumber(2, 3, i, 5) ));
-    }
-
-    for ( i; Nz ) {
-        assert(( wxyz[ 2, 3, 4, i ] == getMagicNumber(2, 3, 4, i) ));
-    }
-
-    for ( i; Nw ) {
-        assert(( wxyz[ i, all, 4, 5 ][3] == getMagicNumber(i, 3, 4, 5) ));
-    }
-
-    for ( i; Nw ) {
-        assert(( wxyz[ all, 3, 4, 5 ][i] == getMagicNumber(i, 3, 4, 5) ));
-    }
+    test_numSubscrTypeCompatibility_lo ( wxyz );
+    test_numSubscrTypeCompatibility_mid( wxyz );
+    test_numSubscrTypeCompatibility_hi ( wxyz );
 }
 
 const size_t  KW = 3,  KX = 4,  KY = 5,  KZ = 6;

@@ -68,23 +68,22 @@ forall( [N], S & | sized(S), Timmed &, Tbase & ) {
 	// -  CFA does overloading on concrete types, like int and unsigned int, not on typedefed
 	//    types like size_t.  So trying to overload on ptrdiff_t vs int works in 64-bit mode
 	//    but not in 32-bit mode.
-	// -  Given bug of Trac #247, CFA gives sizeof expressions type unsigned long int, when it
-	//    should give them type size_t.
 	//
-	//                          gcc -m32         cfa -m32 given bug         gcc -m64 (and cfa)
-	// ptrdiff_t                int              int                        long int
-	// size_t                   unsigned int     unsigned int               unsigned long int
-	// typeof( sizeof(42) )     unsigned int     unsigned long int          unsigned long int
-	// int                      int              int                        int
+	//                          cfa -m32 (and gcc)      cfa -m64 (and gcc)
+	// ptrdiff_t                int                     long int
+	// size_t                   unsigned int            unsigned long int
+	// typeof( sizeof(42) )     unsigned int            unsigned long int
+	// int                      int                     int
 	//
 	// So the solution must support types {zero_t, one_t, int, unsigned int, long int, unsigned long int}
 	//
 	// The solution cannot rely on implicit conversions (e.g. just have one overload for ptrdiff_t)
 	// because assertion satisfaction requires types to match exacly.  Both higher-dimensional
 	// subscripting and operations on slices use asserted subscript operators.  The test case
-	// array-container/array-sbscr-cases covers the combinations.  Mike beleives that commenting out
+	// array-collections/array-sbscr-types covers the combinations.  Mike beleives that commenting out
 	// any of the current overloads leads to one of those cases failing, either on 64- or 32-bit.
 	// Mike is open to being shown a smaller set of overloads that still passes the test.
+
 
 	static inline Timmed & ?[?]( arpk( N, S, Timmed, Tbase ) & a, zero_t ) {
 		subcheck( a, 0L, N );
@@ -241,6 +240,63 @@ forall( TA &, TB &, TC &, IxAB_0, IxAB_1, IxAB_2, IxBC | { TB & ?[?]( TA &, IxAB
 static inline TC & ?[?]( TA & this, IxAB_0 ab0, IxAB_1 ab1, IxAB_2 ab2, IxBC bc ) {
 	return this[[ab0,ab1,ab2]][bc];
 }
+
+// Further form of -[-,-,-] that avoids using the trait system.
+// Above overloads work for any type with (recursively valid) subscript operator,
+// provided said subscript is passed as an assertion.
+// Below works only on arpk variations but never passes its subscript though an assertion.
+//
+// When arpk implements the trait used above,
+// the critical assertion is backed by a nontrivial thunk.
+// There is no "thunk problem" (lifetime) issue, when used as shown in the test suite.
+// But the optimizer has shown difficulty removing these thunks in cases where "it should,"
+// i.e. when all user code is in one compilation unit.
+// Not that every attempt at removing such a thunk fails; cases have been found going both ways.
+// Cases have been found with unnecessary bound-checks removed successfully,
+// on user code written against the overloads below,
+// but where these bound checks (which occur within `call`ed thunks) are not removed,
+// on user code written against the overloads above.
+//
+// The overloads below provide specializations of the above
+// that are a little harder to use than the ones above,
+// but where array API erasure has been seen to be more effective.
+// Note that the style below does not appeal to a case where thunk inlining is more effective;
+// rather, it simply does not rely on thunks in the first place.
+//
+// Both usage styles are shown in test array-md-sbscr-cases#numSubscrTypeCompatibility,
+// with the more general one above being "high abstraction,"
+// and the more performant one below being "mid abstraction" and "low abstraction."
+//
+// A breadth of index types is not given here (providing -[size_t,size_t,...] only)
+// because these declarations are not feeding a trait, so safe implicit arithmetic conversion kiks in.
+// Even so, there may still be an un-met need for accepting
+// either ptrdiff_t or size_t (signed or unsigned)
+// because Mike has seen the optimizer resist removing bound checks when sign-conversion is in play.
+// "Only size_t" is meeting today's need
+// and no solution is known that avoids 2^D overloads for D dimensions
+// while offering multiple subscript types and staying assertion-free.
+//
+// This approach, of avoiding traits entirely, is likely incompatible with the original desire
+// to have one recursive multidimensional subscript operator (TRY_BROKEN_DESIRED_MD_SUBSCRIPT).
+// To make a single declaration work,
+// we would probably have to get better at coaxing the optimizer into inlining thunks.
+
+forall( [N2], S2*, [N1], S1*, Timmed1, Tbase )
+static inline Timmed1 & ?[?]( arpk( N2, S2, arpk( N1, S1, Timmed1, Tbase ), Tbase ) & this, size_t ix2, size_t ix1 ) {
+	return this[ix2][ix1];
+}
+
+forall( [N3], S3*, [N2], S2*, [N1], S1*, Timmed1, Tbase )
+static inline Timmed1 & ?[?]( arpk( N3, S3, arpk( N2, S2, arpk( N1, S1, Timmed1, Tbase ), Tbase ), Tbase ) & this, size_t ix3, size_t ix2, size_t ix1 ) {
+	return this[ix3][ix2][ix1];
+}
+
+forall( [N4], S4*, [N3], S3*, [N2], S2*, [N1], S1*, Timmed1, Tbase )
+static inline Timmed1 & ?[?]( arpk( N4, S4, arpk( N3, S3, arpk( N2, S2, arpk( N1, S1, Timmed1, Tbase ), Tbase ), Tbase ), Tbase ) & this, size_t ix4, size_t ix3, size_t ix2, size_t ix1 ) {
+	return this[ix4][ix3][ix2][ix1];
+}
+
+
 
 #endif
 
