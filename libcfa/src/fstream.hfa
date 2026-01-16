@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 14 20:42:01 2025
-// Update Count     : 276
+// Last Modified On : Wed Jan 14 21:11:16 2026
+// Update Count     : 280
 //
 
 #pragma once
@@ -77,15 +77,13 @@ int fmt( ofstream &, const char format[], ... ) __attribute__(( format(printf, 2
 bool fail( ofstream & );
 void clearerr( ofstream & );
 int flush( ofstream & );
-void open( ofstream &, const char name[], const char mode[] ); // FIX ME: use default = "w"
-void open( ofstream &, const char name[] );
+void open( ofstream &, const char name[], const char mode[] = "w" );
 void close( ofstream & );
 
 ofstream & write( ofstream &, const char data[], size_t size );
 
 void ?{}( ofstream & );
-void ?{}( ofstream &, const char name[], const char mode[] ); // FIX ME: use default = "w"
-void ?{}( ofstream &, const char name[] );
+void ?{}( ofstream &, const char name[], const char mode[] = "w" );
 void ^?{}( ofstream & );
 
 // private
@@ -126,14 +124,12 @@ bool eof( ifstream & is );
 
 bool fail( ifstream & is );
 void clearerr( ifstream & );
-void open( ifstream & is, const char name[], const char mode[] ); // FIX ME: use default = "r"
-void open( ifstream & is, const char name[] );
+void open( ifstream & is, const char name[], const char mode[] = "r" );
 void close( ifstream & is );
 ifstream & read( ifstream & is, char data[], size_t size );
 
 void ?{}( ifstream & is );
-void ?{}( ifstream & is, const char name[], const char mode[] ); // FIX ME: use default = "r"
-void ?{}( ifstream & is, const char name[] );
+void ?{}( ifstream & is, const char name[], const char mode[] = "r" );
 void ^?{}( ifstream & is );
 
 extern ifstream & sin, & stdin;							// aliases

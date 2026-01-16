@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Sep 13 16:10:27 2025
-// Update Count     : 771
+// Last Modified On : Wed Jan 14 21:23:53 2026
+// Update Count     : 772
 //
 
 #pragma once
@@ -26,9 +26,9 @@ struct basic_ostream_data {
 	bool (*sepPrt$)( ostype & );							// get separator state (on/off)
 	void (*sepReset$)( ostype & );							// set separator state to default state
 	void (*sepReset$)( ostype &, bool );					// set separator and default state
-	const char * (*sepGetCur$)( ostype & );				// get current separator string
+	const char * (*sepGetCur$)( ostype & );					// get current separator string
 	void (*sepSetCur$)( ostype &, const char [] );			// set current separator string
-	bool (*getNL$)( ostype & );							// get newline
+	bool (*getNL$)( ostype & );								// get newline
 	bool (*setNL$)( ostype &, bool );						// set newline
 	bool (*getANL$)( ostype & );							// get auto newline (on/off)
 	bool (*setANL$)( ostype &, bool );						// set auto newline (on/off), and return previous state
@@ -41,11 +41,11 @@ struct basic_ostream_data {
 	void (*sep)( ostype & );								// turn separator state on
 	void (*nosep)( ostype & );								// turn separator state off
 	bool (*sepOn)( ostype & );								// set default state to on, and return previous state
-	bool (*sepOff)( ostype & );							// set default state to off, and return previous state
-	const char * (*sepGet)( ostype & );					// get separator string
+	bool (*sepOff)( ostype & );								// set default state to off, and return previous state
+	const char * (*sepGet)( ostype & );						// get separator string
 	void (*sepSet)( ostype &, const char [] );				// set separator to string (15 character maximum)
 	const char * (*sepGetTuple)( ostype & );				// get tuple separator string
-	void (*sepSetTuple)( ostype &, const char [] );		// set tuple separator to string (15 character maximum)
+	void (*sepSetTuple)( ostype &, const char [] );			// set tuple separator to string (15 character maximum)
 
 	void (*ends)( ostype & );								// end of output statement
 	int (*fmt)( ostype &, const char format[], ... ) __attribute__(( format(printf, 2, 3) ));
