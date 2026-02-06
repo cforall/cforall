@@ -1,0 +1,2 @@
+#define __TEMP_DLIST_V2__
+#include "dlist-insert-remove.cfa"

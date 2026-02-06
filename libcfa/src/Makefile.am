@@ -64,6 +64,7 @@ inst_headers_nosrc = \
 	concurrency/barrier.hfa \
 	collections/array.hfa \
 	collections/list.hfa \
+	collections/list2.hfa \
 	collections/lockfree.hfa \
 	collections/string_sharectx.hfa \
 	collections/vector2.hfa \

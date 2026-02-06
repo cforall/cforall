@@ -1,8 +1,16 @@
+#ifdef __TEMP_DLIST_V2__
+#include <collections/list2.hfa>
+#else
 #include <collections/list.hfa>
-#include <fstream.hfa>
+#endif
 #include <assert.h>
+// NO including fstream.hfa (use printf, not sout)
+// Because fstream depends on threading library, which depends on list.
+// This test must stay runnable after changing lists,
+// before fixing any threading library dependencies on the prior list implementation.
 
-// Section 1:  replaced by above include list.hfa
+
+// Former Section 1:  replaced by above include list.hfa
 
 
 ////////////////////////////////////////////////////////////
@@ -57,101 +65,101 @@ void ?{}(mary &this, float anotherdatum) {
 void printMyFredsFwd(fred & f) {
     with( DLINK_VIA( fred, fred.mine ) )
 	do {
-		sout | f.adatum;
+		printf( "%g\n", f.adatum );
 	} while (advance( f ));
 }
 
 void printMyFredsRev(fred & f) {
     with( DLINK_VIA( fred, fred.mine ) )
 	do {
-		sout | f.adatum;
+		printf( "%g\n", f.adatum );
 	} while (recede( f ));
 }
 
 
 void printMyFreddies(fred &f1, fred &f2, int isBefore) {
 	if (isBefore) {
-		sout | "==== fred by MINE before ";
+		printf( "==== fred by MINE before \n" );
 	} else {
-		sout | "==== fred by MINE after ";
+		printf( "==== fred by MINE after \n" );
 	}
 	if (&f1) {
-		printMyFredsFwd(f1);	sout | '-';
-		printMyFredsRev(f1);	sout | '-';
+		printMyFredsFwd(f1);	printf( "-\n" );
+		printMyFredsRev(f1);	printf( "-\n" );
 	} else {
-		sout | '-'; sout | '-';
+		printf( "-\n" ); printf( "-\n" );
 	}
 	if (&f2) {
-		printMyFredsFwd(f2);	sout | '-';
-		printMyFredsRev(f2);	sout | '-';
+		printMyFredsFwd(f2);	printf( "-\n" );
+		printMyFredsRev(f2);	printf( "-\n" );
 	} else {
-		sout | '-'; sout | '-';
+		printf( "-\n" ); printf( "-\n" );
 	}
 }
 
 void printYourFredsFwd(fred & f) {
     with( DLINK_VIA( fred, fred.yours ) )
 	do {
-		sout | f.adatum;
+		printf( "%g\n", f.adatum );
 	} while (advance( f ));
 }
 
 void printYourFredsRev(fred & f) {
     with( DLINK_VIA( fred, fred.yours ) )
 	do {
-		sout | f.adatum;
+		printf( "%g\n", f.adatum );
 	} while (recede( f ));
 }
 
 void printYourFreddies(fred &f1, fred &f2, int isBefore) {
 	if (isBefore) {
-		sout | "==== fred by YOURS before ";
+		printf( "==== fred by YOURS before \n" );
 	} else {
-		sout | "==== fred by YOURS after ";
+		printf( "==== fred by YOURS after \n" );
 	}
 	if (&f1) {
-		printYourFredsFwd(f1);	sout | '-';
-		printYourFredsRev(f1);	sout | '-';
+		printYourFredsFwd(f1);	printf( "-\n" );
+		printYourFredsRev(f1);	printf( "-\n" );
 	} else {
-		sout | '-'; sout | '-';
+		printf( "-\n" ); printf( "-\n" );
 	}
 	if (&f2) {
-		printYourFredsFwd(f2);	sout | '-';
-		printYourFredsRev(f2);	sout | '-';
+		printYourFredsFwd(f2);	printf( "-\n" );
+		printYourFredsRev(f2);	printf( "-\n" );
 	} else {
-		sout | '-'; sout | '-';
+		printf( "-\n" ); printf( "-\n" );
 	}
 }
 
 void printMariesFwd(mary &m) {
 	do {
-		sout | m.anotherdatum;
+		printf( "%g\n", m.anotherdatum );
 	} while (advance( m ));
 }
 
 void printMariesRev(mary &m) {
 	do {
-		sout | m.anotherdatum;
+		printf( "%g\n", m.anotherdatum );
 	} while (recede( m ));
 }
 
 void printMariatheotokos(mary &m1, mary &m2, int isBefore) {
 	if (isBefore) {
-		sout | "==== mary before ";
+		printf( "==== mary before \n" );
 	} else {
-		sout | "==== mary after ";
+		printf( "==== mary after \n" );
 	}
 	if (&m1) {
-		printMariesFwd(m1);	sout | '-';
-		printMariesRev(m1);	sout | '-';
+		printMariesFwd(m1);	printf( "-\n" );
+		printMariesRev(m1);	printf( "-\n" );
 	} else {
-		sout | '-'; sout | '-';
+		printf( "-\n" ); printf( "-\n" );
 	}
 	if (&m2) {
-		printMariesFwd(m2);	sout | '-';
-		printMariesRev(m2);	sout | '-';
+		printMariesFwd(m2);	printf( "-\n" );
+		printMariesRev(m2);	printf( "-\n" );
 	} else {
-		sout | '-'; sout | '-';
+		printf( "-\n" ); printf( "-\n" );
 	}
 }
 
@@ -1635,289 +1643,289 @@ void test__isListed_cases__mary() {
 
 int main() {
 #if 0
-	sout | "~~~~~~~~~~~~~~~~~ Headless List Tests - insert_after ~~~~~~~~~~~~~~~~";
-	sout | "";
+	printf( "~~~~~~~~~~~~~~~~~ Headless List Tests - insert_after ~~~~~~~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 1-i:  Modifying Freds on MINE ";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 1-i:  Modifying Freds on MINE \n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertafter_singleton_on_singleton__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 2-i.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 2-i.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertafter_singleton_on_singleton__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 3-i.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 3-i.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertafter_singleton_on_singleton__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~~~~~~~ Headless List Tests - insert_before ~~~~~~~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~~~~~~~ Headless List Tests - insert_before ~~~~~~~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 1-ii:  Modifying Freds on MINE ";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 1-ii:  Modifying Freds on MINE \n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertbefore_singleton_on_singleton__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 2-ii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 2-ii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertbefore_singleton_on_singleton__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 3-ii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 3-ii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertbefore_singleton_on_singleton__mary();
 #endif
-	sout | "";
-	sout | "~~~~~~~~~~~~~~~~~ Headed List Tests - insert_first ~~~~~~~~~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~~~~~~~~ Headed List Tests - insert_first ~~~~~~~~~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 4-i:  Modifying Freds on MINE ";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 4-i:  Modifying Freds on MINE \n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertfirst_two_on_empty__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 5-i:  Modifying Freds on YOURS ";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 5-i:  Modifying Freds on YOURS \n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertfirst_two_on_empty__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 6-i.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 6-i.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertfirst_two_on_empty__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~~~~~~~~ Headed List Tests - insert_last ~~~~~~~~~~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~~~~~~~~ Headed List Tests - insert_last ~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 4-ii:  Modifying Freds on MINE ";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 4-ii:  Modifying Freds on MINE \n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertlast_two_on_empty__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 5-ii:  Modifying Freds on YOURS ";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 5-ii:  Modifying Freds on YOURS \n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertlast_two_on_empty__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 6-ii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 6-ii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertlast_two_on_empty__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~~ Element ops on Headed List Tests: after, last ~~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~~ Element ops on Headed List Tests: after, last ~~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 7-i.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 7-i.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertafter_after_last__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 8-i.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 8-i.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertafter_after_last__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 9-i.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 9-i.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertafter_after_last__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~ Element ops on Headed List Tests: before, first ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ Element ops on Headed List Tests: before, first ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 7-ii.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 7-ii.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertbefore_before_first__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 8-ii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 8-ii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertbefore_before_first__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 9-ii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 9-ii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__insertbefore_before_first__mary();
 #if 0
 
-	sout | "";
-	sout | "~~~~~~~~~~ Element removal tests on Headless List: mid ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ Element removal tests on Headless List: mid ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 10-i.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 10-i.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_mid__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 11-i.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 11-i.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_mid__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 12-i.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 12-i.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_mid__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~ Element removal tests on Headless List: at first ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ Element removal tests on Headless List: at first ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 10-ii.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 10-ii.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_first__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 11-ii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 11-ii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_first__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 12-ii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 12-ii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_first__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~ Element removal tests on Headless List: at last ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ Element removal tests on Headless List: at last ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 10-iii.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 10-iii.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_last__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 11-iii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 11-iii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_last__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 12-iii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 12-iii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_last__mary();
 #endif
-	sout | "";
-	sout | "~~~~~~~~~~ Element removal tests on Headed List: at first ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ Element removal tests on Headed List: at first ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 13-i.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 13-i.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_head__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 14-i.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 14-i.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_head__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 15-i.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 15-i.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_head__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~ Element removal tests on Headed List: at last ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ Element removal tests on Headed List: at last ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 13-ii.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 13-ii.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_tail__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 14-ii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 14-ii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_tail__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 15-ii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 15-ii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_at_tail__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~ Element removal tests on Headed List: of sole ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ Element removal tests on Headed List: of sole ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 13-iii.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 13-iii.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_of_sole__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 14-iii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 14-iii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_of_sole__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 15-iii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 15-iii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__remove_of_sole__mary();
 
-	sout | "";
-	sout | "~~~~~~~~~~ End removal tests on Headed List: First ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ End removal tests on Headed List: First ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 16-i.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 16-i.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__pop_first__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 16-ii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 16-ii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__pop_first__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 16-iii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 16-iii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__pop_first__maries();
 
-	sout | "";
-	sout | "~~~~~~~~~~ End removal tests on Headed List: Last ~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~ End removal tests on Headed List: Last ~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 17-i.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 17-i.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__pop_last__fred_mine();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 17-ii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 17-ii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__pop_last__fred_yours();
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 17-iii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 17-iii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 	test__pop_last__maries();
 
-	sout | "";
-	sout | "~~~~~~~~~~~~~~~~~~~ Ease-of-access cases ~~~~~~~~~~~~~~~~~~";
-	sout | "";
+	printf( "\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~ Ease-of-access cases ~~~~~~~~~~~~~~~~~~\n" );
+	printf( "\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 18-i.  Modifying Freds on MINE";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Not implmented";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 18-i.  Modifying Freds on MINE\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Not implmented\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 18-ii.  Modifying Freds on YOURS";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Not implmented";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 18-ii.  Modifying Freds on YOURS\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Not implmented\n" );
 
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	sout | "Test 18-iii.  Modifying Maries";
-	sout | "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
+	printf( "Test 18-iii.  Modifying Maries\n" );
+	printf( "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" );
 
 	test__accessor_cases__mary();
 	test__try_pop__mary();

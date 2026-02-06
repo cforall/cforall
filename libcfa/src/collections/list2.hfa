@@ -1,0 +1,695 @@
+// A revision of <collections/list.hfa>.
+// Supports headless (and headed) lists.
+// It's basically all good, and should become the official libcfa one, except:
+// - perf tests compare this one ("thesis's work") to libcfa ("old, before supporting headless")
+// - in libcfa, some uses of list.hfa make assumptions about list's private representation, which need fixing
+
+
+
+
+//
+// Cforall Version 1.0.0 Copyright (C) 2020 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// list -- lets a user-defined stuct form intrusive linked lists
+//
+// Author           : Michael Brooks
+// Created On       : Wed Apr 22 18:00:00 2020
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Feb  2 11:32:26 2023
+// Update Count     : 2
+//
+
+#pragma once
+
+#include <assert.h>
+
+forall( Decorator &, T & )
+struct tytagref {
+    inline T &;
+};
+
+forall( tOuter &, tMid &, tInner & )
+trait embedded {
+    tytagref( tMid, tInner ) ?`inner( tOuter & );
+};
+
+// embedded is reflexive, with no info (void) as the type tag
+forall (T &)
+static inline tytagref(void, T) ?`inner ( T & this ) { tytagref( void, T ) ret = {this}; return ret; }
+
+
+//
+// P9_EMBEDDED: Use on every case of plan-9 inheritance, to make "implements embedded" be a closure of plan-9 inheritance.
+//
+// struct foo {
+//    int a, b, c;
+//    inline (bar);
+// };
+// P9_EMBEDDED( foo, bar )
+//
+
+// usual version, for structs that are top-level declarations
+#define P9_EMBEDDED(        derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase, static ) P9_EMBEDDED_BDY_( immedBase )
+
+// special version, for structs that are declared in functions
+#define P9_EMBEDDED_INFUNC( derived, immedBase ) P9_EMBEDDED_DECL_( derived, immedBase,        ) P9_EMBEDDED_BDY_( immedBase )
+
+// forward declarations of both the above; generally not needed
+// may help you control where the P9_EMBEEDED cruft goes, in case "right after the stuct" isn't where you want it
+#define P9_EMBEDDED_FWD(        derived, immedBase )      P9_EMBEDDED_DECL_( derived, immedBase, static ) ;
+#define P9_EMBEDDED_FWD_INFUNC( derived, immedBase ) auto P9_EMBEDDED_DECL_( derived, immedBase,        ) ;
+
+// private helpers
+#define P9_EMBEDDED_DECL_( derived, immedBase, STORAGE ) \
+    forall( Tbase &, TdiscardPath & | { tytagref( TdiscardPath, Tbase ) ?`inner( immedBase & ); } ) \
+    STORAGE inline tytagref(immedBase, Tbase) ?`inner( derived & this )
+    
+#define P9_EMBEDDED_BDY_( immedBase ) { \
+        immedBase & ib = this; \
+        Tbase & b = ib`inner; \
+        tytagref(immedBase, Tbase) result = { b }; \
+        return result; \
+    }
+
+#define EMBEDDED_VIA( OUTER, MID, INNER ) \
+   (struct { tytagref(MID, INNER) ( * ?`inner ) ( OUTER & ); }){ ?`inner } 
+
+#define DLINK_VIA( TE, TLINK ) \
+   EMBEDDED_VIA( TE, TLINK, dlink(TE) )
+
+// The origin is the position encountered at the start of iteration,
+// signifying, "need to advance to the first element," and at the end
+// of iteration, signifying, "no more elements."  Normal comsumption of
+// an iterator runs advance as the first step, and uses the return
+// of advance as a guard, before dereferencing the iterator.  So
+// normal consumption of an iterator does not dereference an iterator
+// in origin position.  The value of a pointer (underlying a refence)
+// that is exposed publicly as an iteraor, and also a pointer stored
+// internally in a link field, is tagged, to indicate "is the origin"
+// (internally, is the list-head sentinel node), or untagged, to indicate
+// "is a regular node."  Intent is to help a user who dereferences an
+// iterator in origin position (which would be an API-use error on their
+// part), by failing fast.
+
+#ifdef __EXPERIMENTAL_DISABLE_OTAG__ // Perf experimention alt mode
+
+    // With origin tagging disabled, iteration never reports "no more elements."
+    // In this mode, the list API is buggy.
+    // This mode is used to quantify the cost of the normal tagging scheme.
+
+    #define ORIGIN_TAG_ENABL(p)   (p)
+    #define ORIGIN_TAG_CLEAR(p) (p)
+    #define ORIGIN_TAG_QUERY(p) 0
+    #define ORIGIN_TAG_ASGN(p, v) (p)
+    #define ORIGIN_TAG_EITHER(p, v) (p)
+    #define ORIGIN_TAG_NEQ(v1, v2) 0
+
+    #define TAGSONLY(...)
+    #define NOTAGS(...) __VA_ARGS__
+
+#else // Normal
+
+    #if defined( __x86_64 )
+        // Preferred case: tag in the most-significant bit.  Dereference
+        // has been shown to segfault consistently.  Maintenance should
+        // list more architectures as "ok" here, to let them use the
+        // preferred case, when valid.
+        #define ORIGIN_TAG_BITNO ( 8 * sizeof( size_t ) - 1 )
+    #else
+        // Fallback case: tag in the least-significant bit.  Dereference
+        // will often give an alignment error, but may not, e.g. if
+        // accessing a char-typed member.  32-bit x86 uses the most-
+        // significant bit for real room on the heap.
+        #define ORIGIN_TAG_BITNO 0
+    #endif
+
+    #define ORIGIN_TAG_MASK (((size_t)1) << ORIGIN_TAG_BITNO)
+
+    #define ORIGIN_TAG_ENABL(p) ((p) |  ORIGIN_TAG_MASK)
+    #define ORIGIN_TAG_CLEAR(p) ((p) & ~ORIGIN_TAG_MASK)
+    #define ORIGIN_TAG_QUERY(p) ((p) &  ORIGIN_TAG_MASK)
+
+    #define ORIGIN_TAG_ASGN(p, v) ( \
+        verify( ! ORIGIN_TAG_QUERY(p) && "p had no tagbit" ), \
+        ORIGIN_TAG_EITHER((p), (v)) \
+    )
+
+    #define ORIGIN_TAG_EITHER(p, v) ( \
+        verify( ! ORIGIN_TAG_CLEAR(v) && "v is a pure tagbit" ), \
+        ( (p) | (v) ) \
+    )
+
+    #define ORIGIN_TAG_NEQ(v1, v2) ( \
+        verify( ! ORIGIN_TAG_CLEAR(v1) && "v1 is a pure tagbit" ), \
+        verify( ! ORIGIN_TAG_CLEAR(v2) && "v2 is a pure tagbit" ), \
+        ( (v1) ^ (v2) ) \
+    )
+
+    #define TAGSONLY(...) __VA_ARGS__
+    #define NOTAGS(...)
+
+#endif
+
+
+
+
+
+
+#ifdef __EXPERIMENTAL_LOOSE_SINGLES__ // Perf experimention alt mode
+
+    // In loose-singles mode, the ability to answer an "is listed" query is disabled, as is "to insert an element,
+    // it must not be listed already" checking.  The user must know separately whether an element is listed.
+    // Other than inserting it, any list-api action on an unlisted element is undefined.  Notably, list iteration
+    // starting from an unlisted element is not defined to respond "no more elements," and may instead continue
+    // iterating from a formerly occupied list position.  This mode matches LQ usage.
+
+    #define NOLOOSE(...)
+    #define LOOSEONLY(...) __VA_ARGS__
+
+#else // Normal
+
+    #define NOLOOSE(...) __VA_ARGS__
+    #define LOOSEONLY(...)
+
+#endif
+
+
+
+
+
+
+
+
+// struct workaround0_t {};
+
+forall( tE & ) {
+
+    struct dlink;
+
+    // do not use; presence of the field declaration unblocks ability to define dlink (#304)
+    struct __dlink_selfref_workaround_t {
+        dlink(tE) *ref_notSelfRef;
+    };
+
+    struct dlink {
+        dlink(tE) *next;  // TODO: rename with $
+        dlink(tE) *prev;
+    };
+
+    static inline void ?{}( dlink(tE) & this ) {
+      NOLOOSE(
+        dlink(tE) * toSelf = & this;
+        size_t toSelfNum = (size_t) toSelf;
+        size_t toSelfNumTagged = ORIGIN_TAG_ENABL( toSelfNum );
+        dlink(tE) * toSelfPtrTagged = (dlink(tE) *) toSelfNumTagged;
+        toSelf = toSelfPtrTagged;
+        (this.next){ toSelf };
+        (this.prev){ toSelf };
+      )
+    }
+
+    // You can "copy" a dlink.  But the result won't be linked.
+    // Lets you copy what you inline the dlink into.
+    static inline void ?{}( dlink(tE) & this, dlink(tE) ) {
+        this{};
+    }
+
+    forall( tLinks & = dlink(tE) | embedded(tE, tLinks, dlink(tE)) ) {
+        struct dlist {
+            inline dlink(tE);
+        };
+
+        static inline tE * $get_list_origin_addr( dlist(tE, tLinks) & lst ) {
+            dlink(tE) & link_from_null = ( * (tE *) 0p )`inner;
+            ptrdiff_t link_offset = (ptrdiff_t) & link_from_null;
+            size_t origin_addr = ((size_t) & lst) - link_offset;
+            size_t preResult = ORIGIN_TAG_ENABL( origin_addr );
+            return (tE *)preResult;
+        }
+
+        static inline void ?{}( dlist(tE, tLinks) & this ) {
+          NOLOOSE(
+            ( (dlink(tE) &) this ){};
+          )
+          LOOSEONLY(
+			dlink(tE) * listOrigin = (dlink(tE) *) $get_list_origin_addr( this );
+            dlink( tE ) & thisl = this;
+			(thisl.prev) = listOrigin;
+            (thisl.next) = listOrigin;
+          )
+        }
+    }
+}
+
+forall( tE & ) {
+#ifdef __EXPERIMENTAL_DISABLE_OTAG__ // Perf experimention alt mode
+    static inline size_t origin_tag_query_arith$( tE & raw ) {
+        return 0;
+    }
+    static inline tE & nullif$( tE & val, size_t arith_ctrl ) {
+        verify( arith_ctrl == 0 );  (void) arith_ctrl;
+        return val;
+    }
+#else // Normal
+    // like ORIGIN_TAG_QUERY, but return is arithmetic number 0 or 1 (rather than 0 or non-0)
+    static inline size_t origin_tag_query_arith$( tE & raw ) {
+        size_t ret = (((size_t) & raw) >> ORIGIN_TAG_BITNO) & 1;
+        verify( ORIGIN_TAG_QUERY( (size_t) & raw ) ? ret == 1 : ret == 0 );
+        return ret;
+    }
+    // Requires arith_ctrl being 0 or 1.
+    // When 0, passes val through; when 1, returns null reference.
+    // Importantly, implemented without jumps or tests.
+    static inline tE & nullif$( tE & val, size_t arith_ctrl ) {
+        verify( ! ORIGIN_TAG_QUERY( (size_t) & val ) );
+        verify( arith_ctrl == 0 || arith_ctrl == 1 );
+        size_t mask_ctrl = ~ - arith_ctrl;
+        verify( arith_ctrl == 0 && mask_ctrl == -1 || arith_ctrl == 1 && mask_ctrl ==0 );
+        tE & ret = * (tE*) ( ((size_t) & val) & mask_ctrl);
+        verify( arith_ctrl == 0 && &ret == &val || arith_ctrl == 1 && &ret == 0p );
+        return ret;
+    }
+#endif
+}
+
+// Compile-time memory (cmem) barrier
+// Prevents the optimizer from reordering instructions across it
+// Originally included for correctness, though a broken state is not known to be reproducible.
+// Found to have a critical impact on performance:
+// - in the positions given by default: generally optimal
+// - absent: sometimes much slower, depending on the test harness
+// - in positions (that my be influenced by a principle but) that are arbitrary wrt microarchitecture: typically, much slower
+#ifdef __EXPERIMENTAL_DISABLE_CMEM_BARRIER__
+// upon request, disable cmem barriers
+#define MAYBE_CMEM_BARRIER
+#else
+// by default, enable cmem barriers
+#define MAYBE_CMEM_BARRIER asm( "" : : : "memory" )
+#endif
+
+// Insert read (location)
+// One of the read operations that occurs during an insert operation was found to be performace-critical under certain harnesses.
+// Arguably, the position should not matter if cmem barriers are off.  Treating the factors as independent allows for measuring this idea.
+#ifdef __EXPERIMENTAL_DELAY_INSERT_READ__
+// upon request: do the read late (between the cmem barriers); this location is where the read was originally found when this insert read first became a performance-perterbing hypothesis
+#define MAYBE_INSERT_READ_EARLY(...)
+#define MAYBE_INSERT_READ_LATE(...) __VA_ARGS__
+#else
+// by default: do the read early (before the first cmem barrier); better performance has been seen here
+#define MAYBE_INSERT_READ_EARLY(...) __VA_ARGS__
+#define MAYBE_INSERT_READ_LATE(...)
+#endif
+
+forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
+
+	static inline void insert_after(tE & list_pos, tE &to_insert) {
+        size_t list_pos_tag = ORIGIN_TAG_QUERY((size_t) & list_pos); // a request to insert after the origin is fine
+        tE & list_pos_real = * (tE *) ORIGIN_TAG_CLEAR((size_t) & list_pos);
+		verify (&list_pos_real != 0p);
+
+		verify (&to_insert != 0p);
+      NOLOOSE(
+		verify(! ORIGIN_TAG_QUERY((size_t) & to_insert));
+      )
+        dlink(tE) & linkToInsert = to_insert`inner;
+      NOLOOSE(
+       TAGSONLY(
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.prev));
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.next));
+       )
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.prev) == (size_t)&linkToInsert);
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.next) == (size_t)&linkToInsert);
+      )
+        dlink(tE) & list_pos_links = list_pos_real`inner;
+      MAYBE_INSERT_READ_EARLY(
+        dlink(tE) & afterLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.next );
+      )
+        MAYBE_CMEM_BARRIER;
+        size_t list_pos_links_num = (size_t)(& list_pos_links);
+        size_t to_insert_prev_num = ORIGIN_TAG_ASGN(list_pos_links_num, list_pos_tag);
+        dlink(tE) * to_insert_prev = (dlink(tE)*)to_insert_prev_num;
+		linkToInsert.prev = to_insert_prev;
+		linkToInsert.next = list_pos_links.next;
+      MAYBE_INSERT_READ_LATE(
+        dlink(tE) & afterLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.next );
+      )
+        size_t afterLinks_prev_tag = ORIGIN_TAG_QUERY((size_t)afterLinks.prev);
+        size_t linkToInsert_num = (size_t)(& linkToInsert);
+        size_t afterLinks_prev_num = ORIGIN_TAG_ASGN(linkToInsert_num, ORIGIN_TAG_NEQ(list_pos_tag, afterLinks_prev_tag));
+        afterLinks.prev = (dlink(tE)*)(afterLinks_prev_num);
+		list_pos_links.next = &linkToInsert;
+        MAYBE_CMEM_BARRIER;
+	}
+
+	static inline void insert_before(tE & list_pos, tE &to_insert) {
+        size_t list_pos_tag = ORIGIN_TAG_QUERY((size_t) & list_pos); // a request to insert before the origin is fine
+        tE & list_pos_real = * (tE *) ORIGIN_TAG_CLEAR((size_t) & list_pos);
+		verify (&list_pos_real != 0p);
+
+		verify (&to_insert != 0p);
+      NOLOOSE(
+		verify(! ORIGIN_TAG_QUERY((size_t) & to_insert));
+      )
+        dlink(tE) & linkToInsert = to_insert`inner;
+      NOLOOSE(
+       TAGSONLY(
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.prev));
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.next));
+       )
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.prev) == (size_t)&linkToInsert);
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.next) == (size_t)&linkToInsert);
+      )
+        dlink(tE) & list_pos_links = list_pos_real`inner;
+      MAYBE_INSERT_READ_EARLY(
+        dlink(tE) & beforeLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.prev );
+      )
+        MAYBE_CMEM_BARRIER;
+        size_t list_pos_links_num = (size_t)(& list_pos_links);
+        size_t to_insert_next_num = ORIGIN_TAG_ASGN(list_pos_links_num, list_pos_tag);
+        dlink(tE) * to_insert_next = (dlink(tE)*)to_insert_next_num;
+		linkToInsert.next = to_insert_next;
+		linkToInsert.prev = list_pos_links.prev;
+      MAYBE_INSERT_READ_LATE(
+        dlink(tE) & beforeLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.prev );
+      )
+        size_t beforeLinks_next_tag = ORIGIN_TAG_QUERY((size_t)beforeLinks.next);
+        size_t linkToInsert_num = (size_t)(& linkToInsert);
+        size_t beforeLinks_next_num = ORIGIN_TAG_ASGN(linkToInsert_num, ORIGIN_TAG_NEQ(list_pos_tag, beforeLinks_next_tag));
+        beforeLinks.next = (dlink(tE)*)(beforeLinks_next_num);
+		list_pos_links.prev = &linkToInsert;
+        MAYBE_CMEM_BARRIER;
+	}
+
+	static inline tE & remove(tE & list_pos) {
+        verify( ! ORIGIN_TAG_QUERY((size_t) & list_pos) );
+		verify (&list_pos != 0p);
+
+        dlink(tE) & list_pos_links = list_pos`inner;
+        dlink(tE) & before_raw = * list_pos_links.prev;
+        dlink(tE) & before_links = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) & before_raw );
+        size_t before_links_next_tag = ORIGIN_TAG_QUERY( (size_t) (before_links.next) );
+
+        dlink(tE) & after_raw = * list_pos_links.next;
+        dlink(tE) & after_links = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) & after_raw );
+        size_t after_links_prev_tag = ORIGIN_TAG_QUERY( (size_t) (after_links.prev) );
+
+        size_t before_links_next_rslt = ORIGIN_TAG_EITHER( ((size_t) & after_raw), before_links_next_tag );
+        size_t after_links_prev_rslt = ORIGIN_TAG_EITHER( ((size_t) & before_raw), after_links_prev_tag );
+        before_links.next = (dlink(tE) *) before_links_next_rslt;
+        after_links.prev = (dlink(tE) *) after_links_prev_rslt;
+
+      NOLOOSE(
+        MAYBE_CMEM_BARRIER;
+        size_t list_pos_links_num = (size_t) &list_pos_links;
+        size_t list_pos_links_tagged_num = ORIGIN_TAG_ENABL( list_pos_links_num );
+		list_pos_links.next = list_pos_links.prev = (dlink(tE)*) list_pos_links_tagged_num;
+        MAYBE_CMEM_BARRIER;
+      )
+        return list_pos;
+	}
+
+    static inline tE & downcast$( tytagref( tLinks, dlink(tE) ) ref ) {
+        dlink(tE) & lnk = ref;
+        dlink(tE) & link_from_null = ( * (tE *) 0p )`inner;
+        ptrdiff_t link_offset = (ptrdiff_t) & link_from_null;
+        size_t elm_addr = ((size_t) & lnk) - link_offset;
+        return * (tE*) elm_addr;
+    }
+
+    static inline tE & first( dlist(tE, tLinks) & lst ) {
+		verify (&lst != 0p);
+        dlink(tE) * firstLnk = lst.next;
+        if (ORIGIN_TAG_QUERY((size_t)firstLnk)) return * 0p;
+        tytagref( tLinks, dlink(tE) ) firstLnkTagged = {*firstLnk};
+        return downcast$( firstLnkTagged );
+    }
+    static inline tE & last ( dlist(tE, tLinks) & lst ) {
+		verify (&lst != 0p);
+        dlink(tE) * lastLnk = lst.prev;
+        if (ORIGIN_TAG_QUERY((size_t)lastLnk)) return * 0p;
+        tytagref( tLinks, dlink(tE) ) lastLnkTagged = {*lastLnk};
+        return downcast$( lastLnkTagged );
+    }
+
+    static inline bool isEmpty( dlist(tE, tLinks) & lst ) {
+		verify (&lst != 0p);
+        if ( & first(lst) == 0p || & last(lst) == 0p ) {
+            verify( & last(lst) == 0p && & last(lst) == 0p );
+            return true;
+        }
+        return false;
+    }
+
+    static inline bool isListed( tE & e ) {
+      NOLOOSE(
+		verify (&e != 0p);
+		verify(! ORIGIN_TAG_QUERY( (size_t) & e ));
+        dlink(tE) & e_links = e`inner;
+        dlink(tE) * lprev = (dlink(tE)*) ORIGIN_TAG_CLEAR((size_t) e_links.prev);
+        dlink(tE) * lnext = (dlink(tE)*) ORIGIN_TAG_CLEAR((size_t) e_links.next);
+		return ( lprev != &e_links ) || ( lnext != &e_links );
+      )
+      LOOSEONLY(
+        verify(false && "isListed is undefined");
+        return true;
+      )
+    }
+
+    static inline tE & iter( dlist(tE, tLinks) & lst ) {
+        tE * origin = $get_list_origin_addr( lst );
+        return *origin;
+    }
+
+
+    // todo: resolve the pun:
+    //  tag as in proxy (tytagref)
+    //  tag as in bit manipulation on a funny pointer
+
+    static inline bool advance( tE && refx ) {
+        tE && ref_inner = refx;
+        tE & oldReferent = * (tE*) ORIGIN_TAG_CLEAR( (size_t) & ref_inner );
+		verify (& oldReferent != 0p);
+        dlink(tE) * tgt = oldReferent`inner.next;
+        size_t tgt_tags = ORIGIN_TAG_QUERY( (size_t)tgt);
+        dlink(tE) * nextl = (dlink(tE) *)ORIGIN_TAG_CLEAR((size_t)tgt);
+        tytagref( tLinks, dlink(tE) ) nextLnkTagged = { * nextl };
+        tE & nexte = downcast$( nextLnkTagged );
+        size_t next_te_num = (size_t) & nexte;
+        size_t new_ref_inner_num = ORIGIN_TAG_ASGN(next_te_num, tgt_tags);
+        tE * new_ref_inner = (tE *) new_ref_inner_num;
+        &ref_inner = new_ref_inner;
+        return ! tgt_tags;
+    }
+
+    static inline bool recede( tE && refx ) {
+        tE && ref_inner = refx;
+        tE & oldReferent = * (tE*) ORIGIN_TAG_CLEAR( (size_t) & ref_inner );
+		verify (& oldReferent != 0p);
+        dlink(tE) * tgt = oldReferent`inner.prev;
+        size_t tgt_tags = ORIGIN_TAG_QUERY( (size_t)tgt);
+        dlink(tE) * prevl = (dlink(tE) *)ORIGIN_TAG_CLEAR((size_t)tgt);
+        tytagref( tLinks, dlink(tE) ) prevLnkTagged = { * prevl };
+        tE & preve = downcast$( prevLnkTagged );
+        size_t prev_te_num = (size_t) & preve;
+        size_t new_ref_inner_num = ORIGIN_TAG_ASGN(prev_te_num, tgt_tags);
+        tE * new_ref_inner = (tE *) new_ref_inner_num;
+        &ref_inner = new_ref_inner;
+        return ! tgt_tags;
+    }
+
+    bool isFirst( tE & node ) {
+        // Probable bug copied from master
+        // should be `! recede(node)`
+        // correct: "is first iff cannot recede"
+        // used backward in test suite too, probably victim of a grep rename
+        return recede( node );
+    }
+
+    bool isLast( tE & node ) {
+        // ditto, vice versa
+        return advance( node );
+    }
+
+    static inline tE & next( tE & e ) {
+        if( advance(e) ) return e;
+        return * 0p;
+    }
+
+    static inline tE & prev( tE & e ) {
+        if( recede(e) ) return e;
+        return * 0p;
+    }
+
+    // Next 4 headed operations:
+    // Manual inline of the equivalent headless operation, manually simplified.
+    // Applies knowledge of tag pattern around head (unknown to optimizer) to reduce runtime tag operations.
+
+    static inline void insert_first( dlist(tE, tLinks) &lst, tE & e ) {
+        dlink(tE) & linkToInsert = e`inner;
+      NOLOOSE(
+       TAGSONLY(
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.prev));
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.next));
+       )
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.prev) == (size_t)&linkToInsert);
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.next) == (size_t)&linkToInsert);
+      )
+        dlink(tE) & list_pos_links = lst;
+      MAYBE_INSERT_READ_EARLY(
+        dlink(tE) & afterLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.next );
+      )
+        MAYBE_CMEM_BARRIER;
+        size_t list_pos_links_num = (size_t)(& list_pos_links);
+        size_t to_insert_prev_num = ORIGIN_TAG_ENABL(list_pos_links_num);
+        dlink(tE) * to_insert_prev = (dlink(tE)*)to_insert_prev_num;
+		linkToInsert.prev = to_insert_prev;
+		linkToInsert.next = list_pos_links.next;
+      MAYBE_INSERT_READ_LATE(
+        dlink(tE) & afterLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.next );
+      )
+        size_t linkToInsert_num = (size_t)(& linkToInsert);
+        size_t afterLinks_prev_num = linkToInsert_num;
+        afterLinks.prev = (dlink(tE)*)(afterLinks_prev_num);
+		list_pos_links.next = &linkToInsert;
+        MAYBE_CMEM_BARRIER;
+    }
+
+    static inline void insert_last( dlist(tE, tLinks) &lst, tE & e ) {
+        dlink(tE) & linkToInsert = e`inner;
+      NOLOOSE(
+       TAGSONLY(
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.next));
+		verify(ORIGIN_TAG_QUERY((size_t)linkToInsert.prev));
+       )
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.next) == (size_t)&linkToInsert);
+		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.prev) == (size_t)&linkToInsert);
+      )
+        dlink(tE) & list_pos_links = lst;
+      MAYBE_INSERT_READ_EARLY(
+        dlink(tE) & beforeLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.prev );
+      )
+        MAYBE_CMEM_BARRIER;
+        size_t list_pos_links_num = (size_t)(& list_pos_links);
+        size_t to_insert_next_num = ORIGIN_TAG_ENABL(list_pos_links_num);
+        dlink(tE) * to_insert_next = (dlink(tE)*)to_insert_next_num;
+		linkToInsert.next = to_insert_next;
+		linkToInsert.prev = list_pos_links.prev;
+      MAYBE_INSERT_READ_LATE(
+        dlink(tE) & beforeLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.prev );
+      )
+        size_t linkToInsert_num = (size_t)(& linkToInsert);
+        size_t beforeLinks_next_num = linkToInsert_num;
+        beforeLinks.next = (dlink(tE)*)(beforeLinks_next_num);
+		list_pos_links.prev = &linkToInsert;
+        MAYBE_CMEM_BARRIER;
+    }
+
+    static inline tE & remove_first( dlist(tE, tLinks) &lst ) {
+		verify (&lst != 0p);
+        dlink(tE) & list_links = lst;
+        // call is valid on empty list; when so, list_links.next and after_links.prev have otags set
+
+        dlink(tE) & fst_raw = * list_links.next;
+        dlink(tE) & fst_links = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) & fst_raw );
+        size_t fst_tagval = origin_tag_query_arith$( fst_raw );
+
+        dlink(tE) & after_raw = * fst_links.next;
+        dlink(tE) & after_links = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) & after_raw );
+
+        size_t before_links_next_rslt = ((size_t) & after_raw);
+        size_t after_links_prev_rslt = ORIGIN_TAG_ENABL( (size_t) & list_links );
+        list_links.next = (dlink(tE) *) before_links_next_rslt;
+        after_links.prev = (dlink(tE) *) after_links_prev_rslt;
+
+        MAYBE_CMEM_BARRIER;
+        size_t list_pos_links_num = (size_t) &fst_links;
+        size_t list_pos_links_tagged_num = ORIGIN_TAG_ENABL( list_pos_links_num );
+		fst_links.next = fst_links.prev = (dlink(tE)*) list_pos_links_tagged_num;
+        MAYBE_CMEM_BARRIER;
+
+        tytagref( tLinks, dlink(tE) ) retExt = { fst_links };
+        return nullif$( downcast$( retExt ), fst_tagval );
+    }
+
+    static inline tE & remove_last( dlist(tE, tLinks) &lst ) {
+		verify (&lst != 0p);
+        dlink(tE) & list_links = lst;
+        // call is valid on empty list; when so, list_links.prev and before_links.next have otags set
+
+        dlink(tE) & last_raw = * list_links.prev;
+        dlink(tE) & last_links = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) & last_raw );
+        size_t last_tagval = origin_tag_query_arith$( last_raw );
+
+        dlink(tE) & before_raw = * last_links.prev;
+        dlink(tE) & before_links = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) & before_raw );
+
+        size_t after_links_prev_rslt = ((size_t) & before_raw);
+        size_t before_links_next_rslt = ORIGIN_TAG_ENABL( (size_t) & list_links );
+        list_links.prev = (dlink(tE) *) after_links_prev_rslt;
+        before_links.next = (dlink(tE) *) before_links_next_rslt;
+
+        MAYBE_CMEM_BARRIER;
+        size_t list_pos_links_num = (size_t) &last_links;
+        size_t list_pos_links_tagged_num = ORIGIN_TAG_ENABL( list_pos_links_num );
+		last_links.prev = last_links.next = (dlink(tE)*) list_pos_links_tagged_num;
+        MAYBE_CMEM_BARRIER;
+
+        tytagref( tLinks, dlink(tE) ) lpLnkTagged = { last_links };
+        return nullif$( downcast$( lpLnkTagged ), last_tagval );
+    }
+
+    static inline tE & try_pop_first( dlist(tE, tLinks) &lst ) {
+        tE & first_inlist = first(lst);
+        tE & first_item = first_inlist;
+        if (&first_item) remove(first_inlist);  // TODO: should it use pop_front?
+        return first_item;
+    }
+
+    static inline tE & try_pop_last( dlist(tE, tLinks) &lst ) {
+        tE & last_inlist = last(lst);
+        tE & last_item = last_inlist;
+        if (&last_item) remove(last_inlist);  // TODO: should it use pop_back?
+        return last_item;
+    }
+
+
+  #if !defined(NDEBUG) && (defined(__CFA_DEBUG__) || defined(__CFA_VERIFY__))
+	static bool $validate_fwd( dlist(tE, tLinks) & this ) {
+        tE & lagElem = *0p;
+
+        while ( tE & it = iter(this); advance(it) ) {
+            if (& lagElem == 0p &&  &it != & first(this) ) return false;
+            & lagElem = & it;
+        }
+
+        if (& lagElem != & last(this)) return false;
+
+        // TODO: verify that it is back at iter(this);
+        return true;
+	}
+	static bool $validate_rev( dlist(tE, tLinks) & this ) {
+        tE & lagElem = *0p;
+
+        while ( tE & it = iter(this); recede(it) ) {
+            if (& lagElem == 0p &&  &it != & last(this) ) return false;
+            & lagElem = & it;
+        }
+
+        if (& lagElem != & first(this)) return false;
+
+        // TODO: verify that it is back at iter(this);
+        return true;
+	}
+	static inline bool validate( dlist(tE, tLinks) & this ) {
+        bool reportsHavingFirst = ((& first(this)) == 0p);
+        bool reportsHavingLast = ((& last(this)) == 0p);
+        if ( reportsHavingFirst != reportsHavingLast ) return false;
+
+		return $validate_fwd(this) && $validate_rev(this);
+	}
+  #endif
+
+}
