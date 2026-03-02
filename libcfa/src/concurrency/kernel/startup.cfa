@@ -473,7 +473,7 @@ static void __kernel_last_resume( processor * this ) {
 //=============================================================================================
 //-----------------------------------------------------------------------------
 // Main thread construction
-static void ?{}( coroutine$ & this, current_stack_info_t * info) with( this ) {
+static void ?{}( coroutine$ & this, current_stack_info_t * info ) with( this ) {
 	stack.storage = info->storage;
 	with(*stack.storage) {
 		limit = info->limit;
@@ -484,14 +484,14 @@ static void ?{}( coroutine$ & this, current_stack_info_t * info) with( this ) {
 	name = "Main Thread";
 	state = Start;
 	starter = 0p;
-	this.last = 0p;
+	this.last = 0p;										// "last" overloaded in scope => qualification
 	cancellation = 0p;
 	ehm_state.ehm_buffer{};
 	ehm_state.buffer_lock{};
 	ehm_state.ehm_enabled = false;
 }
 
-static void ?{}( thread$ & this, current_stack_info_t * info) with( this ) {
+static void ?{}( thread$ & this, current_stack_info_t * info ) with( this ) {
 	ticket = TICKET_RUNNING;
 	state = Start;
 	self_cor{ info };

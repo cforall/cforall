@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Oct 31 08:46:59 2025
-// Update Count     : 67
+// Last Modified On : Sun Mar  1 15:43:17 2026
+// Update Count     : 70
 //
 
 // No not use #pragma once was this file is included twice in some places. It has its own guard system.
@@ -30,7 +30,7 @@ extern "C" {
 #ifndef _INVOKE_H_
 #define _INVOKE_H_
 
-	enum { DEFAULT_STACK_SIZE = 65000 };
+	enum { DEFAULT_STACK_SIZE = 256000 };				// raised from 65000
 
 	struct __cfaehm_try_resume_node;
 	struct __cfaehm_base_exception_t;

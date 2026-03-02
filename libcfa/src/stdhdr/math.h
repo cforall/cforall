@@ -9,22 +9,12 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Jul  4 23:25:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun  6 06:35:49 2025
-// Update Count     : 24
+// Last Modified On : Sun Feb  8 22:03:48 2026
+// Update Count     : 25
 // 
 
 extern "C" {
-#if ! defined( exception )								// nesting ?
-//#define exception ``exception							// make keyword an identifier
-#define __CFA_MATH_H__
-#endif
-
 #include_next <math.h>									// has internal check for multiple expansion
-
-#if defined( exception ) && defined( __CFA_MATH_H__ )	// reset only if set
-//#undef exception
-#undef __CFA_MATH_H__
-#endif
 } // extern "C"
 
 // Local Variables: //

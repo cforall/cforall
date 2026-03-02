@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon Jun 5 14:20:42 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 25 07:24:39 2025
-// Update Count     : 63
+// Last Modified On : Sun Mar  1 10:00:18 2026
+// Update Count     : 68
 //
 
 #define __cforall_thread__
@@ -570,6 +570,10 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 
 	__cfaabi_dbg_print_buffer_decl( " KERNEL: preempting core %p (%p @ %p).\n", __cfaabi_tls.this_processor, __cfaabi_tls.this_thread, (void *)(cxt->uc_mcontext.CFA_REG_IP) );
 
+	#if defined( __CFA_DEBUG__ )
+	stack_verify();										// good place to check for stack overflow
+	#endif // __CFA_DEBUG__
+
 	// Sync flag : prevent recursive calls to the signal handler
 	__cfaabi_tls.preemption_state.in_progress = true;
 
@@ -590,7 +594,7 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 		__cfaabi_tls.this_stats->ready.threads.preempt.yield++;
 	#endif
 
-	force_yield( __ALARM_PREEMPTION ); // Do the actual __cfactx_switch
+	force_yield( __ALARM_PREEMPTION );					// Do the actual __cfactx_switch
 }
 
 static void sigHandler_alarm( __CFA_SIGPARMS__ ) {

@@ -43,5 +43,3 @@ void __Cofor__( ssize_t low, ssize_t high, __cofor_body_t loop_body ) libcfa_pub
 		delete( runners[i] );
 	}
 }
-
-
