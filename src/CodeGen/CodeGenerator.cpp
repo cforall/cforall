@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Oct 17 15:54:00 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 17 14:19:22 2025
-// Update Count     : 1
+// Last Modified On : Wed Mar 11 11:13:10 2026
+// Update Count     : 28
 //
 
 #include "CodeGenerator.hpp"
@@ -48,8 +48,7 @@ void CodeGenerator::asmName( ast::DeclWithType const * decl ) {
 	}
 }
 
-CodeGenerator::LabelPrinter & CodeGenerator::LabelPrinter::operator()(
-		std::vector<ast::Label> const & l ) {
+CodeGenerator::LabelPrinter & CodeGenerator::LabelPrinter::operator()( std::vector<ast::Label> const & l ) {
 	labels = &l;
 	return *this;
 }
@@ -1244,9 +1243,9 @@ void CodeGenerator::postvisit( ast::WhileDoStmt const * stmt ) {
 	if ( stmt->isDoWhile ) {
 		output << "do";
 	} else {
-		output << "while (";
+		output << "while ( ";
 		stmt->cond->accept( *visitor );
-		output << ")";
+		output << " )";
 	}
 	output << " ";
 
@@ -1254,32 +1253,31 @@ void CodeGenerator::postvisit( ast::WhileDoStmt const * stmt ) {
 	stmt->body->accept( *visitor );
 
 	if ( stmt->isDoWhile ) {
-		output << " while (";
+		output << " while ( ";
 		stmt->cond->accept( *visitor );
-		output << ( ( nullptr == stmt->else_ ) ? ");" : ")" );
+		output << " );";								// always terminate with semi-colon
 	}
+
 	if ( stmt->else_ ) {
-		output << " else ";
-		stmt->else_->accept( *visitor );
+		stmt->else_->accept( *visitor );				// not converted in AST pass
 	}
 }
 
 void CodeGenerator::postvisit( ast::ForStmt const * stmt ) {
-	// Initializer is always hoised so don't generate it.
-	// TODO: Do an assertion check?
-	output << "for (;";
+	assert( stmt->inits.empty() );						// initializer is hoisted
+	output << "for ( ; ";								// empty initializer
 
 	if ( nullptr != stmt->cond ) {
 		stmt->cond->accept( *visitor );
 	}
-	output << ";";
+	output << "; ";										// separator
 
 	if ( nullptr != stmt->inc ) {
 		// cast the top-level expression to void to reduce gcc warnings.
 		ast::Expr * expr = new ast::CastExpr( stmt->inc );
 		expr->accept( *visitor );
 	}
-	output << ") ";
+	output << " ) ";
 
 	if ( nullptr != stmt->body ) {
 		output << printLabels( stmt->body->labels );
@@ -1287,9 +1285,7 @@ void CodeGenerator::postvisit( ast::ForStmt const * stmt ) {
 	}
 
 	if ( nullptr != stmt->else_ ) {
-		assertf( !options.genC, "Loop else should not reach code generation." );
-		output << " else ";
-		stmt->else_->accept( *visitor );
+		stmt->else_->accept( *visitor );				// not converted in AST pass
 	}
 }
 

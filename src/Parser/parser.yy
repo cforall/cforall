@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed May 21 18:44:44 2025
-// Update Count     : 7296
+// Last Modified On : Wed Mar 11 11:09:33 2026
+// Update Count     : 7300
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1414,7 +1414,7 @@ iteration_statement:
 	| WHILE '(' conditional_declaration ')' statement	%prec THEN
 		{ $$ = new StatementNode( build_while( yylloc, $3, maybe_build_compound( yylloc, $5 ) ) ); }
 	| WHILE '(' conditional_declaration ')' statement ELSE statement // CFA
-		{ $$ = new StatementNode( build_while( yylloc, $3, maybe_build_compound( yylloc, $5 ), $7 ) ); }
+		{ $$ = new StatementNode( build_while( yylloc, $3, maybe_build_compound( yylloc, $5 ), maybe_build_compound( yylloc, $7 ) ) ); }
 	| DO statement WHILE '(' ')' ';'					// CFA => do while( 1 )
 		{ $$ = new StatementNode( build_do_while( yylloc, NEW_ONE, maybe_build_compound( yylloc, $2 ) ) ); }
 	| DO statement WHILE '(' ')' ELSE statement			// CFA
@@ -1425,7 +1425,7 @@ iteration_statement:
 	| DO statement WHILE '(' comma_expression ')' ';'
 		{ $$ = new StatementNode( build_do_while( yylloc, $5, maybe_build_compound( yylloc, $2 ) ) ); }
 	| DO statement WHILE '(' comma_expression ')' ELSE statement // CFA
-		{ $$ = new StatementNode( build_do_while( yylloc, $5, maybe_build_compound( yylloc, $2 ), $8 ) ); }
+		{ $$ = new StatementNode( build_do_while( yylloc, $5, maybe_build_compound( yylloc, $2 ), maybe_build_compound( yylloc, $8 ) ) ); }
 	| FOR '(' ')' statement								%prec THEN // CFA => for ( ;; )
 		{ $$ = new StatementNode( build_for( yylloc, new ForCtrl( nullptr, nullptr, nullptr ), maybe_build_compound( yylloc, $4 ) ) ); }
 	| FOR '(' ')' statement ELSE statement				// CFA
@@ -1436,7 +1436,7 @@ iteration_statement:
 	| FOR '(' for_control_expression_list ')' statement	%prec THEN
 		{ $$ = new StatementNode( build_for( yylloc, $3, maybe_build_compound( yylloc, $5 ) ) ); }
 	| FOR '(' for_control_expression_list ')' statement ELSE statement // CFA
-		{ $$ = new StatementNode( build_for( yylloc, $3, maybe_build_compound( yylloc, $5 ), $7 ) ); }
+		{ $$ = new StatementNode( build_for( yylloc, $3, maybe_build_compound( yylloc, $5 ), maybe_build_compound( yylloc, $7 ) ) ); }
 	;
 
 for_control_expression_list:

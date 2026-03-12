@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Fri Dec  3 15:34:00 2021
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Jul 24 12:00:00 2024
-// Update Count     : 3
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Mar  5 13:40:58 2026
+// Update Count     : 80
 //
 
 #include "HoistControlDecls.hpp"
@@ -28,15 +28,16 @@ template<typename StmtT>
 const Stmt * hoist( const StmtT * stmt ) {
 	// If no hoisting is needed (no declaration), then make no changes.
 	if ( stmt->inits.size() == 0 ) {
-		// if ( /* no conditional declarations */ ...  ) ...
+		// while ( /* no conditional declarations */ ...  ) ...
 		return stmt;
 	}
 
 	StmtT * mutStmt = mutate( stmt );
+
 	CompoundStmt * block = new CompoundStmt( stmt->location );
 	//    {}
 
-	//    Label: if ( int x = f(), y = g(); ... ) ...
+	//    Label: while ( int x = f(), y = g(); ... ) ...
 	// link declarations into compound statement
 	for ( const Stmt * next : mutStmt->inits ) {
 		block->kids.push_back( next );
@@ -53,14 +54,15 @@ const Stmt * hoist( const StmtT * stmt ) {
 	//        int x = f();
 	//        int y = g();
 	//    }
-	//    if ( ... ) ...
+	//    while ( ... ) ...
 
 	block->kids.push_back( mutStmt );
 	//    Label: {
 	//        int x = f();
 	//        int y = g();
-	//        if ( ... ) ...
+	//        while ( ... ) ...
 	//    }
+
 	return block;
 }
 

@@ -11486,7 +11486,7 @@ yyreduce:
 
   case 261: /* iteration_statement: WHILE '(' conditional_declaration ')' statement ELSE statement  */
 #line 1417 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.stmt) = new StatementNode( build_while( yylloc, (yyvsp[-4].ifctrl), maybe_build_compound( yylloc, (yyvsp[-2].stmt) ), (yyvsp[0].stmt) ) ); }
+                { (yyval.stmt) = new StatementNode( build_while( yylloc, (yyvsp[-4].ifctrl), maybe_build_compound( yylloc, (yyvsp[-2].stmt) ), maybe_build_compound( yylloc, (yyvsp[0].stmt) ) ) ); }
 #line 11491 "Parser/parser.cc"
     break;
 
@@ -11513,7 +11513,7 @@ yyreduce:
 
   case 265: /* iteration_statement: DO statement WHILE '(' comma_expression ')' ELSE statement  */
 #line 1428 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.stmt) = new StatementNode( build_do_while( yylloc, (yyvsp[-3].expr), maybe_build_compound( yylloc, (yyvsp[-6].stmt) ), (yyvsp[0].stmt) ) ); }
+                { (yyval.stmt) = new StatementNode( build_do_while( yylloc, (yyvsp[-3].expr), maybe_build_compound( yylloc, (yyvsp[-6].stmt) ), maybe_build_compound( yylloc, (yyvsp[0].stmt) ) ) ); }
 #line 11518 "Parser/parser.cc"
     break;
 
@@ -11540,7 +11540,7 @@ yyreduce:
 
   case 269: /* iteration_statement: FOR '(' for_control_expression_list ')' statement ELSE statement  */
 #line 1439 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { (yyval.stmt) = new StatementNode( build_for( yylloc, (yyvsp[-4].forctrl), maybe_build_compound( yylloc, (yyvsp[-2].stmt) ), (yyvsp[0].stmt) ) ); }
+                { (yyval.stmt) = new StatementNode( build_for( yylloc, (yyvsp[-4].forctrl), maybe_build_compound( yylloc, (yyvsp[-2].stmt) ), maybe_build_compound( yylloc, (yyvsp[0].stmt) ) ) ); }
 #line 11545 "Parser/parser.cc"
     break;
 

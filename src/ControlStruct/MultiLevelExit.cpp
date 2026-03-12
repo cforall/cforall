@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Mon Nov  1 13:48:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 17:34:12 2023
-// Update Count     : 39
+// Last Modified On : Wed Mar 11 17:35:25 2026
+// Update Count     : 137
 //
 
 #include "MultiLevelExit.hpp"
@@ -159,8 +159,7 @@ struct MultiLevelExitCore final :
 	template<typename LoopNode>
 	const LoopNode * posthandleLoopStmt( const LoopNode * loopStmt );
 
-	list<ptr<Stmt>> fixBlock(
-		const list<ptr<Stmt>> & kids, bool caseClause );
+	list<ptr<Stmt>> fixBlock( const list<ptr<Stmt>> & kids, bool caseClause );
 
 	void enterSealedContext( ReturnContext );
 
@@ -184,8 +183,7 @@ void MultiLevelExitCore::previsit( const FunctionDecl * ) {
 	visit_children = false;
 }
 
-const CompoundStmt * MultiLevelExitCore::previsit(
-		const CompoundStmt * stmt ) {
+const CompoundStmt * MultiLevelExitCore::previsit( const CompoundStmt * stmt ) {
 	visit_children = false;
 
 	// if the stmt is labelled then generate a label to check in postvisit if the label is used
@@ -243,8 +241,7 @@ const Stmt * addUnused( const Stmt * stmt, const Label & originalTarget ) {
 // This routine updates targets on enclosing control structures to indicate which
 //     label is used by the BranchStmt that is passed
 const BranchStmt * MultiLevelExitCore::postvisit( const BranchStmt * stmt ) {
-	vector<Entry>::reverse_iterator targetEntry =
-		enclosing_control_structures.rend();
+	vector<Entry>::reverse_iterator targetEntry = enclosing_control_structures.rend();
 
 	// Labels on different stmts require different approaches to access
 	switch ( stmt->kind ) {
@@ -583,8 +580,7 @@ void MultiLevelExitCore::previsit( const FinallyClause * ) {
 	enterSealedContext( ReturnContext::InFinally );
 }
 
-const Stmt * MultiLevelExitCore::mutateLoop(
-	const Stmt * body, Entry & entry ) {
+const Stmt * MultiLevelExitCore::mutateLoop( const Stmt * body, Entry & entry ) {
 	if ( entry.isBreakUsed() ) {
 		break_label = entry.useBreakExit();
 	}
@@ -607,15 +603,12 @@ const Stmt * MultiLevelExitCore::mutateLoop(
 template<typename LoopNode>
 void MultiLevelExitCore::prehandleLoopStmt( const LoopNode * loopStmt ) {
 	// Create temporary labels and mark the enclosing loop before traversal.
-	// The labels will be folded in if they are used.
+	// The labels are folded in if they are used.
 	Label breakLabel = newLabel( "loopBreak", loopStmt );
 	Label contLabel = newLabel( "loopContinue", loopStmt );
 	enclosing_control_structures.emplace_back( loopStmt, breakLabel, contLabel );
 
 	GuardAction( [this](){ enclosing_control_structures.pop_back(); } );
-
-	// Because of fixBlock, this should be empty now (and must be).
-	assert( nullptr == loopStmt->else_ );
 }
 
 template<typename LoopNode>
@@ -628,25 +621,26 @@ const LoopNode * MultiLevelExitCore::posthandleLoopStmt( const LoopNode * loopSt
 	return mutate_field( loopStmt, &LoopNode::body, mutateLoop( loopStmt->body, entry ) );
 }
 
-list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
-	const list<ptr<Stmt>> & kids, bool is_case_clause ) {
-	// Unfortunately cannot use automatic error collection.
-	SemanticErrorException errors;
+list<ptr<Stmt>> MultiLevelExitCore::fixBlock( const list<ptr<Stmt>> & kids, bool is_case_clause ) {
+	// SKULLDUGGERY: While the loop-else clause is not part of C, it is allowed to proceed to codegen via the else_
+	// field and printed there as a compound statement. The alternative is another pass after hoist-control-declarations
+	// to make the else clause a separate compound statement, which seems unnecessary.
 
-	list<ptr<Stmt>> ret;
+	SemanticErrorException errors;						// cannot use automatic error collection
+	list<ptr<Stmt>> ret;								// list of augmented statements
 
-	// Manually visit each child.
+	// Manually visit each each control structure in a block checking for untargeted break and continue statements.
 	for ( const ptr<Stmt> & kid : kids ) {
 		if ( is_case_clause ) {
-			// Once a label is seen, it's no longer a valid for fallthrough.
+			// Once a label is seen, it is no longer valid for fallthrough.
 			for ( const Label & l : kid->labels ) {
 				fallthrough_labels.erase( l );
-			}
-		}
+			} // for
+		} // if
 
 		ptr<Stmt> else_stmt = nullptr;
-		const Stmt * to_visit;
-		// check if loop node and if so add else clause if it exists
+		const Stmt * to_visit = nullptr;
+		// SKULLDUGGERY: temporarily hide the else clause on a loop statement, by setting the else_ field to NULL.
 		if ( auto ptr = kid.as<WhileDoStmt>() ; ptr && ptr->else_ ) {
 			else_stmt = ptr->else_;
 			to_visit = mutate_field( ptr, &WhileDoStmt::else_, nullptr );
@@ -654,39 +648,55 @@ list<ptr<Stmt>> MultiLevelExitCore::fixBlock(
 			else_stmt = ptr->else_;
 			to_visit = mutate_field( ptr, &ForStmt::else_, nullptr );
 		} else {
-			to_visit = kid.get();
-		}
+			// Process all other statements as a whole rather than parts, as is done below for loop-else.
+			try {
+				ret.push_back( kid.get()->accept( *visitor ) );
+			} catch ( SemanticErrorException & e ) {
+				errors.append( e );
+			} // try
+		} // if
 
-		// This is the main (safe) visit of the child node.
-		try {
-			ret.push_back( to_visit->accept( *visitor ) );
+		// Process loops with hidden else clause.
+		if ( else_stmt ) try {
+			// In both else_stmt cases, we already modified to_visit, so its location won't change
+			const Stmt * subvisit_rslt = to_visit->accept( *visitor );
+			assert( subvisit_rslt == to_visit ); 
 		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
-		}
+		} // try
 
-		// The following sections handle visiting loop else clause and makes
-		// sure breaking from a loop body does not execute that clause.
+		// Create untargeted break-label for all statements. (global) break_label must be copied here, as it is changed
+		// by subsequent processing.
 		Label local_break_label = std::move( break_label );
 		break_label = Label( CodeLocation(), "" );
 
 		if ( else_stmt ) try {
-			ret.push_back( else_stmt->accept( *visitor ) );
+			// SKULLDUGGERY: now reconnect the else clause to the loop and process it seperately looking for untargeted
+			// breaks. These breaks apply to the containing switch or loop, not the connected loop-else.
+			if ( auto ptr = dynamic_cast<const WhileDoStmt *>(to_visit) ) {
+				assert( ptr->else_ == nullptr );
+				else_stmt->accept( *visitor );
+				mutate_field( ptr, &WhileDoStmt::else_, else_stmt );
+			} else if ( auto ptr = dynamic_cast<const ForStmt *>(to_visit) ) {
+				assert( ptr->else_ == nullptr );
+				else_stmt->accept( *visitor );
+				mutate_field( ptr, &ForStmt::else_, else_stmt );
+			} // if
+			// Now process the else clause so breaks apply to the containing scope.
+			ret.push_back( to_visit->accept( *visitor ) );
 		} catch ( SemanticErrorException & e ) {
 			errors.append( e );
-		}
+		} // try
 
-		if ( !break_label.empty() ) {
-			ret.push_back( labelledNullStmt( ret.back()->location, break_label ) );
-			break_label = Label( CodeLocation(), "" );
-		}
-
-		// This handles a break from the body or non-loop statement.
-		if ( !local_break_label.empty() ) {
+		// Generate untargeted break-label AFTER its containing control structure, including else clause, if present.
+		if ( ! local_break_label.empty() ) {
 			ret.push_back( labelledNullStmt( ret.back()->location, local_break_label ) );
-		}
-	}
+		} // if
+	} // for
 
 	errors.throwIfNonEmpty();
+	// Return a new list of augmented statements with untargeted breaks replaced by goto statements that transfer after
+	// the containing switch/loop.
 	return ret;
 }
 
@@ -698,8 +708,7 @@ void MultiLevelExitCore::enterSealedContext( ReturnContext enter_context ) {
 
 } // namespace
 
-const CompoundStmt * multiLevelExitUpdate(
-		const CompoundStmt * stmt, const LabelToStmt & labelTable ) {
+const CompoundStmt * multiLevelExitUpdate( const CompoundStmt * stmt, const LabelToStmt & labelTable ) {
 	// Must start in the body, so FunctionDecls can be a stopping point.
 	Pass<MultiLevelExitCore> visitor( labelTable );
 	return stmt->accept( visitor );

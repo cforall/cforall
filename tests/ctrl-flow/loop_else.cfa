@@ -122,6 +122,8 @@ int main() {
 	for ( s; (S){0} -~= (S){10,10} ~ (S){1} ) { sout | s; } else { sout | "else"; } sout | nl;
 	sout | nl;
 
+	sout | nlOn;										// turn on auto newline
+
 	// A break (or a continue) in an else clause should target an outer loop.
 
 	sout | "before";
@@ -135,5 +137,18 @@ int main() {
 		}
 		sout | " end";
 	}
-	sout | " after" | nl;
+	sout | " after";
+
+	// A loop index for while and for is accessible in the else clause.
+	// Do-while has no local declarations in condition.
+
+	int key = 11, size = 10, arr[size] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+	while ( int i = 0; i < size ) {
+		if ( arr[i] == key ) sout | "key" | key | "found at posstion" | i;
+		i += 1;
+	} else sout | "key" | key | "not found at position" | i;
+			
+	for ( i; size ) {
+		if ( arr[i] == key ) sout | "key" | key | "found at posstion" | i;
+	} else sout | "key" | key | "not found at position" | i;
 }

@@ -68,4 +68,9 @@ N N N N N N N N N N else
 (10 10)(9 9)(8 8)(7 7)(6 6)(5 5)(4 4)(3 3)(2 2)(1 1)(0 0)else
 (10 10)(9 9)(8 8)(7 7)(6 6)(5 5)(4 4)(3 3)(2 2)(1 1)(0 0)else
 
-before begin else after
+before
+ begin
+ else
+ after
+key 11 not found at position 10
+key 11 not found at position 10
