@@ -9,22 +9,22 @@
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 10 19:12:53 2023
-// Update Count     : 6
+// Last Modified On : Sat Mar  7 15:39:59 2026
+// Update Count     : 14
 //
 
 extern int yydebug;                   // set for -g flag (Grammar)
 extern int
 	astp,
-	bresolvep,
+	bresolverp,
 	bboxp,
 	bcodegenp,
-	ctorinitp,
+	ctordtorp,
 	declstatsp,
-	exdeclp,
-	exprp,
+	excpdeclp,
 	expraltp,
-	genericsp,
+	expranlp,
+	instgenp,
 	invariant,
 	libcfap,
 	nopreludep,
@@ -37,7 +37,7 @@ extern int
 	symtabp,
 	treep,
 	tuplep,
-	validp,
+	valideclp,
 	errorp,
 	codegenp,
 	prettycodegenp,

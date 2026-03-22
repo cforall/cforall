@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jun 23 16:38:09 2024
-// Update Count     : 691
+// Last Modified On : Fri Mar 20 08:10:38 2026
+// Update Count     : 710
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -201,7 +201,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Hoist Type Decls", Validate::hoistTypeDecls, transUnit );
 
 		PASS( "Translate Exception Declarations", ControlStruct::translateExcept, transUnit );
-		DUMP( exdeclp, transUnit );
+		DUMP( excpdeclp, transUnit );
 		PASS( "Verify Ctor, Dtor & Assign", Validate::verifyCtorDtorAssign, transUnit );
 		PASS( "Replace Typedefs", Validate::replaceTypedef, transUnit );
 		PASS( "Fix Return Types", Validate::fixReturnTypes, transUnit );
@@ -241,12 +241,12 @@ int main( int argc, char * argv[] ) {
 			return EXIT_SUCCESS;
 		} // if
 
-		if ( expraltp ) {
+		if ( expranlp ) {
 			ResolvExpr::printCandidates( transUnit );
 			return EXIT_SUCCESS;
 		} // if
 
-		DUMP( validp, transUnit );
+		DUMP( valideclp, transUnit );
 
 		PASS( "Translate Throws", ControlStruct::translateThrows, transUnit );
 		PASS( "Implement Waituntil", Concurrency::generateWaitUntil, transUnit  );
@@ -264,7 +264,7 @@ int main( int argc, char * argv[] ) {
 			return EXIT_SUCCESS;
 		} // if
 
-		DUMP( bresolvep, transUnit );
+		DUMP( bresolverp, transUnit );
 
 		if ( resolvprotop ) {
 			dumpAsResolverProto( transUnit );
@@ -272,12 +272,12 @@ int main( int argc, char * argv[] ) {
 		} // if
 
 		PASS( "Resolve", ResolvExpr::resolve, transUnit );
-		DUMP( exprp, transUnit );
-		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() ); // Here
+		DUMP( expranlp, transUnit );
+		PASS( "Fix Init", InitTweak::fix, transUnit, buildingLibrary() );
 		PASS( "Erase With", ResolvExpr::eraseWith, transUnit );
 
 		// fix ObjectDecl - replaces ConstructorInit nodes
-		DUMP( ctorinitp, transUnit );
+		DUMP( ctordtorp, transUnit );
 
 		// Currently not working due to unresolved issues with UniqueExpr
 		PASS( "Expand Unique Expr", Tuples::expandUniqueExpr, transUnit ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
@@ -296,7 +296,7 @@ int main( int argc, char * argv[] ) {
 		PASS( "Virtual Expand Casts", Virtual::expandCasts, transUnit );
 
 		PASS( "Instantiate Generics", GenPoly::instantiateGeneric, transUnit );
-		DUMP( genericsp, transUnit );
+		DUMP( instgenp, transUnit );
 
 		PASS( "Convert L-Value", GenPoly::convertLvalue, transUnit );
 		DUMP( bboxp, transUnit );
@@ -421,17 +421,18 @@ static struct Printopts {
 	{ "rsteps", resolvep, true, "print resolver steps" },
 	// AST dumps
 	{ "ast", astp, true, "print AST after parsing" },
-	{ "excpdecl", exdeclp, true, "print AST after translating exception decls" },
-	{ "symevt", symtabp, true, "print AST after symbol table events" },
-	{ "expralt", expraltp, true, "print AST after expressions alternatives" },
-	{ "valdecl", validp, true, "print AST after declaration validation pass" },
-	{ "bresolver", bresolvep, true, "print AST before resolver step" },
-	{ "expranly", exprp, true, "print AST after expression analysis" },
-	{ "ctordtor", ctorinitp, true, "print AST after ctor/dtor are replaced" },
+	{ "excpdecl", excpdeclp, true, "print AST after translating exception decls" },
+	// These flags are currently disconnected from whatever they did in the past.
+	// { "symevt", symtabp, true, "print AST after symbol table events" },
+	// { "expralt", expraltp, true, "print AST after expressions alternatives" },
+	{ "validecl", valideclp, true, "print AST after declaration validation pass" },
+	{ "bresolver", bresolverp, true, "print AST before resolver step" },
+	{ "expranl", expranlp, true, "print AST after expression analysis" },
+	{ "ctordtor", ctordtorp, true, "print AST after ctor/dtor are replaced" },
 	{ "tuple", tuplep, true, "print AST after tuple expansion" },
-	{ "instgen", genericsp, true, "print AST after instantiate generics" },
+	{ "instgen", instgenp, true, "print AST after instantiate generics" },
 	{ "bbox", bboxp, true, "print AST before box pass" },
-	{ "bcodegen", bcodegenp, true, "print AST before code generation" }
+	{ "bcodegen", bcodegenp, true, "print AST before code generation" },
 };
 enum { printoptsSize = sizeof( printopts ) / sizeof( printopts[0] ) };
 

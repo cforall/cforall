@@ -9,23 +9,23 @@
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Apr 10 19:12:50 2023
-// Update Count     : 6
+// Last Modified On : Sat Mar  7 15:43:02 2026
+// Update Count     : 11
 //
 
 #include "config.h"
 
 int
 	astp = false,
-	bresolvep = false,
+	bresolverp = false,
 	bboxp = false,
 	bcodegenp = false,
-	ctorinitp = false,
+	ctordtorp = false,
 	declstatsp = false,
-	exdeclp = false,
-	exprp = false,
+	excpdeclp = false,
 	expraltp = false,
-	genericsp = false,
+	expranlp = false,
+	instgenp = false,
 	invariant = false,
 	libcfap = false,
 	nopreludep = false,
@@ -38,7 +38,7 @@ int
 	symtabp = false,
 	treep = false,
 	tuplep = false,
-	validp = false,
+	valideclp = false,
 	errorp = false,
 	codegenp = false,
 	prettycodegenp = false,

@@ -32,13 +32,13 @@
 #include "ResolvExpr/Unify.hpp"        // for typesCompatible
 #include "SymTab/GenImplicitCall.hpp"  // for genImplicitCall
 
-bool ctordtorp = false; // print all debug
+bool ctordtorp2 = false; // print all debug (duplicate name in main.cpp)
 bool ctorp = false; // print ctor debug
 bool cpctorp = false; // print copy ctor debug
 bool dtorp = false; // print dtor debug
-#define PRINT( text ) if ( ctordtorp ) { text }
-#define CP_CTOR_PRINT( text ) if ( ctordtorp || cpctorp ) { text }
-#define DTOR_PRINT( text ) if ( ctordtorp || dtorp ) { text }
+#define PRINT( text ) if ( ctordtorp2 ) { text }
+#define CP_CTOR_PRINT( text ) if ( ctordtorp2 || cpctorp ) { text }
+#define DTOR_PRINT( text ) if ( ctordtorp2 || dtorp ) { text }
 
 namespace InitTweak {
 
