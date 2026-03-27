@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thd Feb 23 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Nov  4 22:03:41 2025
-// Update Count     : 82
+// Last Modified On : Thu Mar 26 22:37:42 2026
+// Update Count     : 91
 //
 
 #define __cforall_thread__
@@ -492,52 +492,44 @@ void wait( condition & this, uintptr_t user_info = 0 ) libcfa_public {
 	monitor_restore;
 }
 
-bool signal( condition & this ) libcfa_public {
-	if ( empty( this ) ) { return false; }
+bool signal( condition & this ) libcfa_public with( this ) {
+  if ( empty( this ) ) { return false; }
 
-	//Check that everything is as expected
-	verify( this.monitors );
-	verify( this.monitor_count != 0 );
+	verifyf( monitors != 0p, "Waiting with no monitors (%p)", monitors );
+	verifyf( monitor_count != 0, "Waiting with 0 monitors (%"PRIiFAST16")", monitor_count );
 
-	//Some more checking in debug
-	__cfaabi_dbg_debug_do(
+	__cfaabi_dbg_debug_do(								// more checking in debug
 		thread$ * this_thrd = active_thread();
-		if ( this.monitor_count != this_thrd->monitors.size ) {
-			abort( "Signal on condition %p made with different number of monitor(s), expected %zi got %zi", &this, this.monitor_count, this_thrd->monitors.size );
-		}
+		if ( monitor_count != this_thrd->monitors.size ) {
+			abort( "Signal on condition %p made with different number of monitor(s), expected %zi got %zi",
+				   &this, monitor_count, this_thrd->monitors.size );
+		} // if
 
-		for ( i; this.monitor_count ) {
-			if ( this.monitors[i] != this_thrd->monitors[i] ) {
-				abort( "Signal on condition %p made with different monitor, expected %p got %p", &this, this.monitors[i], this_thrd->monitors[i] );
-			}
-		}
+		for ( i; monitor_count ) {
+			if ( monitors[i] != this_thrd->monitors[i] ) {
+				abort( "Signal on condition %p made with different monitor, expected %p got %p",
+					   &this, monitors[i], this_thrd->monitors[i] );
+			} // if
+		} // for
 	);
 
-	__lock_size_t count = this.monitor_count;
+	__lock_size_t count = monitor_count;
+	lock_all( monitors, 0p, count );					// lock all monitors
+	__condition_node_t * node = pop_head( blocked );	// pop head of waiting queue
 
-	// Lock all monitors
-	lock_all( this.monitors, 0p, count );
-
-	//Pop the head of the waiting queue
-	__condition_node_t * node = pop_head( this.blocked );
-
-	//Add the thread to the proper AS stack
-	for ( i; count ) {
+	for ( i; count ) {									// add threads to the proper AS stack
 		__condition_criterion_t * crit = &node->criteria[i];
 		assert( ! crit->ready );
 		push( crit->target->signal_stack, crit );
-	}
+	} // for
 
-	//Release
-	unlock_all( this.monitors, count );
-
+	unlock_all( monitors, count );						// release
 	return true;
-}
+} // signal
 
 bool signal_block( condition & this ) libcfa_public {
-	if ( ! this.blocked.head ) { return false; }
+  if ( empty( this ) ) { return false; }
 
-	//Check that everything is as expected
 	verifyf( this.monitors != 0p, "Waiting with no monitors (%p)", this.monitors );
 	verifyf( this.monitor_count != 0, "Waiting with 0 monitors (%"PRIiFAST16")", this.monitor_count );
 
@@ -550,8 +542,7 @@ bool signal_block( condition & this ) libcfa_public {
 	// Create the node specific to this wait operation
 	wait_ctx_primed( active_thread(), 0 )
 
-	//save contexts
-	monitor_save;
+	monitor_save;										// save contexts
 
 	//Find the thread to run
 	thread$ * signallee = pop_head( this.blocked )->waiting_thread;
@@ -559,24 +550,18 @@ bool signal_block( condition & this ) libcfa_public {
 
 	__cfaabi_dbg_print_buffer_decl( "Kernel : signal_block condition %p (s: %p)\n", &this, signallee );
 
-	// unlock all the monitors
-	unlock_all( locks, count );
+	unlock_all( locks, count );							// unlock all the monitors
+	unpark( signallee );								// unpark the thread we signalled
+	park();												// everything is ready to go to sleep
 
-	// unpark the thread we signalled
-	unpark( signallee );
-
-	//Everything is ready to go to sleep
-	park();
-
-	// WE WOKE UP
+	// WOKE UP
 
 	__cfaabi_dbg_print_buffer_local( "Kernel : signal_block returned\n" );
 
-	//We are back, restore the masks and recursions
-	monitor_restore;
+	monitor_restore;									// restore the masks and recursions
 
 	return true;
-}
+} // signal_block
 
 // Access the user_info of the thread waiting at the front of the queue
 uintptr_t front( condition & this ) libcfa_public {

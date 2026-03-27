@@ -9,8 +9,8 @@
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug  7 10:46:08 2025
-// Update Count     : 75
+// Last Modified On : Tue Mar 24 11:25:34 2026
+// Update Count     : 98
 //
 
 #pragma once
@@ -71,84 +71,83 @@ static inline tytagref(void, T) ?`inner ( T & this ) { tytagref( void, T ) ret =
 
 
 // The origin is the position encountered at the start of iteration, signifying, "need to advance to the first element,"
-// and at the end of iteration, signifying, "no more elements."  Normal comsumption of an iterator runs "advance" as
-// the first step, and uses the return of "advance" as a guard, before dereferencing the iterator.  So normal
-// consumption of an iterator does not dereference an iterator in origin position.  The value of a pointer (underlying a
-// refence) that is exposed publicly as an iteraor, and also a pointer stored internally in a link field, is tagged, to
-// indicate "is the origin" (internally, is the list-head sentinel node), or untagged, to indicate "is a regular node."
-// Intent is to help a user who dereferences an iterator in origin position (which would be an API-use error on their
-// part), by failing fast.
+// and at the end of iteration, signifying, "no more elements."  Normal comsumption of an iterator runs "advance" as the
+// first step, and uses the return of "advance" as a guard, before dereferencing the iterator.  So normal consumption of
+// an iterator does not dereference an iterator in origin position.  The value of a pointer (underlying a refence) that
+// is exposed publicly as an iteraor, and also a pointer stored internally in a link field, is tagged, to indicate "is
+// the origin" (internally, is the list-head sentinel node), or untagged, to indicate "is a regular node."  Intent is to
+// help a user who dereferences an iterator in origin position (which would be an API-use error on their part), by
+// failing fast.
 
 #ifdef __EXPERIMENTAL_DISABLE_OTAG__ // Perf experimention alt mode
 
-    // With origin tagging disabled, iteration never reports "no more elements."
-    // In this mode, the list API is buggy.
-    // This mode is used to quantify the cost of the normal tagging scheme.
+	// With origin tagging disabled, iteration never reports "no more elements."
+	// In this mode, the list API is buggy.
+	// This mode is used to quantify the cost of the normal tagging scheme.
 
-    #define ORIGIN_TAG_SET(p)   (p)
-    #define ORIGIN_TAG_CLEAR(p) (p)
-    #define ORIGIN_TAG_QUERY(p) 0
-    #define ORIGIN_TAG_ASGN(p, v) (p)
-    #define ORIGIN_TAG_EITHER(p, v) (p)
-    #define ORIGIN_TAG_NEQ(v1, v2) 0
+	#define ORIGIN_TAG_SET(p)   (p)
+	#define ORIGIN_TAG_CLEAR(p) (p)
+	#define ORIGIN_TAG_QUERY(p) 0
+	#define ORIGIN_TAG_ASGN(p, v) (p)
+	#define ORIGIN_TAG_EITHER(p, v) (p)
+	#define ORIGIN_TAG_NEQ(v1, v2) 0
 
 #else // Normal
 
-    #if defined( __x86_64 )
-        // Preferred case: tag in the most-significant bit.  Dereference
-        // has been shown to segfault consistently.  Maintenance should
-        // list more architectures as "ok" here, to let them use the
-        // preferred case, when valid.
-        #define ORIGIN_TAG_BITNO ( 8 * sizeof( size_t ) - 1 )
-    #else
-        // Fallback case: tag in the least-significant bit.  Dereference
-        // will often give an alignment error, but may not, e.g. if
-        // accessing a char-typed member.  32-bit x86 uses the most-
-        // significant bit for real room on the heap.
-        #define ORIGIN_TAG_BITNO 0
-    #endif
+	#if defined( __x86_64 )
+		// Preferred case: tag in the most-significant bit.  Dereference
+		// has been shown to segfault consistently.  Maintenance should
+		// list more architectures as "ok" here, to let them use the
+		// preferred case, when valid.
+		#define ORIGIN_TAG_BITNO ( 8 * sizeof( size_t ) - 1 )
+	#else
+		// Fallback case: tag in the least-significant bit.  Dereference
+		// will often give an alignment error, but may not, e.g. if
+		// accessing a char-typed member.  32-bit x86 uses the most-
+		// significant bit for real room on the heap.
+		#define ORIGIN_TAG_BITNO 0
+	#endif
 
-    #define ORIGIN_TAG_MASK (((size_t)1) << ORIGIN_TAG_BITNO)
+	#define ORIGIN_TAG_MASK (((size_t)1) << ORIGIN_TAG_BITNO)
 
-    #define ORIGIN_TAG_SET(p) ((p) |  ORIGIN_TAG_MASK)
-    #define ORIGIN_TAG_CLEAR(p) ((p) & ~ORIGIN_TAG_MASK)
-    #define ORIGIN_TAG_QUERY(p) ((p) &  ORIGIN_TAG_MASK)
+	#define ORIGIN_TAG_SET(p) ((p) |  ORIGIN_TAG_MASK)
+	#define ORIGIN_TAG_CLEAR(p) ((p) & ~ORIGIN_TAG_MASK)
+	#define ORIGIN_TAG_QUERY(p) ((p) &  ORIGIN_TAG_MASK)
 
-    #define ORIGIN_TAG_ASGN(p, v) ( \
-        verify( ! ORIGIN_TAG_QUERY(p) && "p had no tagbit" ), \
-        ORIGIN_TAG_EITHER((p), (v)) \
-    )
+	#define ORIGIN_TAG_ASGN(p, v) ( \
+		verify( ! ORIGIN_TAG_QUERY(p) && "p had no tagbit" ), \
+		ORIGIN_TAG_EITHER((p), (v)) \
+	)
 
-    #define ORIGIN_TAG_EITHER(p, v) ( \
-        verify( ! ORIGIN_TAG_CLEAR(v) && "v is a pure tagbit" ), \
-        ( (p) | (v) ) \
-    )
+	#define ORIGIN_TAG_EITHER(p, v) ( \
+		verify( ! ORIGIN_TAG_CLEAR(v) && "v is a pure tagbit" ), \
+		( (p) | (v) ) \
+	)
 
-    #define ORIGIN_TAG_NEQ(v1, v2) ( \
-        verify( ! ORIGIN_TAG_CLEAR(v1) && "v1 is a pure tagbit" ), \
-        verify( ! ORIGIN_TAG_CLEAR(v2) && "v2 is a pure tagbit" ), \
-        ( (v1) ^ (v2) ) \
-    )
+	#define ORIGIN_TAG_NEQ(v1, v2) ( \
+		verify( ! ORIGIN_TAG_CLEAR(v1) && "v1 is a pure tagbit" ), \
+		verify( ! ORIGIN_TAG_CLEAR(v2) && "v2 is a pure tagbit" ), \
+		( (v1) ^ (v2) ) \
+	)
 
 #endif
 
 
-
 #ifdef __EXPERIMENTAL_LOOSE_SINGLES__ // Perf experimention alt mode
 
-    // In loose-singles mode, the ability to answer an "is listed" query is disabled, as is "to insert an element,
-    // it must not be listed already" checking.  The user must know separately whether an element is listed.
-    // Other than inserting it, any list-api action on an unlisted element is undefined.  Notably, list iteration
-    // starting from an unlisted element is not defined to respond "no more elements," and may instead continue
-    // iterating from a formerly occupied list position.  This mode matches LQ usage.
+	// In loose-singles mode, the ability to answer an "is listed" query is disabled, as is "to insert an element,
+	// it must not be listed already" checking.  The user must know separately whether an element is listed.
+	// Other than inserting it, any list-api action on an unlisted element is undefined.  Notably, list iteration
+	// starting from an unlisted element is not defined to respond "no more elements," and may instead continue
+	// iterating from a formerly occupied list position.  This mode matches LQ usage.
 
-    #define NOLOOSE(...)
-    #define LOOSEONLY(...) __VA_ARGS__
+	#define NOLOOSE(...)
+	#define LOOSEONLY(...) __VA_ARGS__
 
 #else // Normal
 
-    #define NOLOOSE(...) __VA_ARGS__
-    #define LOOSEONLY(...)
+	#define NOLOOSE(...) __VA_ARGS__
+	#define LOOSEONLY(...)
 
 #endif
 
@@ -189,13 +188,13 @@ forall( tE & ) {
 
 static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 	bool isListed( tE & node ) {
-      NOLOOSE(
+	  NOLOOSE(
 		verify( &node != 0p );
 		dlink( tE ) & node_links = node`inner;
 		return (node_links.prev != 0p) || (node_links.next != 0p);
 	  )
 	  LOOSEONLY(
-        verify(false && "isListed is undefined");
+		verify(false && "isListed is undefined");
 		return true;
 	  )
 	}
@@ -223,7 +222,7 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		verify( &node != 0p );
 
 		dlink( tE ) & linkToInsert = node`inner;
-      NOLOOSE(
+	  NOLOOSE(
 		verify( linkToInsert.next == 0p );
 		verify( linkToInsert.prev == 0p );
 	  )
@@ -241,13 +240,22 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		asm( "" : : : "memory" );
 		return node;
 	}
+	// FIXME: Change from pointer to reference for node, when tuple type can handle references.
+	forall( List ... | { void insert_before( tE & before, List ); } )
+	void insert_before( tE & before, tE * node, List args ) {
+		insert_before( before, *node );
+		insert_before( before, args );
+	}
+	void insert_before( tE & before, tE * node ) {
+		insert_before( before, *node );
+	}
 
 	tE & insert_after( tE & after, tE & node ) {
 		verify( &after != 0p );
 		verify( &node != 0p );
 
 		dlink( tE ) & linkToInsert = node`inner;
-      NOLOOSE(
+	  NOLOOSE(
 		verify( linkToInsert.prev == 0p );
 		verify( linkToInsert.next == 0p );
 	  )
@@ -265,6 +273,15 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		asm( "" : : : "memory" );
 		return node;
 	}
+	// FIXME: Change from pointer to reference for node, when tuple type can handle references.
+	forall( List ... | { void insert_after( tE & after, List ); } )
+	void insert_after( tE & after, tE * node, List args ) {
+		insert_after( after, *node );
+		insert_after( after, args );
+	}
+	void insert_after( tE & after, tE * node ) {
+		insert_after( after, *node );
+	}
 
 	tE & remove( tE & node ) {
 		verify( &node != 0p );
@@ -280,13 +297,22 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		before_links.next = &after_raw;
 		after_links.prev = &before_raw;
 
-      NOLOOSE(
+	  NOLOOSE(
 		asm( "" : : : "memory" );
 		list_pos_links.prev = 0p;
 		list_pos_links.next = 0p;
 		asm( "" : : : "memory" );
 	  )
 		return node;
+	}
+	// FIXME: Change from pointer to reference for node, when tuple type can handle references.
+	forall( List ... | { void remove( List ); } )
+	void remove( tE * node, List args ) {
+		remove( *node );
+		remove( args );
+	}
+	void remove( tE * node ) {
+		remove( *node );
 	}
 
 	tE & iter( dlist( tE, tLinks ) & list ) {
@@ -308,12 +334,12 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		return &ref_inner != 0p && ! ORIGIN_TAG_QUERY( (size_t)&ref_inner );
 	}
 
-    bool isFirst( tE & node ) {
-        return recede( node );
-    }
+	bool isFirst( tE & node ) {
+		return recede( node );
+	}
 
-    bool isLast( tE & node ) {
-        return advance( node );
+	bool isLast( tE & node ) {
+		return advance( node );
     }
 
 	tE & prev( tE & node ) {
@@ -330,14 +356,42 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		insert_after( iter( list ), node );
 		return node;
 	}
+	// FIXME: Change from pointer to reference for node, when tuple type can handle references.
+	forall( List ... | { void insert_first( dlist( tE, tLinks ) & list, List ); } )
+	void insert_first( dlist( tE, tLinks ) & list, tE * node, List args ) {
+		insert_first( list, *node );
+		insert_first( list, args );
+	}
+	void insert_first( dlist( tE, tLinks ) & list, tE * node ) {
+		insert_first( list, *node );
+	}
 
 	tE & insert_last( dlist( tE, tLinks ) & list, tE & node ) {
 		insert_before( iter( list ), node );
 		return node;
 	}
+	// FIXME: Change from pointer to reference for node, when tuple type can handle references.
+	forall( List ... | { void insert_last( dlist( tE, tLinks ) & list, List ); } )
+	void insert_last( dlist( tE, tLinks ) & list, tE * node, List args ) {
+		insert_last( list, *node );
+		insert_last( list, args );
+	}
+	void insert_last( dlist( tE, tLinks ) & list, tE * node ) {
+		insert_last( list, *node );
+	}
+
 	tE & insert( dlist( tE, tLinks ) & list, tE & node ) { // synonym for insert_last
 		insert_last( list, node );
 		return node;
+	}
+	// FIXME: Change from pointer to reference for node, when tuple type can handle references.
+	forall( List ... | { void insert( dlist( tE, tLinks ) & list, List ); } )
+	void insert( dlist( tE, tLinks ) & list, tE * node, List args ) {
+		insert( list, *node );
+		insert( list, args );
+	}
+	void insert( dlist( tE, tLinks ) & list, tE * node ) {
+		insert( list, *node );
 	}
 
 	tE & remove_first( dlist( tE, tLinks ) & list ) {
