@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Thu Dec  2 13:44:00 2021
-// Last Modified By : Andrew Beach
-// Last Modified On : Tue Sep 20 16:00:00 2022
-// Update Count     : 2
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Fri Mar 27 06:44:33 2026
+// Update Count     : 3
 //
 
 #include "Autogen.hpp"
@@ -400,7 +400,19 @@ ast::FunctionDecl * FuncGenerator::genDtorProto() const {
 	if ( isConcurrentType() ) {
 		add_qualifiers( dst->type, ast::CV::Qualifiers( ast::CV::Mutex ) );
 	}
-	return genProto( "^?{}", { dst }, {} );
+//	return genProto( "^?{}", { dst }, {} );
+
+	ast::FunctionDecl * decl = genProto( "^?{}", { dst }, {} );
+	// For concurrent types, remove static storage and inline specifier, and add
+	// cfa_linkonce attribute so the destructor has linkonce semantics.
+	// This is required to share the same function pointer across TUs.
+	if ( isConcurrentType() ) {
+		auto mut = ast::mutate( decl );
+		mut->storage = ast::Storage::Classes();
+		mut->funcSpec = ast::Function::Specs();
+		mut->attributes.push_back( new ast::Attribute( "cfa_linkonce" ) );
+	}
+	return decl;
 }
 
 /// Use the current type T to create `T ?=?(T & _dst, T _src)`.

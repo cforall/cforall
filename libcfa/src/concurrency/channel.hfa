@@ -116,15 +116,15 @@ static inline forall( T ) {
 		printf("Channel %p Consumer Blocks: %lu,\tConsumer Ops: %lu,\t%.2f%% of Consumer ops blocked\n", &c, p_blocks, p_ops, ((double)p_blocks)/p_ops * 100);
 		printf("Channel %p Producer Blocks: %lu,\tProducer Ops: %lu,\t%.2f%% of Producer ops blocked\n", &c, c_blocks, c_ops, ((double)c_blocks)/c_ops * 100);
 	    #endif
-		verifyf( __handle_waituntil_OR( cons ) || __handle_waituntil_OR( prods ) || isEmpty( cons ) && isEmpty( prods ), 
+		verifyf( __handle_waituntil_OR( cons ) || __handle_waituntil_OR( prods ) || empty( cons ) && empty( prods ), 
 				 "Attempted to delete channel with waiting threads (Deadlock).\n" );
 		if ( size != 0 ) delete( buffer );
 	}
 	size_t get_count( channel(T) & chan ) with(chan) { return __atomic_load_n( &count, __ATOMIC_RELAXED ); }
 	size_t get_size( channel(T) & chan ) with(chan) { return __atomic_load_n( &size, __ATOMIC_RELAXED ); }
-	bool has_waiters( channel(T) & chan ) with(chan) { return ! isEmpty( cons ) || ! isEmpty( prods ); }
-	bool has_waiting_consumers( channel(T) & chan ) with(chan) { return ! isEmpty( cons ); }
-	bool has_waiting_producers( channel(T) & chan ) with(chan) { return ! isEmpty( prods ); }
+	bool has_waiters( channel(T) & chan ) with(chan) { return ! empty( cons ) || ! empty( prods ); }
+	bool has_waiting_consumers( channel(T) & chan ) with(chan) { return ! empty( cons ); }
+	bool has_waiting_producers( channel(T) & chan ) with(chan) { return ! empty( prods ); }
 
 	// closes the channel and notifies all blocked threads
 	void close( channel(T) & chan ) with(chan) {
@@ -163,7 +163,7 @@ static inline forall( T ) {
 
 	void flush( channel(T) & chan, T elem ) with(chan) {
 		lock( mutex_lock );
-		while ( count == 0 && ! isEmpty( cons ) ) {
+		while ( count == 0 && ! empty( cons ) ) {
 			__cons_handoff( chan, elem );
 		}
 		unlock( mutex_lock );
@@ -185,7 +185,7 @@ static inline forall( T ) {
 	    #endif
 
 	  ConsEmpty:
-		if ( ! isEmpty( cons ) ) {
+		if ( ! empty( cons ) ) {
 			if ( ! __handle_waituntil_OR( cons ) ) break ConsEmpty;
 			__cons_handoff( chan, elem );
 			unlock( mutex_lock );
@@ -232,7 +232,7 @@ static inline forall( T ) {
 
 		// buffer count must be zero if cons are blocked (also handles zero-size case)
 	  ConsEmpty:
-		if ( ! isEmpty( cons ) ) {
+		if ( ! empty( cons ) ) {
 			if ( ! __handle_waituntil_OR( cons ) ) break ConsEmpty;
 			__cons_handoff( chan, elem );
 			unlock( mutex_lock );
@@ -260,7 +260,7 @@ static inline forall( T ) {
 		memcpy( (void *)&retval, (void *)&buffer[front], sizeof(T) );
 		count -= 1;
 		front = (front + 1) % size;
-		if (count == size - 1 && ! isEmpty( prods ) ) {
+		if (count == size - 1 && ! empty( prods ) ) {
 			if ( ! __handle_waituntil_OR( prods ) ) return;
 			__buf_insert( chan, *(T *)first( prods ).extra );  // do waiting producer work
 			wake_one( prods );
@@ -275,7 +275,7 @@ static inline forall( T ) {
 	    #endif
 
 	  ZeroSize:
-		if ( size == 0 && ! isEmpty( prods ) ) {
+		if ( size == 0 && ! empty( prods ) ) {
 			if ( ! __handle_waituntil_OR( prods ) ) break ZeroSize;
 			__prods_handoff( chan, retval );
 			unlock( mutex_lock );
@@ -331,7 +331,7 @@ static inline forall( T ) {
 
 		// have to check for the zero size channel case
 	  ZeroSize:
-		if ( size == 0 && ! isEmpty( prods ) ) {
+		if ( size == 0 && ! empty( prods ) ) {
 			if ( ! __handle_waituntil_OR( prods ) ) break ZeroSize;
 			__prods_handoff( chan, retval );
 			unlock( mutex_lock );
@@ -383,7 +383,7 @@ static inline forall( T ) {
 
 	// special case of __handle_waituntil_OR, that does some work to avoid starvation/deadlock case
 	bool __handle_pending( dlist( select_node ) & queue, select_node & mine ) {
-	    while ( ! isEmpty( queue ) ) {
+	    while ( ! empty( queue ) ) {
 	        // if node not a special OR case or if we win the special OR case race break
 	        if ( ! first( queue ).clause_status || first( queue ).park_counter || __pending_set_other( first( queue ), mine, ((unsigned long int)(&(first( queue )))) ) )
 	            return true;
@@ -420,7 +420,7 @@ static inline forall( T ) {
 
 	    if ( ! node.park_counter ) {
 	        // are we special case OR and front of cons is also special case OR
-	        if ( ! unlikely(closed) && ! isEmpty( prods ) && first( prods ).clause_status && ! first( prods ).park_counter ) {
+	        if ( ! unlikely(closed) && ! empty( prods ) && first( prods ).clause_status && ! first( prods ).park_counter ) {
 	            if ( ! __make_select_node_pending( node ) ) {
 	                unlock( mutex_lock );
 	                return false;
@@ -436,7 +436,7 @@ static inline forall( T ) {
 	                __make_select_node_unsat( node );
 	        }
 	        // check if we can complete operation. If so race to establish winner in special OR case
-	        if ( count != 0 || ! isEmpty( prods ) || unlikely(closed) ) {
+	        if ( count != 0 || ! empty( prods ) || unlikely(closed) ) {
 	            if ( ! __make_select_node_available( node ) ) { // we didn't win the race so give up on registering
 	                unlock( mutex_lock );
 	                return false;
@@ -452,7 +452,7 @@ static inline forall( T ) {
 
 	    // have to check for the zero size channel case
 	    ZeroSize:
-		if ( size == 0 && ! isEmpty( prods ) ) {
+		if ( size == 0 && ! empty( prods ) ) {
 			if ( ! __handle_waituntil_OR( prods ) ) break ZeroSize;
 			__prods_handoff( *chan, *ret );
 			__set_avail_then_unlock( node, mutex_lock );
@@ -521,7 +521,7 @@ static inline forall( T ) {
 	    // special OR case handling
 	    if ( ! node.park_counter ) {
 	        // are we special case OR and front of cons is also special case OR
-	        if ( ! unlikely(closed) && ! isEmpty( cons ) && first( cons ).clause_status && ! first( cons ).park_counter ) {
+	        if ( ! unlikely(closed) && ! empty( cons ) && first( cons ).clause_status && ! first( cons ).park_counter ) {
 	            if ( ! __make_select_node_pending( node ) ) {
 	                unlock( mutex_lock );
 	                return false;
@@ -536,7 +536,7 @@ static inline forall( T ) {
 					__make_select_node_unsat( node );
 			}
 			// check if we can complete operation. If so race to establish winner in special OR case
-			if ( count != size || ! isEmpty( cons ) || unlikely(closed) ) {
+			if ( count != size || ! empty( cons ) || unlikely(closed) ) {
 				if ( ! __make_select_node_available( node ) ) { // we didn't win the race so give up on registering
 					unlock( mutex_lock );
 					return false;
@@ -553,7 +553,7 @@ static inline forall( T ) {
 
 		// handle blocked consumer case via handoff (buffer is implicitly empty)
     ConsEmpty:
-		if ( ! isEmpty( cons ) ) {
+		if ( ! empty( cons ) ) {
 			if ( ! __handle_waituntil_OR( cons ) ) break ConsEmpty;
 			__cons_handoff( *chan, elem );
 			__set_avail_then_unlock( node, mutex_lock );

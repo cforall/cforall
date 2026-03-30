@@ -593,7 +593,7 @@
 		// Lock the list, it's not thread safe
 		lock( queue.lock __cfaabi_dbg_ctx2 );
 		{
-			was_empty = isEmpty( queue.queue );
+			was_empty = empty( queue.queue );
 
 			// Add our request to the list
 			insert_last( queue.queue, item );
@@ -631,7 +631,7 @@
 
 	// notify the arbiter that new allocations are available
 	static void __ioarbiter_notify( io_arbiter$ & this, io_context$ * ctx ) {
-		/* paranoid */ verify( ! isEmpty( this.pending.queue ) );
+		/* paranoid */ verify( ! empty( this.pending.queue ) );
 		/* paranoid */ verify( __preemption_enabled() );
 
 		// mutual exclusion is needed
@@ -641,7 +641,7 @@
 
 			// as long as there are pending allocations try to satisfy them
 			// for simplicity do it in FIFO order
-			while( ! isEmpty( this.pending.queue ) ) {
+			while( ! empty( this.pending.queue ) ) {
 				// get first pending allocs
 				__u32 have = ctx->sq.free_ring.tail - ctx->sq.free_ring.head;
 				__pending_alloc & pa = (__pending_alloc&)( first( this.pending.queue ));
@@ -726,7 +726,7 @@
 		{
 			// pop each operation one at a time.
 			// There is no wait morphing because of the io sq ring
-			while( ! isEmpty( ctx.ext_sq.queue ) ) {
+			while( ! empty( ctx.ext_sq.queue ) ) {
 				// drop the element from the queue
 				__external_io & ei = (__external_io&)remove_first( ctx.ext_sq.queue );
 

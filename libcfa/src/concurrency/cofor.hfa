@@ -32,7 +32,7 @@ thread cofor_runner {
 void ?{}( cofor_runner & this ) { this.done = false; }
 
 void main( cofor_runner & this ) with(this) {
-    while ( ! done || ! isEmpty( items ) ) {
+    while ( ! done || ! empty( items ) ) {
 		lock( mutex_lock );
         runner_node * node = &remove_first( items );
 		unlock( mutex_lock );

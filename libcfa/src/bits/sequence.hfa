@@ -64,7 +64,7 @@ forall( T & ) {
 
 		void ?{}( Sequence(T) & s ) with( s ) {
 			((Collection &)s){};
-		}	// post: isEmpty()
+		}	// post: empty()
 	}
 
 	static inline forall(| { T *& Back ( T * ); T *& Next ( T * ); }) {

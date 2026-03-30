@@ -1435,7 +1435,7 @@ void test__pop_last__maries() {
 //
 // Section 4g
 //
-// Test cases of isEmpty, isFirst, isLast,
+// Test cases of empty, isFirst, isLast,
 // remove_first, remove_last, modifications via iter
 //
 // Example of call-side user code
@@ -1448,11 +1448,11 @@ void test__accessor_cases__mary() {
 	mary m2 = {2.7};
 	mary m3 = {3.7};
 
-	dlist(mary) ml;			assert( isEmpty( ml ));
+	dlist(mary) ml;			assert(empty( ml ));
 
-	insert_last(ml, m1);	assert(!isEmpty( ml ));
-	insert_last(ml, m2);	assert(!isEmpty( ml ));
-	insert_last(ml, m3);	assert(!isEmpty( ml ));
+	insert_last(ml, m1);	assert(!empty( ml ));
+	insert_last(ml, m2);	assert(!empty( ml ));
+	insert_last(ml, m3);	assert(!empty( ml ));
 
 	mary & m1prev = prev( m1 );
 	mary & m1next = next( m1 );
@@ -1493,16 +1493,16 @@ void test__try_pop__mary() {
 
 	// queue, back to front
 
-	assert( isEmpty( ml ));
+	assert(empty( ml ));
 
 	insert_last(ml, m1);
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	&m1r = & remove_first(ml);	assert(!isEmpty( ml ));
-	&m2r = & remove_first(ml);	assert(!isEmpty( ml ));
-	&m3r = & remove_first(ml);	assert( isEmpty( ml ));
-	&mxr = & remove_first(ml);	assert( isEmpty( ml ));
+	&m1r = & remove_first(ml);	assert(!empty( ml ));
+	&m2r = & remove_first(ml);	assert(!empty( ml ));
+	&m3r = & remove_first(ml);	assert(empty( ml ));
+	&mxr = & remove_first(ml);	assert(empty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1515,16 +1515,16 @@ void test__try_pop__mary() {
 
 	// queue, front to back
 
-	assert( isEmpty( ml ));
+	assert(empty( ml ));
 
 	insert_first(ml, m1);
 	insert_first(ml, m2);
 	insert_first(ml, m3);
 
-	&m1r = & remove_last(ml);	assert(!isEmpty( ml ));
-	&m2r = & remove_last(ml);	assert(!isEmpty( ml ));
-	&m3r = & remove_last(ml);	assert( isEmpty( ml ));
-	&mxr = & remove_last(ml);	assert( isEmpty( ml ));
+	&m1r = & remove_last(ml);	assert(!empty( ml ));
+	&m2r = & remove_last(ml);	assert(!empty( ml ));
+	&m3r = & remove_last(ml);	assert(empty( ml ));
+	&mxr = & remove_last(ml);	assert(empty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1537,16 +1537,16 @@ void test__try_pop__mary() {
 
 	// stack at front
 
-	assert( isEmpty( ml ));
+	assert(empty( ml ));
 
 	insert_first(ml, m1);
 	insert_first(ml, m2);
 	insert_first(ml, m3);
 
-	&m3r = & remove_first(ml);	assert(!isEmpty( ml ));
-	&m2r = & remove_first(ml);	assert(!isEmpty( ml ));
-	&m1r = & remove_first(ml);	assert( isEmpty( ml ));
-	&mxr = & remove_first(ml);	assert( isEmpty( ml ));
+	&m3r = & remove_first(ml);	assert(!empty( ml ));
+	&m2r = & remove_first(ml);	assert(!empty( ml ));
+	&m1r = & remove_first(ml);	assert(empty( ml ));
+	&mxr = & remove_first(ml);	assert(empty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1559,16 +1559,16 @@ void test__try_pop__mary() {
 
 	// stack at back
 
-	assert( isEmpty( ml ));
+	assert(empty( ml ));
 
 	insert_last(ml, m1);
 	insert_last(ml, m2);
 	insert_last(ml, m3);
 
-	&m3r = & remove_last(ml);	assert(!isEmpty( ml ));
-	&m2r = & remove_last(ml);	assert(!isEmpty( ml ));
-	&m1r = & remove_last(ml);	assert( isEmpty( ml ));
-	&mxr = & remove_last(ml);	assert( isEmpty( ml ));
+	&m3r = & remove_last(ml);	assert(!empty( ml ));
+	&m2r = & remove_last(ml);	assert(!empty( ml ));
+	&m1r = & remove_last(ml);	assert(empty( ml ));
+	&mxr = & remove_last(ml);	assert(empty( ml ));
 
 	assert( &m1r == &m1 );
 	assert( &m2r == &m2 );
@@ -1592,7 +1592,7 @@ void test__origin_mutation__mary() {
 	// insert before the origin
 
 	insert_before( iter( ml ), m1 );
-	assert( ! isEmpty( ml ) );
+	assert( !empty( ml ) );
 
 	mary & mlfirst = first( ml );
 	mary & mllast = last( ml );

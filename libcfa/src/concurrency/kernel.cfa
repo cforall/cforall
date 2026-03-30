@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 25 07:02:42 2025
-// Update Count     : 82
+// Last Modified On : Sun Mar 29 21:20:54 2026
+// Update Count     : 83
 //
 
 #define __cforall_thread__
@@ -784,7 +784,7 @@ static void mark_awake(__cluster_proc_list & this, processor & proc) {
 		{
 			// update the pointer to the head wait context
 			struct __fd_waitctx * wctx = 0;
-			if ( ! isEmpty( this.idles )) wctx = &first( this. idles ).idle_wctx;
+			if ( ! empty( this.idles )) wctx = &first( this. idles ).idle_wctx;
 			__atomic_store_n(&this.fdw, wctx, __ATOMIC_SEQ_CST);
 		}
 

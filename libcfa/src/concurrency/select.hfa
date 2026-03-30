@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 23 22:38:36 2025
-// Update Count     : 8
+// Last Modified On : Sun Mar 29 21:12:52 2026
+// Update Count     : 9
 //
 
 #pragma once
@@ -168,9 +168,9 @@ static inline bool __make_select_node_available( select_node & this ) with( this
 // performing the operation since if we lose the race the operation should not be performed as it will be lost
 // Returns true if execution can continue normally and false if the queue has now been drained
 static inline bool __handle_waituntil_OR( dlist( select_node ) & queue ) {
-	if ( isEmpty( queue ) ) return false;
+	if ( empty( queue ) ) return false;
 	if ( first( queue ).clause_status && ! first( queue ).park_counter ) {
-		while ( ! isEmpty( queue ) ) {
+		while ( ! empty( queue ) ) {
 			// if node not a special OR case or if we win the special OR case race break
 			if ( ! first( queue ).clause_status || first( queue ).park_counter || __make_select_node_available( first( queue ) ) )
 				return true;

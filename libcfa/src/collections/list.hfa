@@ -9,8 +9,8 @@
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Mar 24 11:25:34 2026
-// Update Count     : 98
+// Last Modified On : Sun Mar 29 21:20:44 2026
+// Update Count     : 101
 //
 
 #pragma once
@@ -199,10 +199,14 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 	  )
 	}
 
-	bool isEmpty( dlist( tE, tLinks ) & list ) {
+	bool empty( dlist( tE, tLinks ) & list ) {
 		tE * firstPtr = list.next;
 		if ( ORIGIN_TAG_QUERY(( size_t)firstPtr) ) firstPtr = 0p;
 		return firstPtr == 0p;
+	}
+
+	bool isEmpty( dlist( tE, tLinks ) & list ) {		// deprecated
+		return empty( list );
 	}
 
 	tE & first( dlist( tE, tLinks ) & list ) {
@@ -408,8 +412,8 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 
 	// Transfer the "from" list to the end of this sequence; the "from" list is empty after the transfer.
 //	void transfer( dlist( tE, tLinks ) & to, dlist( tE, tLinks ) & from ) {
-//		if ( isEmpty( from ) ) return;					// "from" list empty ?
-//		if ( isEmpty( to ) ) {							// "to" list empty ?
+//		if ( empty( from ) ) return;					// "from" list empty ?
+//		if ( empty( to ) ) {							// "to" list empty ?
 //			root = from.root;
 //		} else {										// "to" list not empty
 //			T * toEnd = (T *)uBack( root );

@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons & Peter Buhr
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Nov 24 16:08:52 2025
-// Update Count     : 222
+// Last Modified On : Sun Mar 29 21:13:04 2026
+// Update Count     : 223
 //
 
 #pragma once
@@ -172,9 +172,9 @@ forall( T ) {
 		// PRIVATE
 
 		bool fulfil$( future(T) & fut ) with( fut ) {	// helper
-			bool ret_val = ! isEmpty( waiters );
+			bool ret_val = ! empty( waiters );
 			state = FUTURE_FULFILLED$;
-			while ( ! isEmpty( waiters ) ) {
+			while ( ! empty( waiters ) ) {
 				if ( !__handle_waituntil_OR( waiters ) ) // handle special waituntil OR case
 					break; // if handle_OR returns false then waiters is empty so break
 				select_node &s = remove_first( waiters );
@@ -210,7 +210,7 @@ forall( T ) {
 
 		void reset( future(T) & fut ) with( fut ) {		// mark future as empty (for reuse)
 			lock( lock );
-		  if ( ! isEmpty( waiters ) ) abort( "Attempting to reset a future with blocked waiters" );
+		  if ( ! empty( waiters ) ) abort( "Attempting to reset a future with blocked waiters" );
 			state = FUTURE_EMPTY$;
 			free( except );
 			except = 0p;

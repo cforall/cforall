@@ -18,8 +18,8 @@
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Mar 24 22:20:56 2026
-// Update Count     : 8
+// Last Modified On : Sun Mar 29 21:47:53 2026
+// Update Count     : 12
 //
 
 #pragma once
@@ -205,10 +205,10 @@ forall( tE & ) {
 			inline dlink(tE);
 		};
 
-		static inline tE * $get_list_origin_addr( dlist(tE, tLinks) & lst ) {
+		static inline tE * $get_list_origin_addr( dlist(tE, tLinks) & list ) {
 			dlink(tE) & link_from_null = ( * (tE *) 0p )`inner;
 			ptrdiff_t link_offset = (ptrdiff_t) & link_from_null;
-			size_t origin_addr = ((size_t) & lst) - link_offset;
+			size_t origin_addr = ((size_t) & list) - link_offset;
 			size_t preResult = ORIGIN_TAG_ENABL( origin_addr );
 			return (tE *)preResult;
 		}
@@ -429,28 +429,33 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		return * (tE*) elm_addr;
 	}
 
-	static inline tE & first( dlist(tE, tLinks) & lst ) {
-		verify (&lst != 0p);
-		dlink(tE) * firstLnk = lst.next;
+	static inline tE & first( dlist(tE, tLinks) & list ) {
+		verify (&list != 0p);
+		dlink(tE) * firstLnk = list.next;
 		if (ORIGIN_TAG_QUERY((size_t)firstLnk)) return * 0p;
 		tytagref( tLinks, dlink(tE) ) firstLnkTagged = {*firstLnk};
 		return downcast$( firstLnkTagged );
 	}
-	static inline tE & last ( dlist(tE, tLinks) & lst ) {
-		verify (&lst != 0p);
-		dlink(tE) * lastLnk = lst.prev;
+	static inline tE & last ( dlist(tE, tLinks) & list ) {
+		verify (&list != 0p);
+		dlink(tE) * lastLnk = list.prev;
 		if (ORIGIN_TAG_QUERY((size_t)lastLnk)) return * 0p;
 		tytagref( tLinks, dlink(tE) ) lastLnkTagged = {*lastLnk};
 		return downcast$( lastLnkTagged );
 	}
 
-	static inline bool isEmpty( dlist(tE, tLinks) & lst ) {
-		verify (&lst != 0p);
-		if ( & first(lst) == 0p || & last(lst) == 0p ) {
-			verify( & last(lst) == 0p && & last(lst) == 0p );
+	static inline bool empty( dlist(tE, tLinks) & list ) {
+		verify (&list != 0p);
+		if ( & first(list) == 0p || & last(list) == 0p ) {
+			verify( & last(list) == 0p && & last(list) == 0p );
 			return true;
 		}
 		return false;
+	}
+
+	static inline bool isEmpty( dlist(tE, tLinks) & list ) __attribute__ ((deprecated));
+	static inline bool isEmpty( dlist(tE, tLinks) & list ) {
+		return empty( list );
 	}
 
 	static inline bool isListed( tE & e ) {
@@ -468,8 +473,8 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 	  )
 	}
 
-	static inline tE & iter( dlist(tE, tLinks) & lst ) {
-		tE * origin = $get_list_origin_addr( lst );
+	static inline tE & iter( dlist(tE, tLinks) & list ) {
+		tE * origin = $get_list_origin_addr( list );
 		return *origin;
 	}
 
@@ -537,7 +542,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 	// Manual inline of the equivalent headless operation, manually simplified.
 	// Applies knowledge of tag pattern around head (unknown to optimizer) to reduce runtime tag operations.
 
-	static inline void insert_first( dlist(tE, tLinks) &lst, tE & e ) {
+	static inline void insert_first( dlist(tE, tLinks) &list, tE & e ) {
 		dlink(tE) & linkToInsert = e`inner;
 	  NOLOOSE(
 	   TAGSONLY(
@@ -547,7 +552,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.prev) == (size_t)&linkToInsert);
 		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.next) == (size_t)&linkToInsert);
 	  )
-		dlink(tE) & list_pos_links = lst;
+		dlink(tE) & list_pos_links = list;
 	  MAYBE_INSERT_READ_EARLY(
 		dlink(tE) & afterLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.next );
 	  )
@@ -576,7 +581,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		insert_first( list, *node );
 	}
 
-	static inline void insert_last( dlist(tE, tLinks) &lst, tE & e ) {
+	static inline void insert_last( dlist(tE, tLinks) &list, tE & e ) {
 		dlink(tE) & linkToInsert = e`inner;
 	  NOLOOSE(
 	   TAGSONLY(
@@ -586,7 +591,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.next) == (size_t)&linkToInsert);
 		verify(ORIGIN_TAG_CLEAR((size_t)linkToInsert.prev) == (size_t)&linkToInsert);
 	  )
-		dlink(tE) & list_pos_links = lst;
+		dlink(tE) & list_pos_links = list;
 	  MAYBE_INSERT_READ_EARLY(
 		dlink(tE) & beforeLinks = * (dlink(tE) *) ORIGIN_TAG_CLEAR( (size_t) list_pos_links.prev );
 	  )
@@ -629,9 +634,9 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		insert( list, *node );
 	}
 
-	static inline tE & remove_first( dlist(tE, tLinks) &lst ) {
-		verify (&lst != 0p);
-		dlink(tE) & list_links = lst;
+	static inline tE & remove_first( dlist(tE, tLinks) &list ) {
+		verify (&list != 0p);
+		dlink(tE) & list_links = list;
 		// call is valid on empty list; when so, list_links.next and after_links.prev have otags set
 
 		dlink(tE) & fst_raw = * list_links.next;
@@ -656,9 +661,9 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		return nullif$( downcast$( retExt ), fst_tagval );
 	}
 
-	static inline tE & remove_last( dlist(tE, tLinks) &lst ) {
-		verify (&lst != 0p);
-		dlink(tE) & list_links = lst;
+	static inline tE & remove_last( dlist(tE, tLinks) &list ) {
+		verify (&list != 0p);
+		dlink(tE) & list_links = list;
 		// call is valid on empty list; when so, list_links.prev and before_links.next have otags set
 
 		dlink(tE) & last_raw = * list_links.prev;
@@ -683,15 +688,15 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		return nullif$( downcast$( lpLnkTagged ), last_tagval );
 	}
 
-	static inline tE & try_pop_first( dlist(tE, tLinks) &lst ) {
-		tE & first_inlist = first(lst);
+	static inline tE & try_pop_first( dlist(tE, tLinks) &list ) {
+		tE & first_inlist = first(list);
 		tE & first_item = first_inlist;
 		if (&first_item) remove(first_inlist);  // TODO: should it use pop_front?
 		return first_item;
 	}
 
-	static inline tE & try_pop_last( dlist(tE, tLinks) &lst ) {
-		tE & last_inlist = last(lst);
+	static inline tE & try_pop_last( dlist(tE, tLinks) &list ) {
+		tE & last_inlist = last(list);
 		tE & last_item = last_inlist;
 		if (&last_item) remove(last_inlist);  // TODO: should it use pop_back?
 		return last_item;

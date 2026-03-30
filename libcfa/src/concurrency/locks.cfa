@@ -346,7 +346,7 @@ forall(L & | is_blocking_lock(L)) {
 
 	bool notify_one( cond_lock(L) & this ) with( this ) {
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! isEmpty( blocked_threads );
+		bool ret = ! empty( blocked_threads );
 		process_popped(this, remove_first( blocked_threads ));
 		unlock( lock );
 		return ret;
@@ -354,8 +354,8 @@ forall(L & | is_blocking_lock(L)) {
 
 	bool notify_all( cond_lock(L) & this ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! isEmpty( blocked_threads );
-		while( ! isEmpty( blocked_threads ) ) {
+		bool ret = ! empty( blocked_threads );
+		while( ! empty( blocked_threads ) ) {
 			process_popped(this, remove_first( blocked_threads ));
 		}
 		unlock( lock );
@@ -363,12 +363,12 @@ forall(L & | is_blocking_lock(L)) {
 	}
 
 	uintptr_t front( cond_lock(L) & this ) with(this) {
-		return isEmpty( blocked_threads ) ? NULL : first( blocked_threads ).info;
+		return empty( blocked_threads ) ? NULL : first( blocked_threads ).info;
 	}
 
 	bool empty( cond_lock(L) & this ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = isEmpty( blocked_threads );
+		bool ret = empty( blocked_threads );
 		unlock( lock );
 		return ret;
 	}
@@ -454,7 +454,7 @@ forall(L & | is_blocking_lock(L)) {
 	void ^?{}( fast_cond_var(L) & this ){ }
 
 	bool notify_one( fast_cond_var(L) & this ) with(this) {
-		bool ret = ! isEmpty( blocked_threads );
+		bool ret = ! empty( blocked_threads );
 		if ( ret ) {
 			info_thread(L) & popped = remove_first( blocked_threads );
 			on_notify(*popped.lock, popped.t);
@@ -462,16 +462,16 @@ forall(L & | is_blocking_lock(L)) {
 		return ret;
 	}
 	bool notify_all( fast_cond_var(L) & this ) with(this) {
-		bool ret = ! isEmpty( blocked_threads );
-		while( ! isEmpty( blocked_threads ) ) {
+		bool ret = ! empty( blocked_threads );
+		while( ! empty( blocked_threads ) ) {
 			info_thread(L) & popped = remove_first( blocked_threads );
 			on_notify(*popped.lock, popped.t);
 		}
 		return ret;
 	}
 
-	uintptr_t front( fast_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ) ? NULL : first( blocked_threads ).info; }
-	bool empty ( fast_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ); }
+	uintptr_t front( fast_cond_var(L) & this ) with(this) { return empty( blocked_threads ) ? NULL : first( blocked_threads ).info; }
+	bool empty ( fast_cond_var(L) & this ) with(this) { return empty( blocked_threads ); }
 
 	void wait( fast_cond_var(L) & this, L & l ) {
 		wait( this, l, 0 );
@@ -502,7 +502,7 @@ forall(L & | is_blocking_lock(L)) {
 
 	bool notify_one( pthread_cond_var(L) & this ) with(this) { 
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! isEmpty( blocked_threads );
+		bool ret = ! empty( blocked_threads );
 		if ( ret ) {
 			info_thread(L) & popped = remove_first( blocked_threads );
 			popped.signalled = true;
@@ -514,8 +514,8 @@ forall(L & | is_blocking_lock(L)) {
 
 	bool notify_all( pthread_cond_var(L) & this ) with(this) { 
 		lock( lock __cfaabi_dbg_ctx2 );
-		bool ret = ! isEmpty( blocked_threads );
-		while( ! isEmpty( blocked_threads ) ) {
+		bool ret = ! empty( blocked_threads );
+		while( ! empty( blocked_threads ) ) {
 			info_thread(L) & popped = remove_first( blocked_threads );
 			popped.signalled = true;
 			on_notify(*popped.lock, popped.t);
@@ -524,8 +524,8 @@ forall(L & | is_blocking_lock(L)) {
 		return ret;
 	}
 
-	uintptr_t front( pthread_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ) ? NULL : first( blocked_threads ).info; }
-	bool empty ( pthread_cond_var(L) & this ) with(this) { return isEmpty( blocked_threads ); }
+	uintptr_t front( pthread_cond_var(L) & this ) with(this) { return empty( blocked_threads ) ? NULL : first( blocked_threads ).info; }
+	bool empty ( pthread_cond_var(L) & this ) with(this) { return empty( blocked_threads ); }
 
 	static void queue_info_thread_timeout( pthread_cond_var(L) & this, info_thread(L) & info, Duration t, Alarm_Callback callback ) with(this) {
 		lock( lock __cfaabi_dbg_ctx2 );
