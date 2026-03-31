@@ -368,9 +368,9 @@ static inline forall( T ) {
 	// The following is support for waituntil (select) statements
 	///////////////////////////////////////////////////////////////////////////////////////////
 	bool unregister_chan( channel(T) & chan, select_node & node ) with(chan) {
-	    if ( ! isListed( node ) && ! node.park_counter ) return false; // handle special OR case
+	    if ( ! listed( node ) && ! node.park_counter ) return false; // handle special OR case
 	    lock( mutex_lock );
-	    if ( isListed( node ) ) { // op wasn't performed
+	    if ( listed( node ) ) { // op wasn't performed
 	        remove( node );
 	        unlock( mutex_lock );
 	        return false;

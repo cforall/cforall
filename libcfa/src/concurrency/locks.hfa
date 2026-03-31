@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Nov 23 22:38:45 2025
-// Update Count     : 67
+// Last Modified On : Sun Mar 29 22:46:39 2026
+// Update Count     : 68
 //
 
 #pragma once
@@ -644,7 +644,7 @@ static inline bool register_select$( simple_owner_lock & this, select_node & nod
 
 static inline bool unregister_select$( simple_owner_lock & this, select_node & node ) with( this ) {
 	lock( lock __cfaabi_dbg_ctx2 );
-	if ( isListed( node ) ) {
+	if ( listed( node ) ) {
 		remove( node );
 		unlock( lock );
 		return false;

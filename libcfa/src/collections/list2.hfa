@@ -18,8 +18,8 @@
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 29 21:47:53 2026
-// Update Count     : 12
+// Last Modified On : Sun Mar 29 22:59:31 2026
+// Update Count     : 15
 //
 
 #pragma once
@@ -453,12 +453,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		return false;
 	}
 
-	static inline bool isEmpty( dlist(tE, tLinks) & list ) __attribute__ ((deprecated));
-	static inline bool isEmpty( dlist(tE, tLinks) & list ) {
-		return empty( list );
-	}
-
-	static inline bool isListed( tE & e ) {
+	static inline bool listed( tE & e ) {
 	  NOLOOSE(
 		verify (&e != 0p);
 		verify(! ORIGIN_TAG_QUERY( (size_t) & e ));
@@ -468,7 +463,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		return ( lprev != &e_links ) || ( lnext != &e_links );
 	  )
 	  LOOSEONLY(
-		verify(false && "isListed is undefined");
+		verify(false && "listed is undefined");
 		return true;
 	  )
 	}
@@ -515,7 +510,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		return ! tgt_tags;
 	}
 
-	bool isFirst( tE & node ) {
+	bool first( tE & node ) {
 		// Probable bug copied from master
 		// should be `! recede(node)`
 		// correct: "is first iff cannot recede"
@@ -523,7 +518,7 @@ forall( tE &, tLinks & | embedded( tE, tLinks, dlink(tE) ) ) {
 		return recede( node );
 	}
 
-	bool isLast( tE & node ) {
+	bool last( tE & node ) {
 		// ditto, vice versa
 		return advance( node );
 	}

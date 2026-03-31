@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons & Peter Buhr
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 29 21:13:04 2026
-// Update Count     : 223
+// Last Modified On : Sun Mar 29 22:47:01 2026
+// Update Count     : 224
 //
 
 #pragma once
@@ -78,9 +78,9 @@ forall( T ) {
 		}
 
 		bool unregister_select$( future(T) & fut, select_node & s ) with( fut ) { // for waituntil statement
-		  if ( ! isListed( s ) ) return false;
+		  if ( ! listed( s ) ) return false;
 			lock( lock );
-			if ( isListed( s ) ) remove( s );
+			if ( listed( s ) ) remove( s );
 			unlock( lock );
 			return false;
 		}

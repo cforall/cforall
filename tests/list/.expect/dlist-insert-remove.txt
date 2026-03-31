@@ -1108,4 +1108,4 @@ Test 18-iii.  Modifying Maries
 accessor_cases done
 try_pop cases done
 origin_mutation cases done
-isListed cases done
+listed cases done

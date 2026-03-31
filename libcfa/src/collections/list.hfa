@@ -9,8 +9,8 @@
 // Author           : Michael Brooks
 // Created On       : Wed Apr 22 18:00:00 2020
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 29 21:20:44 2026
-// Update Count     : 101
+// Last Modified On : Sun Mar 29 22:59:08 2026
+// Update Count     : 104
 //
 
 #pragma once
@@ -187,14 +187,14 @@ forall( tE & ) {
 
 
 static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
-	bool isListed( tE & node ) {
+	bool listed( tE & node ) {
 	  NOLOOSE(
 		verify( &node != 0p );
 		dlink( tE ) & node_links = node`inner;
 		return (node_links.prev != 0p) || (node_links.next != 0p);
 	  )
 	  LOOSEONLY(
-		verify(false && "isListed is undefined");
+		verify(false && "listed is undefined");
 		return true;
 	  )
 	}
@@ -203,10 +203,6 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		tE * firstPtr = list.next;
 		if ( ORIGIN_TAG_QUERY(( size_t)firstPtr) ) firstPtr = 0p;
 		return firstPtr == 0p;
-	}
-
-	bool isEmpty( dlist( tE, tLinks ) & list ) {		// deprecated
-		return empty( list );
 	}
 
 	tE & first( dlist( tE, tLinks ) & list ) {
@@ -338,11 +334,11 @@ static inline forall( tE &, tLinks & | embedded( tE, tLinks, dlink( tE ) ) ) {
 		return &ref_inner != 0p && ! ORIGIN_TAG_QUERY( (size_t)&ref_inner );
 	}
 
-	bool isFirst( tE & node ) {
+	bool first( tE & node ) {
 		return recede( node );
 	}
 
-	bool isLast( tE & node ) {
+	bool last( tE & node ) {
 		return advance( node );
     }
 

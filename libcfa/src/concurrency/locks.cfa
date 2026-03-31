@@ -219,7 +219,7 @@ bool register_select$( blocking_lock & this, select_node & node ) with(this) {
 
 bool unregister_select$( blocking_lock & this, select_node & node ) with(this) {
 	lock( lock __cfaabi_dbg_ctx2 );
-	if ( isListed( node ) ) {
+	if ( listed( node ) ) {
 		remove( node );
 		wait_count--;
 		unlock( lock );
@@ -264,7 +264,7 @@ forall(L & | is_blocking_lock(L)) {
 		// this check is necessary to avoid a race condition since this timeout handler
 		// 	may still be called after a thread has been removed from the queue but
 		// 	before the alarm is unregistered
-		if ( isListed( *info_thd ) ) {					// is thread on queue
+		if ( listed( *info_thd ) ) {					// is thread on queue
 			info_thd->signalled = false;
 			// remove this thread O(1)
 			remove( *info_thd );
@@ -303,7 +303,7 @@ forall(L & | is_blocking_lock(L)) {
 		// this check is necessary to avoid a race condition since this timeout handler
 		// 	may still be called after a thread has been removed from the queue but
 		// 	before the alarm is unregistered
-		if ( isListed( *info_thd ) ) {					// is thread on queue
+		if ( listed( *info_thd ) ) {					// is thread on queue
 			info_thd->signalled = false;
 			// remove this thread O(1)
 			remove( *info_thd );

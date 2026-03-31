@@ -1435,7 +1435,7 @@ void test__pop_last__maries() {
 //
 // Section 4g
 //
-// Test cases of empty, isFirst, isLast,
+// Test cases of empty, first, last,
 // remove_first, remove_last, modifications via iter
 //
 // Example of call-side user code
@@ -1468,12 +1468,12 @@ void test__accessor_cases__mary() {
 	assert( &m3prev == &m2 );
 	assert( &m3next == 0p );
 
-	assert( ! isFirst( m1 ) );
-	assert( isLast( m1 ) );
-	assert( isFirst( m2 ) );
-	assert( isLast( m2 ) );
-	assert( isFirst( m3 ) );
-	assert( ! isLast( m3 ) );
+	assert( ! first( m1 ) );
+	assert( last( m1 ) );
+	assert( first( m2 ) );
+	assert( last( m2 ) );
+	assert( first( m3 ) );
+	assert( ! last( m3 ) );
 
 	printf("accessor_cases done\n");
 }
@@ -1614,23 +1614,23 @@ void test__origin_mutation__mary() {
 	printf("origin_mutation cases done\n");
 }
 
-void test__isListed_cases__mary() {
+void test__listed_cases__mary() {
 
-	mary m1 = {1.7};        assert( ! isListed( m1 ) );
-	mary m2 = {2.7};        assert( ! isListed( m2 ) );
-	mary m3 = {3.7};        assert( ! isListed( m3 ) );
+	mary m1 = {1.7};        assert( ! listed( m1 ) );
+	mary m2 = {2.7};        assert( ! listed( m2 ) );
+	mary m3 = {3.7};        assert( ! listed( m3 ) );
 
 	dlist(mary) ml;
 
-	insert_last(ml, m1);	assert( isListed( m1 ) );  assert(! isListed( m2 ) );
-	insert_last(ml, m2);	assert( isListed( m2 ) );  assert(! isListed( m3 ) );
-	insert_last(ml, m3);	assert( isListed( m3 ) );
+	insert_last(ml, m1);	assert( listed( m1 ) );  assert(! listed( m2 ) );
+	insert_last(ml, m2);	assert( listed( m2 ) );  assert(! listed( m3 ) );
+	insert_last(ml, m3);	assert( listed( m3 ) );
 
-	remove( m1 );           assert( ! isListed( m1 ) );  assert(  isListed( m2 ) );
-	remove( m2 );           assert( ! isListed( m2 ) );  assert(  isListed( m3 ) );
-	remove( m3 );           assert( ! isListed( m3 ) );
+	remove( m1 );           assert( ! listed( m1 ) );  assert(  listed( m2 ) );
+	remove( m2 );           assert( ! listed( m2 ) );  assert(  listed( m3 ) );
+	remove( m3 );           assert( ! listed( m3 ) );
 
-	printf("isListed cases done\n");
+	printf("listed cases done\n");
 }
 
 ////////////////////////////////////////////////////////////
@@ -1930,7 +1930,7 @@ int main() {
 	test__accessor_cases__mary();
 	test__try_pop__mary();
 	test__origin_mutation__mary();
-	test__isListed_cases__mary();
+	test__listed_cases__mary();
 
 	return 0;
 }
