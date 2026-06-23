@@ -3181,8 +3181,8 @@ char *yytext;
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Thu Jun  5 22:38:35 2025
- * Update Count     : 885
+ * Last Modified On : Tue Jun 23 07:44:07 2026
+ * Update Count     : 888
  */
 #line 21 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
 // The lexer assumes the program has been preprocessed by cpp. Hence, all user level preprocessor directive have been
@@ -3222,8 +3222,8 @@ using namespace std;
 
 string * build_postfix_name( string * name );
 
-char *yyfilename;
-string *strtext;										// accumulate parts of character and string constant value
+char * yyfilename;
+string * strtext;										// accumulate parts of character and string constant value
 
 #define RETURN_LOCN(x)		yylval.tok.loc.file = yyfilename; yylval.tok.loc.line = yylineno; return( x )
 #define RETURN_VAL(x)		yylval.tok.str = new string( yytext ); RETURN_LOCN( x )
@@ -3650,7 +3650,7 @@ YY_RULE_SETUP
 case 11:
 YY_RULE_SETUP
 #line 228 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(ALIGNOF); }			// CFA
+{ KEYWORD_RETURN(ALIGNOF); }			// C23
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
@@ -3660,12 +3660,12 @@ YY_RULE_SETUP
 case 13:
 YY_RULE_SETUP
 #line 230 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(ALIGNOF); }			// GCC
+{ KEYWORD_RETURN(__ALIGNOF); }			// GCC
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
 #line 231 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/lex.ll"
-{ KEYWORD_RETURN(ALIGNOF); }			// GCC
+{ KEYWORD_RETURN(__ALIGNOF); }			// GCC
 	YY_BREAK
 case 15:
 YY_RULE_SETUP

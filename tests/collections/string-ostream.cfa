@@ -1,0 +1,37 @@
+//                               -*- Mode: C -*- 
+// 
+// Copyright (C) Peter A. Buhr 2026
+// 
+// string-ostream.cfa -- 
+// 
+// Author           : Peter A. Buhr
+// Created On       : Sat May  2 18:02:34 2026
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun May  3 23:31:07 2026
+// Update Count     : 8
+// 
+
+#include <fstream.hfa>
+#include <string.hfa>
+
+int main() {
+	sout | "string";
+	const char * cs = "abcd";
+	sout | cs | quote(cs) | wd(8,cs) | quote(wd(8,cs)) | quote(wd(8,cs), '\'')| quote(wd(8,cs), '<', '>')
+		 | wd(6,8,cs) | left(wd(8,cs)) | quote(left(wd(8,cs)));
+	string s = "abcd";
+	sout | s | quote(s) | wd(8,s) | quote(wd(8,s)) | quote(wd(8,s), '\'')| quote(wd(8,s), '<', '>')
+		 | wd(6,8,s) | left(wd(8,s)) | quote(left(wd(8,s)));
+
+	sout | nobase(oct(cs)) | upcase(oct(cs)) | nobase(wd(8,oct(cs))) | left(wd(-8,oct(cs)));
+	sout | nobase(oct(s)) | upcase(oct(s)) | nobase(wd(8,oct(s))) | left(wd(-8,oct(s)));
+	sout | nobase(hex(cs)) | upcase(hex(cs)) | nobase(wd(8,hex(cs))) | left(wd(-8,hex(cs)));
+	sout | nobase(hex(s)) | upcase(hex(s)) | nobase(wd(8,hex(s))) | left(wd(-8,hex(s)));
+	sout | nobase(bin(cs)) | upcase(bin(cs)) | nobase(wd(12,bin(cs))) | left(wd(-12,bin(cs)));
+	sout | nobase(bin(s)) | upcase(bin(s)) | nobase(wd(12,bin(s))) | left(wd(-12,bin(s)));
+}
+
+// Local Variables: //
+// tab-width: 4 //
+// compile-command: "cfa -Wall -Wextra string-ostream.cfa" //
+// End: //

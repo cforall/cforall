@@ -1,4 +1,4 @@
-bound_ptr_allow 999: 1.1 1.2 1.3
+bound_ptr_allow 42: 1.1 1.2 1.3
 bound_ar_allow 41:
 1.1 1.2 1.3
 2.1 2.2 2.3

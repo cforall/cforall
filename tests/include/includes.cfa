@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Mar 13 11:56:08 2025
-// Update Count     : 831
+// Last Modified On : Sun May 31 12:06:50 2026
+// Update Count     : 834
 //
 
 #ifdef __CFA__
@@ -47,7 +47,9 @@ extern "C" {
 #endif
 #include <execinfo.h>
 #if __has_include( "expat.h" )
+#if ! defined( __i386 )									// FIX ME: attribute location in "enum E __attribute__((...)) rtn();"
 #include <expat.h>										// may not be installed
+#endif
 #include <expat_external.h>
 #endif
 #include <fcntl.h>

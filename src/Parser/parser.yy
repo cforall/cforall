@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Mar 11 11:09:33 2026
-// Update Count     : 7300
+// Last Modified On : Tue Jun 23 12:37:08 2026
+// Update Count     : 7350
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -53,9 +53,9 @@ using namespace std;
 #include "AST/Type.hpp"                                 // for BasicType, BasicKind
 #include "Common/SemanticError.hpp"                     // error_str
 #include "Common/Utility.hpp"                           // for maybeMoveBuild, maybeBuild, CodeLo...
-#include "AST/Attribute.hpp"         // for Attribute
-#include "AST/Print.hpp"             // for print
-#include "Common/Iterate.hpp"        // for reverseIterate
+#include "Common/Iterate.hpp"							// for reverseIterate
+#include "AST/Attribute.hpp"							// for Attribute
+#include "AST/Print.hpp"								// for print
 
 // lex uses __null in a boolean context, it's fine.
 #ifdef __clang__
@@ -392,7 +392,7 @@ if ( N ) {																		\
 %token CORUN COFOR
 %token DISABLE ENABLE TRY THROW THROWRESUME AT			// CFA
 %token ASM												// C99, extension ISO/IEC 9899:1999 Section J.5.10(1)
-%token ALIGNAS ALIGNOF GENERIC STATICASSERT				// C11
+%token ALIGNAS ALIGNOF __ALIGNOF GENERIC STATICASSERT	// C11/C23
 
 // names and constants: lexer differentiates between identifier and typedef names
 %token<tok> IDENTIFIER		TYPEDIMname		TYPEDEFname		TYPEGENname
@@ -431,7 +431,7 @@ if ( N ) {																		\
 // expressions
 %type<expr> constant
 %type<expr> tuple						tuple_expression_list
-%type<oper> ptrref_operator				unary_operator				assignment_operator			simple_assignment_operator	compound_assignment_operator
+%type<oper> ptrref_operator				alignof_operator			unary_operator				assignment_operator			simple_assignment_operator	compound_assignment_operator
 %type<expr> primary_expression			postfix_expression			unary_expression
 %type<expr> cast_expression_list		cast_expression				exponential_expression		multiplicative_expression	additive_expression
 %type<expr> shift_expression			relational_expression		equality_expression
@@ -442,7 +442,7 @@ if ( N ) {																		\
 %type<expr> argument_expression_list_opt argument_expression_list	argument_expression			default_initializer_opt
 %type<ifctrl> conditional_declaration
 %type<forctrl> for_control_expression	for_control_expression_list
-%type<oper> upupeq	updown	updownS	updownEq
+%type<oper> upupeq updown updownS updownEq
 %type<expr> subrange
 %type<decl> asm_name_opt
 %type<expr> asm_operands_opt			asm_operands_list			asm_operand
@@ -879,9 +879,7 @@ field_name:
 	| FLOATINGconstant fraction_constants_opt
 		{ $$ = new ExpressionNode( build_field_name_fraction_constants( yylloc, build_field_name_FLOATINGconstant( yylloc, *$1 ), $2 ) ); }
 	| identifier_at fraction_constants_opt				// CFA, allow anonymous fields
-		{
-			$$ = new ExpressionNode( build_field_name_fraction_constants( yylloc, build_varref( yylloc, $1 ), $2 ) );
-		}
+		{ $$ = new ExpressionNode( build_field_name_fraction_constants( yylloc, build_varref( yylloc, $1 ), $2 ) );	}
 	;
 
 fraction_constants_opt:
@@ -934,18 +932,20 @@ unary_expression:
 		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
 	| SIZEOF '(' attribute_list type_no_function ')'
 		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuildType( $4->addQualifiers( $3 ) ) ) ); }
-	| ALIGNOF unary_expression							// GCC, variable alignment
-		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ) ) ); }
-	| ALIGNOF '(' type_no_function ')'					// GCC, type alignment
-		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
+	| alignof_operator unary_expression						// GCC, variable alignment
+		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ),
+					$1 == OperKinds::AlignOf ? ast::AlignofExpr::Alignof : ast::AlignofExpr::__Alignof ) ); }
+	| alignof_operator '(' type_no_function ')'					// GCC, type alignment
+		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuildType( $3 ),
+					$1 == OperKinds::AlignOf ? ast::AlignofExpr::Alignof : ast::AlignofExpr::__Alignof ) ); }
 
 		// Cannot use rule "type", which includes cfa_abstract_function, for sizeof/alignof, because of S/R problems on
 		// look ahead, so the cfa_abstract_function is factored out.
 	| SIZEOF '(' cfa_abstract_function ')'
 		{ $$ = new ExpressionNode( new ast::SizeofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
-	| ALIGNOF '(' cfa_abstract_function ')'				// GCC, type alignment
-		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
-
+	| alignof_operator '(' cfa_abstract_function ')'			// GCC, type alignment
+		{ $$ = new ExpressionNode( new ast::AlignofExpr( yylloc, maybeMoveBuildType( $3 ),
+					$1 == OperKinds::AlignOf ? ast::AlignofExpr::Alignof : ast::AlignofExpr::__Alignof ) ); }
 	| OFFSETOF '(' type_no_function ',' identifier ')'
 		{ $$ = new ExpressionNode( build_offsetOf( yylloc, $3, build_varref( yylloc, $5 ) ) ); }
 	| TYPEID '(' type ')'
@@ -957,6 +957,11 @@ unary_expression:
 		{ $$ = new ExpressionNode( new ast::CountofExpr( yylloc, new ast::TypeofType( maybeMoveBuild( $2 ) ) ) ); }
 	| COUNTOF '(' type_no_function ')'
 		{ $$ = new ExpressionNode( new ast::CountofExpr( yylloc, maybeMoveBuildType( $3 ) ) ); }
+	;
+
+alignof_operator:
+	ALIGNOF										{ $$ = OperKinds::AlignOf; }
+	| __ALIGNOF									{ $$ = OperKinds::__AlignOf; }
 	;
 
 ptrref_operator:

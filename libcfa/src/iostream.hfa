@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 14 21:23:53 2026
-// Update Count     : 772
+// Last Modified On : Sun May  3 21:55:06 2026
+// Update Count     : 829
 //
 
 #pragma once
@@ -192,6 +192,7 @@ struct _Ostream_Flags {
 	unsigned char nobsdp:1;								// base prefix / decimal point
 	unsigned char sign:1;								// plus / minus sign
 	unsigned char pad0:1;								// zero pad
+	unsigned char quote:1;								// print quotes
 };
 
 // FIXME: Should be an anonymous inner union of _Ostream_Manip.
@@ -207,6 +208,7 @@ struct _Ostream_Manip {
 	int wd, pc;											// width, precision: signed for computations
 	char base;											// numeric base / floating-point style
 	inline _Ostream_Manip_Mode;
+	char qleft, qright;									// quote delimiters (PLACE HERE SO OPTIONAL IN INITIALIZATION)
 }; // _Ostream_Manip
 
 // *********************************** integral ***********************************
@@ -223,9 +225,9 @@ static inline { \
 	_Ostream_Manip(T) & left( _Ostream_Manip(T) & fmt ) { fmt.flags.left = true; return fmt; } \
 	_Ostream_Manip(T) & upcase( _Ostream_Manip(T) & fmt ) { if ( fmt.base == 'x' || fmt.base == 'b' ) fmt.base -= 32; /* upper case */ return fmt; } \
 	_Ostream_Manip(T) & nobase( _Ostream_Manip(T) & fmt ) { fmt.flags.nobsdp = true; return fmt; } \
-	_Ostream_Manip(T) & pad0( _Ostream_Manip(T) & fmt ) { fmt.flags.pad0 = true; return fmt; } \
 	_Ostream_Manip(T) sign( T val ) { return (_Ostream_Manip(T))@{ .val = val, .wd = 1, .pc = 0, .base = CODE, { .flags.sign = true } }; } \
 	_Ostream_Manip(T) & sign( _Ostream_Manip(T) & fmt ) { fmt.flags.sign = true; return fmt; } \
+	_Ostream_Manip(T) & pad0( _Ostream_Manip(T) & fmt ) { fmt.flags.pad0 = true; return fmt; } \
 } /* distribution */ \
 forall( ostype & | basic_ostream( ostype ) ) { \
 	ostype & ?|?( ostype & os, _Ostream_Manip(T) f ); \
@@ -287,11 +289,15 @@ static inline {
 	_Ostream_Manip(char) bin( char c ) { return (_Ostream_Manip(char))@{ .val = c, .wd = 1, .pc = 0, .base = 'b', { .all = 0 } }; }
 	_Ostream_Manip(char) oct( char c ) { return (_Ostream_Manip(char))@{ .val = c, .wd = 1, .pc = 0, .base = 'o', { .all = 0 } }; }
 	_Ostream_Manip(char) hex( char c ) { return (_Ostream_Manip(char))@{ .val = c, .wd = 1, .pc = 0, .base = 'x', { .all = 0 } }; }
-	_Ostream_Manip(char) wd( unsigned int wd, char c ) { return (_Ostream_Manip(char))@{ c, wd, 0, .base = 'c', { .all = 0 } }; }
+	_Ostream_Manip(char) quote( char c, const char qleft = '\'', const char qright = '\0' ) {
+		return (_Ostream_Manip(char))@{ .val = c, .wd = 1, .pc = 0, .base = 'c', { .flags.quote = true }, .qleft = qleft, .qright = qright }; }
+	_Ostream_Manip(char) wd( unsigned int wd, char c ) { return (_Ostream_Manip(char))@{ .val = c, .wd = wd, .pc = 0, .base = 'c', { .all = 0 } }; }
 	_Ostream_Manip(char) & wd( unsigned int wd, _Ostream_Manip(char) & fmt ) { fmt.wd = wd; return fmt; }
 	_Ostream_Manip(char) & left( _Ostream_Manip(char) & fmt ) { fmt.flags.left = true; return fmt; }
 	_Ostream_Manip(char) & upcase( _Ostream_Manip(char) & fmt ) { if ( fmt.base == 'x' || fmt.base == 'b' ) fmt.base -= 32; /* upper case */ return fmt; }
 	_Ostream_Manip(char) & nobase( _Ostream_Manip(char) & fmt ) { fmt.flags.nobsdp = true; return fmt; }
+	_Ostream_Manip(char) & quote( _Ostream_Manip(char) & fmt, const char qleft = '\'', const char qright = '\0' ) {
+		fmt.flags.quote = true; fmt.qleft = qleft, fmt.qright = qright; return fmt; }
 } // distribution
 forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, _Ostream_Manip(char) f );
@@ -304,12 +310,17 @@ static inline {
 	_Ostream_Manip(const char *) bin( const char s[] ) { return (_Ostream_Manip(const char *))@{ .val = s, .wd = 1, .pc = 0, .base = 'b', { .all = 0 } }; }
 	_Ostream_Manip(const char *) oct( const char s[] ) { return (_Ostream_Manip(const char *))@{ .val = s, .wd = 1, .pc = 0, .base = 'o', { .all = 0 } }; }
 	_Ostream_Manip(const char *) hex( const char s[] ) { return (_Ostream_Manip(const char *))@{ .val = s, .wd = 1, .pc = 0, .base = 'x', { .all = 0 } }; }
-	_Ostream_Manip(const char *) wd( unsigned int wd, const char s[] ) { return (_Ostream_Manip(const char *))@{ s, wd, 0, .base = 's', { .all = 0 } }; }
-	_Ostream_Manip(const char *) wd( unsigned int wd, unsigned int pc, const char s[] ) { return (_Ostream_Manip(const char *))@{ s, .wd = wd, .pc = pc, .base = 's', { .flags.pc = true } }; }
+	_Ostream_Manip(const char *) quote( const char s[], const char qleft = '"', const char qright = '\0' ) {
+		return (_Ostream_Manip(const char *))@{ .val = s, .wd = 1, .pc = 0, .base = 's', { .flags.quote = true }, .qleft = qleft, .qright = qright }; }
+	_Ostream_Manip(const char *) wd( unsigned int wd, const char s[] ) { return (_Ostream_Manip(const char *))@{ .val = s, .wd = wd, .pc = 0, .base = 's', { .all = 0 } }; }
+	_Ostream_Manip(const char *) wd( unsigned int wd, unsigned int pc, const char s[] ) { return (_Ostream_Manip(const char *))@{ .val = s, .wd = wd, .pc = pc, .base = 's', { .flags.pc = true } }; }
 	_Ostream_Manip(const char *) & wd( unsigned int wd, _Ostream_Manip(const char *) & fmt ) { fmt.wd = wd; return fmt; }
 	_Ostream_Manip(const char *) & wd( unsigned int wd, unsigned int pc, _Ostream_Manip(const char *) & fmt ) { fmt.wd = wd; fmt.pc = pc; fmt.flags.pc = true; return fmt; }
 	_Ostream_Manip(const char *) & left( _Ostream_Manip(const char *) & fmt ) { fmt.flags.left = true; return fmt; }
+	_Ostream_Manip(const char *) & upcase( _Ostream_Manip(const char *) & fmt ) { if ( fmt.base == 'x' || fmt.base == 'b' ) fmt.base -= 32; /* upper case */ return fmt; }
 	_Ostream_Manip(const char *) & nobase( _Ostream_Manip(const char *) & fmt ) { fmt.flags.nobsdp = true; return fmt; }
+	_Ostream_Manip(const char *) & quote( _Ostream_Manip(const char *) & fmt, const char qleft = '"', const char qright = '\0' ) {
+		fmt.flags.quote = true; fmt.qleft = qleft; fmt.qright = qright; return fmt; }
 } // distribution
 forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, _Ostream_Manip(const char *) f );
@@ -423,7 +434,7 @@ static inline {
 struct _Istream_str_base {
 	union {
 		const char * scanset;
-		char delimiters[3];								// [0] => left, [1] => right
+		char delimiters[3];								// [0] => qleft or terminator, [1] => qright or getline '\0', [2] => char '\0' or char * '\1'
 	};
 	int wd;												// width
 	union {

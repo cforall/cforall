@@ -9,8 +9,8 @@
 // Author           : Rodolfo G. Esteves
 // Created On       : Sat May 16 13:28:16 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Dec  9 17:39:34 2023
-// Update Count     : 945
+// Last Modified On : Tue Jun 23 07:43:13 2026
+// Update Count     : 947
 //
 
 #pragma once
@@ -93,7 +93,7 @@ void extend( Node *& list, Node * value ) {
 // Must harmonize with OperName.
 enum class OperKinds {
 	// diadic
-	SizeOf, AlignOf, OffsetOf, Plus, Minus, Exp, Mul, Div, Mod, Or, And,
+	SizeOf, AlignOf, __AlignOf, OffsetOf, Plus, Minus, Exp, Mul, Div, Mod, Or, And,
 	BitOr, BitAnd, Xor, Cast, LShift, RShift, LThan, GThan, LEThan, GEThan, Eq, Neq,
 	Assign, AtAssn, ExpAssn, MulAssn, DivAssn, ModAssn, PlusAssn, MinusAssn, LSAssn, RSAssn, AndAssn, ERAssn, OrAssn,
 	Index, Range,

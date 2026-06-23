@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Thu Jun  5 22:38:35 2025
- * Update Count     : 885
+ * Last Modified On : Tue Jun 23 07:44:07 2026
+ * Update Count     : 888
  */
 
 %option yylineno
@@ -55,8 +55,8 @@ using namespace std;
 
 string * build_postfix_name( string * name );
 
-char *yyfilename;
-string *strtext;										// accumulate parts of character and string constant value
+char * yyfilename;
+string * strtext;										// accumulate parts of character and string constant value
 
 #define RETURN_LOCN(x)		yylval.tok.loc.file = yyfilename; yylval.tok.loc.line = yylineno; return( x )
 #define RETURN_VAL(x)		yylval.tok.str = new string( yytext ); RETURN_LOCN( x )
@@ -224,10 +224,10 @@ attributes "deprecated"{attr_arg_opt}|"fallthrough"|"nodiscard"{attr_arg_opt}|"m
 				/* keywords */
 alignas			{ KEYWORD_RETURN(ALIGNAS); }			// CFA
 _Alignas		{ KEYWORD_RETURN(ALIGNAS); }			// C11
-alignof			{ KEYWORD_RETURN(ALIGNOF); }			// CFA
+alignof			{ KEYWORD_RETURN(ALIGNOF); }			// C23
 _Alignof		{ KEYWORD_RETURN(ALIGNOF); }			// C11
-__alignof		{ KEYWORD_RETURN(ALIGNOF); }			// GCC
-__alignof__		{ KEYWORD_RETURN(ALIGNOF); }			// GCC
+__alignof		{ KEYWORD_RETURN(__ALIGNOF); }			// GCC
+__alignof__		{ KEYWORD_RETURN(__ALIGNOF); }			// GCC
 and				{ QKEYWORD_RETURN(WAND); }				// CFA
 asm				{ KEYWORD_RETURN(ASM); }
 __asm			{ KEYWORD_RETURN(ASM); }				// GCC

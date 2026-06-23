@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep 15 10:26:35 2025
-// Update Count     : 394
+// Last Modified On : Fri May  8 08:38:51 2026
+// Update Count     : 413
 //
 
 #define _COMPILING_STRING_CFA_
@@ -56,22 +56,22 @@ void ?{}( string & s, char c ) {
 	?{}( *s.inner, c );
 }
 
-void ?{}( string & s, const char * c ) {
+void ?{}( string & s, const char cs[] ) {
 	(s.inner) { malloc() };
-	?{}( *s.inner, c );
+	?{}( *s.inner, cs );
 }
 
-void ?{}( string & s, const char * c, size_t size ) {
+void ?{}( string & s, const char cs[] , size_t size ) {
 	(s.inner) { malloc() };
-	?{}( *s.inner, c, size );
+	?{}( *s.inner, cs, size );
 }
 
-void ?{}( string & s, signed long int rhs ) {
+void ?{}( string & s, size_t rhs ) {
 	(s.inner) { malloc() };
 	?{}( *s.inner, rhs );
 }
 
-void ?{}( string & s, size_t rhs ) {
+void ?{}( string & s, ssize_t rhs ) {
 	(s.inner) { malloc() };
 	?{}( *s.inner, rhs );
 }
@@ -117,37 +117,37 @@ void ?{}( string & s, string_Share src ) {
 ////////////////////////////////////////////////////////
 // Assignment
 
-PBOOST string & ?=?( string & s, string c ) {
-	(*s.inner) = (*c.inner);
+PBOOST string & ?=?( string & s, string rhs ) {
+	(*s.inner) = (*rhs.inner);
 	return s;
 }
 
-string & ?=?( string & s, const char * val ) {
-	(*s.inner) = val;
-	return s;
-}
-
-string & ?=?( string & s, char val ) {
-	(*s.inner) = val;
-	return s;
-}
-
-string & assign( string & s, const string & c, size_t n ) {
-	assign( *s.inner, *c.inner, n );
-	return s;
-}
-
-string & assign( string & s, const char * c, size_t n ) {
-	assign( *s.inner, c, n );
-	return s;
-}
-
-string & ?=?( string & s, signed long int rhs ) {
+string & ?=?( string & s, char rhs ) {
 	(*s.inner) = rhs;
 	return s;
 }
 
+string & ?=?( string & s, const char rhs[] ) {
+	(*s.inner) = rhs;
+	return s;
+}
+
+string & assign( string & s, const string & rhs, size_t n ) {
+	assign( *s.inner, *rhs.inner, n );
+	return s;
+}
+
+string & assign( string & s, const char rhs[], size_t n ) {
+	assign( *s.inner, rhs, n );
+	return s;
+}
+
 string & ?=?( string & s, size_t rhs ) {
+	(*s.inner) = rhs;
+	return s;
+}
+
+string & ?=?( string & s, ssize_t rhs ) {
 	(*s.inner) = rhs;
 	return s;
 }
@@ -176,7 +176,7 @@ string & ?=?( string & s, long double _Complex rhs ) {
 // C-style
 
 // safe conversion from string to char *
-char * strncpy( char * dst, string & src, size_t n ) {
+char * strncpy( char dst[], string & src, size_t n ) {
 	size_t l = min( n - 1, len( src ) );				// ensure null terminated
 	for ( i; l ) dst[i] = src[i];
 	dst[l] = '\0';
@@ -213,7 +213,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		char cstr[l + 1];									// room for null terminator
 		for ( i; l ) cstr[i] = f.val[i];					// copy string
 		cstr[l] = '\0';										// terminate
-		_Ostream_Manip(const char *) cf @= { cstr, f.wd, f.pc, f.base, {f.all} };
+		_Ostream_Manip(const char *) cf @= { cstr, f.wd, f.pc, f.base, {f.all}, f.qleft, f.qright };
 		return os | cf | nonl;
 	} // ?|?
 
@@ -272,11 +272,11 @@ void append( string & s, const string & s2, size_t maxlen ) {
 	append( (*s.inner), (*s2.inner), maxlen );
 }
 
-void ?+=?( string & s, const char * c ) {
-	(*s.inner) += c;
+void ?+=?( string & s, const char cs[] ) {
+	(*s.inner) += cs;
 }
 
-void append( string & s, const char * buffer, size_t bsize ) {
+void append( string & s, const char buffer[], size_t bsize ) {
 	append( (*s.inner), buffer, bsize );
 }
 
@@ -298,33 +298,33 @@ PBOOST string ?+?( string s, string s2 ) {
 	return ret;
 }
 
-string ?+?( const char * s,  char c ) {
-	string ret = s;
+string ?+?( const char cs[],  char c ) {
+	string ret = cs;
 	ret += c;
 	return ret;
 }
 
-string ?+?( char c, const char * s ) {
+string ?+?( char c, const char cs[] ) {
 	string ret = c;
+	ret += cs;
+	return ret;
+}
+
+string ?+?( const char cs1[], const char cs2[] ) {
+	string ret = cs1;
+	ret += cs2;
+	return ret;
+}
+
+string ?+?( const char cs[], string s ) {
+	string ret = cs;
 	ret += s;
 	return ret;
 }
 
-string ?+?( const char * s1, const char * s2 ) {
-	string ret = s1;
-	ret += s2;
-	return ret;
-}
-
-string ?+?( const char * s1, string s2 ) {
-	string ret = s1;
-	ret += s2;
-	return ret;
-}
-
-string ?+?( string s, const char * c ) {
+string ?+?( string s, const char cs[] ) {
 	string ret = s;
-	ret += c;
+	ret += cs;
 	return ret;
 }
 
@@ -353,8 +353,8 @@ string ?*?( char c, strmul_factor_t factor ) {
 	return ret;
 }
 
-string ?*?( const char * s, strmul_factor_t factor ) {
-	string ret = s;
+string ?*?( const char cs[], strmul_factor_t factor ) {
+	string ret = cs;
 	ret *= factor;
 	return ret;
 }
@@ -376,35 +376,31 @@ string ?[?]( string & s, size_t index ) {
 
 #define STRNCPY_FMT "**** Error **** strncpy: maximum length %zu is greater than string lengths %zd or %zd."
 
-int strncmp( const string & s1, const string & s2, size_t maxlen ) {
-	if ( maxlen > len( s1 ) || maxlen > len( s2 ) ) {
-		abort( STRNCPY_FMT, maxlen, len( s1 ), len( s2 ) );
+int strncmp( const string & s, const string & s2, size_t maxlen ) {
+	if ( maxlen > len( s ) || maxlen > len( s2 ) ) {
+		abort( STRNCPY_FMT, maxlen, len( s ), len( s2 ) );
 	} // if
-	return strcmp$( s1.inner->Handle.s, maxlen, s2.inner->Handle.s, maxlen );
+	return strcmp$( s.inner->Handle.s, maxlen, s2.inner->Handle.s, maxlen );
 }
 
-int strncmp( const string & s1, const char * s2, size_t maxlen ) {
-	size_t s2len = len( s2 );
-	if ( maxlen > len( s1 ) || maxlen > s2len ) {
-		abort( STRNCPY_FMT, maxlen, len( s1 ), s2len );
+int strncmp( const string & s, const char cs[], size_t maxlen ) {
+	size_t cslen = len( cs );
+	if ( maxlen > len( s ) || maxlen > cslen ) {
+		abort( STRNCPY_FMT, maxlen, len( s ), cslen );
 	} // if
-	return strcmp$( s1.inner->Handle.s, maxlen, s2, maxlen );
+	return strcmp$( s.inner->Handle.s, maxlen, cs, maxlen );
 }
 
-int strncmp( const char * s1, const string & s2, size_t maxlen ) {
-	size_t s1len = len( s1 );
-	if ( maxlen > s1len || maxlen > len( s2 ) ) {
-		abort( STRNCPY_FMT, maxlen, s1len, len( s2 ) );
+int strncmp( const char cs[], const string & s, size_t maxlen ) {
+	size_t slen = len( cs );
+	if ( maxlen > slen || maxlen > len( s ) ) {
+		abort( STRNCPY_FMT, maxlen, slen, len( s ) );
 	} // if
-	return strcmp$( s1, maxlen, s2.inner->Handle.s, maxlen );
+	return strcmp$( cs, maxlen, s.inner->Handle.s, maxlen );
 }
 
 ////////////////////////////////////////////////////////
 // Search
-
-bool contains( const string & s, char ch ) {
-	return contains( *s.inner, ch );
-}
 
 size_t find( const string & s, size_t start, size_t len, const string & key, size_t kstart, size_t klen ) {
 	if ( start < 0 ) { start += len( s ); }
@@ -428,11 +424,11 @@ size_t find( const string & s, const string & key ) {
 	return find( *s.inner, *key.inner );
 }
 
-size_t find( const string & s, const char * key ) {
+size_t find( const string & s, const char key[] ) {
 	return find( *s.inner, key );
 }
 
-size_t find( const string & s, const char * key, size_t keysize ) {
+size_t find( const string & s, const char key[], size_t keysize ) {
 	return find( *s.inner, key, keysize );
 }
 
@@ -440,35 +436,35 @@ size_t find( const string & s, size_t start, char key ) {
 	return findFrom( *s.inner, start, key );
 }
 
-size_t find( const string & s, size_t start, const char * key ) {
+size_t find( const string & s, size_t start, const char key[] ) {
 	return findFrom( *s.inner, start, key );
 }
 
-size_t find( const string & s, size_t start, const char * key, size_t keysize ) {
+size_t find( const string & s, size_t start, const char key[], size_t keysize ) {
 	return findFrom( *s.inner, start, key, keysize );
 }
 
-bool includes( const string & s, const string & mask ) {
-	return includes( *s.inner, *mask.inner );
-}
+// bool includes( const string & s, const string & search ) {
+// 	return includes( *s.inner, *search.inner );
+// }
 
-bool includes( const string & s, const char * mask ) {
-	return includes( *s.inner, mask );
-}
+// bool includes( const string & s, const char search[] ) {
+// 	return includes( *s.inner, search );
+// }
 
-bool includes( const string & s, const char * mask, size_t masksize ) {
-	return includes( *s.inner, mask, masksize );
-}
+// bool includes( const string & s, const char search[], size_t searchsize ) {
+// 	return includes( *s.inner, search, searchsize );
+// }
 
 bool startsWith( const string & s, const string & prefix ) {
 	return startsWith( *s.inner, *prefix.inner );
 }
 
-bool startsWith( const string & s, const char * prefix ) {
+bool startsWith( const string & s, const char prefix[] ) {
 	return startsWith( *s.inner, prefix );
 }
 
-bool startsWith( const string & s, const char * prefix, size_t prefixsize ) {
+bool startsWith( const string & s, const char prefix[], size_t prefixsize ) {
 	return startsWith( *s.inner, prefix, prefixsize );
 }
 
@@ -476,11 +472,11 @@ bool endsWith( const string & s, const string & suffix ) {
 	return endsWith( *s.inner, *suffix.inner );
 }
 
-bool endsWith( const string & s, const char * suffix ) {
+bool endsWith( const string & s, const char suffix[] ) {
 	return endsWith( *s.inner, suffix );
 }
 
-bool endsWith( const string & s, const char * suffix, size_t suffixsize ) {
+bool endsWith( const string & s, const char suffix[], size_t suffixsize ) {
 	return endsWith( *s.inner, suffix, suffixsize );
 }
 
@@ -493,12 +489,12 @@ void ?{}( charclass & s, const string & chars ) {
 	?{}( *s.inner, *(const string_res *)chars.inner );
 }
 
-void ?{}( charclass & s, const char * chars ) {
+void ?{}( charclass & s, const char chars[] ) {
 	(s.inner) { malloc() };
 	?{}( *s.inner, chars );
 }
 
-void ?{}( charclass & s, const char * chars, size_t charssize ) {
+void ?{}( charclass & s, const char chars[], size_t charssize ) {
 	(s.inner) { malloc() };
 	?{}( *s.inner, chars, charssize );
 }

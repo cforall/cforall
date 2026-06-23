@@ -9,8 +9,8 @@
 // Author           : Aaron B. Moss
 // Created On       : Wed Jun 5 14:30:00 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Sep  9 11:30:11 2024
-// Update Count     : 5
+// Last Modified On : Tue Jun 23 11:41:24 2026
+// Update Count     : 7
 //
 
 #include "CandidateFinder.hpp"
@@ -1495,9 +1495,7 @@ namespace {
 	void Finder::postvisit( const ast::AlignofExpr * alignofExpr ) {
 		const ast::Type * type = resolveTypeof( alignofExpr->type, context );
 		const ast::Type * sizeType = context.global.sizeType.get();
-		addCandidate(
-			new ast::AlignofExpr( alignofExpr->location, type, sizeType ),
-			tenv );
+		addCandidate( new ast::AlignofExpr( alignofExpr->location, type, sizeType, alignofExpr->kind ), tenv );
 	}
 
 	void Finder::postvisit( const ast::CountofExpr * countExpr ) {

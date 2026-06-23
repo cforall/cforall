@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Thr Oct  6 13:39:00 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 17:42:17 2023
-// Update Count     : 7
+// Last Modified On : Tue Jun 23 12:31:47 2026
+// Update Count     : 9
 //
 
 #include "Box.hpp"
@@ -264,7 +264,7 @@ void LayoutFunctionBuilder::previsit( ast::StructDecl const * decl ) {
 			// Make sure all later members have padding to align them.
 			kids.emplace_back( makeAlignTo( location,
 				derefVar( location, sizeofParam ),
-				new ast::AlignofExpr( location, ast::deepCopy( memberType ) )
+				new ast::AlignofExpr( location, ast::deepCopy( memberType ), ast::AlignofExpr::Alignof )
 			) );
 		}
 
@@ -284,7 +284,7 @@ void LayoutFunctionBuilder::previsit( ast::StructDecl const * decl ) {
 		// (As align is always 2^n, this will always be a multiple of both.)
 		kids.emplace_back( makeAssignMax( location,
 			derefVar( location, alignofParam ),
-			new ast::AlignofExpr( location, ast::deepCopy( memberType ) ) ) );
+			new ast::AlignofExpr( location, ast::deepCopy( memberType ), ast::AlignofExpr::Alignof ) ) );
 	}
 	// Make sure the type is end-padded to a multiple of its alignment.
 	kids.emplace_back( makeAlignTo( location,
@@ -342,7 +342,7 @@ void LayoutFunctionBuilder::previsit( ast::UnionDecl const * decl ) {
 		// Take max of member alignment and global alignment.
 		kids.emplace_back( makeAssignMax( location,
 			derefVar( location, alignofParam ),
-			new ast::AlignofExpr( location, ast::deepCopy( memberType ) )
+			new ast::AlignofExpr( location, ast::deepCopy( memberType ), ast::AlignofExpr::Alignof )
 		) );
 	}
 	kids.emplace_back( makeAlignTo( location,
@@ -806,7 +806,7 @@ void CallAdapter::passTypeVars(
 		extraArgs.emplace_back(
 			new ast::SizeofExpr( expr->location, ast::deepCopy( concrete ) ) );
 		extraArgs.emplace_back(
-			new ast::AlignofExpr( expr->location, ast::deepCopy( concrete ) ) );
+			new ast::AlignofExpr( expr->location, ast::deepCopy( concrete ), ast::AlignofExpr::Alignof ) );
 	}
 }
 
@@ -1722,7 +1722,7 @@ ast::Decl const * PolyGenericCalculator::postvisit(
 	ast::ObjectDecl * alignDecl = new ast::ObjectDecl( decl->location,
 		alignofName( typeName ), getLayoutCType( transUnit() ),
 		new ast::SingleInit( decl->location,
-			new ast::AlignofExpr( decl->location, deepCopy( base ) )
+			new ast::AlignofExpr( decl->location, deepCopy( base ), ast::AlignofExpr::Alignof )
 		)
 	);
 
@@ -2198,7 +2198,7 @@ void PolyGenericCalculator::addSTypeParamsToLayoutCall(
 			args.emplace_back(
 				new ast::SizeofExpr( location, ast::deepCopy( param ) ) );
 			args.emplace_back(
-				new ast::AlignofExpr( location, ast::deepCopy( param ) ) );
+				new ast::AlignofExpr( location, ast::deepCopy( param ), ast::AlignofExpr::Alignof ) );
 		}
 	}
 }

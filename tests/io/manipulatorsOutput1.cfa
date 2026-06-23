@@ -6,8 +6,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Jun  8 18:04:11 2019
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Apr 10 08:42:15 2021
-// Update Count     : 18
+// Last Modified On : Sun May  3 23:31:09 2026
+// Update Count     : 76
 // 
 
 #include <fstream.hfa>
@@ -100,19 +100,22 @@ int main() {
 
 	sout | nl | "char";
 	char c = 'a';
-	printf( "%c %2c %5c %-5c %hho %#hho %hhx %#hhx %#8hhx %#8hhX %-8c %8c\n", c, c, c, c, c, c, c, c, c, c, c, c );
-	sout | c | ' ' | wd(2,c) | wd(5,c) | left(wd(5,c)) | nobase(oct(c)) | oct(c) | nonl;
-	sout | nobase(hex(c)) | hex(c) | wd(8,hex(c)) | upcase(wd(8,hex(c))) | left(wd(8,c)) | wd(8,c);
+	printf( "%c'%c'%c'%c'\"%c\"<%c>%8c%8s%8s%8s%5c%-5c\n", c, c, ' ', ' ', c, c, c, "'a'", "\"a\"", "{a}", c, c );
+	sout | c | quote(c) | ' ' | quote(' ') | quote( c, '"' ) | quote( c, '<', '>' )
+		 | wd(8,c) | quote( wd(8,c) ) | quote( wd(8,c), '"' ) | quote( wd(8,c), '{', '}' ) | wd(5,c) | left(wd(5,c));
+	printf( "%hho %#hho %8hho %#-8hho %hhx %#hhx %8hhx %#-8hhx\n", c, c, c, c, c, c, c, c );
+	sout | nobase(oct(c)) | upcase(oct(c)) | nobase(wd(8,oct(c))) | left(wd(-8,oct(c))) | nonl;
+	sout | nobase(hex(c)) | upcase(hex(c)) | nobase(wd(8,hex(c))) | left(wd(-8,hex(c))) | nonl;
+	sout | nobase(bin(c)) | upcase(bin(c)) | nobase(wd(12,bin(c))) | left(wd(-12,bin(c)));
 
-	sout | nl | "string";
-	const char * s = "abcd";
-	printf( "%s %8s %6.8s %-8s\n", s, s, s, s );
-	sout | s | wd(8,s) | wd(6,8,s) | left(wd(8,s));
-
-	sout | nl | "binary string";
-	sout | bin("0") | bin(s) | oct(s) | hex(s);
-	sout | nobase(bin("0")) | nobase(bin(s)) | nobase(oct(s)) | nobase(hex(s));
-	sout | nobase(wd(8,bin("0"))) | nobase(wd(8,bin(s))) | nobase(wd(4,oct(s))) | nobase(wd(3,hex(s)));
+	sout | nl | "char *";
+	const char * cs = "abcd";
+	printf( "%s %s %8s %8s %8s %8s %6.8s %-8s %-8s\n", cs, "\"abcd\"", cs, "\"abcd\"", "'abcd'", "<abcd>", cs, cs, "\"abcd\"" );
+	sout | cs | quote(cs) | wd(8,cs) | quote(wd(8,cs)) | quote(wd(8,cs), '\'')| quote(wd(8,cs), '<', '>')
+		 | wd(6,8,cs) | left(wd(8,cs)) | quote(left(wd(8,cs)));
+	sout | nobase(oct(cs)) | upcase(oct(cs)) | nobase(wd(8,oct(cs))) | left(wd(-8,oct(cs)));
+	sout | nobase(hex(cs)) | upcase(hex(cs)) | nobase(wd(8,hex(cs))) | left(wd(-8,hex(cs)));
+	sout | nobase(bin(cs)) | upcase(bin(cs)) | nobase(wd(12,bin(cs))) | left(wd(-12,bin(cs)));
 }
 
 // Local Variables: //

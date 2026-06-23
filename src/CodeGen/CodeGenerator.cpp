@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Oct 17 15:54:00 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Mar 11 11:13:10 2026
-// Update Count     : 28
+// Last Modified On : Tue Jun 23 13:42:15 2026
+// Update Count     : 34
 //
 
 #include "CodeGenerator.hpp"
@@ -777,9 +777,8 @@ void CodeGenerator::postvisit( ast::SizeofExpr const * expr ) {
 }
 
 void CodeGenerator::postvisit( ast::AlignofExpr const * expr ) {
-	// Using the GCC extension to avoid changing the std to C11.
 	extension( expr );
-	output << "__alignof__(";
+	output << (expr->kind ? "__alignof__(" : "_Alignof(");
 	if ( auto type = expr->type.as<ast::TypeofType>() ) {
 		type->expr->accept( *visitor );
 	} else {
@@ -789,7 +788,7 @@ void CodeGenerator::postvisit( ast::AlignofExpr const * expr ) {
 }
 
 void CodeGenerator::postvisit( ast::CountofExpr const * expr ) {
-	assertf( !options.genC, "CountofExpr should not reach code generation." );
+	assertf( ! options.genC, "CountofExpr should not reach code generation." );
 	extension( expr );
 	output << "countof(";
 	if ( auto type = expr->type.as<ast::TypeofType>() ) {

@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat May 16 13:17:07 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Apr  1 08:13:17 2025
-// Update Count     : 1122
+// Last Modified On : Mon Jun 22 16:30:56 2026
+// Update Count     : 1129
 //
 
 #include "ExpressionNode.hpp"
@@ -124,8 +124,7 @@ static void scanbin( string & str, unsigned long long int & v ) {
 	} // for
 } // scanbin
 
-ast::Expr * build_constantInteger(
-		const CodeLocation & location, string & str ) {
+ast::Expr * build_constantInteger( const CodeLocation & location, string & str ) {
 	static const ast::BasicKind kind[2][6] = {
 		// short (h) must be before char (hh) because shorter type has the longer suffix
 		{ ast::BasicKind::ShortSignedInt, ast::BasicKind::SignedChar, ast::BasicKind::SignedInt, ast::BasicKind::LongSignedInt, ast::BasicKind::LongLongSignedInt, /* BasicKind::SignedInt128 */ ast::BasicKind::LongLongSignedInt, },
@@ -302,38 +301,21 @@ ast::Expr * build_constantInteger(
 	assert( 0 <= type && type <= 6 );
 
 	// Constant type is correct for overload resolving.
-	ret = new ast::ConstantExpr( location,
-		new ast::BasicType( kind[Unsigned][type] ), str, v );
+	ret = new ast::ConstantExpr( location, new ast::BasicType( kind[Unsigned][type] ), str, v );
 	if ( Unsigned && type < 2 ) {						// hh or h, less than int ?
 		// int i = -1uh => 65535 not -1, so cast is necessary for unsigned, which unfortunately eliminates warnings for large values.
-		ret = new ast::CastExpr( location,
-			ret,
-			new ast::BasicType( kind[Unsigned][type] ),
-			ast::ExplicitCast );
+		ret = new ast::CastExpr( location, ret, new ast::BasicType( kind[Unsigned][type] ), ast::ExplicitCast );
 	} else if ( ltype != -1 ) {							// explicit length ?
 		if ( ltype == 6 ) {								// int128, (int128)constant
-			ret2 = new ast::ConstantExpr( location,
-				new ast::BasicType( ast::BasicKind::LongLongSignedInt ),
-				str2,
-				v2 );
+			ret2 = new ast::ConstantExpr( location, new ast::BasicType( ast::BasicKind::LongLongSignedInt ), str2, v2 );
 			ret = build_compoundLiteral( location,
-				DeclarationNode::newFromTypeData(
-					addType(
-						build_basic_type( TypeData::Int128 ),
-						build_signedness( TypeData::Unsigned ) ) ),
-				new InitializerNode(
-					(new InitializerNode( new ExpressionNode( v2 == 0 ? ret2 : ret ) ))->set_last( new InitializerNode( new ExpressionNode( v2 == 0 ? ret : ret2 ) ) ), true )
+				DeclarationNode::newFromTypeData( addType( build_basic_type( TypeData::Int128 ), build_signedness( TypeData::Unsigned ) ) ),
+				new InitializerNode( (new InitializerNode( new ExpressionNode( v2 == 0 ? ret2 : ret ) ))->set_last( new InitializerNode( new ExpressionNode( v2 == 0 ? ret : ret2 ) ) ), true )
 			);
 		} else {										// explicit length, (length_type)constant
-			ret = new ast::CastExpr( location,
-				ret,
-				new ast::TypeInstType( lnthsInt[Unsigned][ltype], ast::TypeDecl::Dtype ),
-				ast::ExplicitCast );
+			ret = new ast::CastExpr( location, ret, new ast::TypeInstType( lnthsInt[Unsigned][ltype], ast::TypeDecl::Dtype ), ast::ExplicitCast );
 			if ( ltype == 5 ) {							// pointer, intptr( (uintptr_t)constant )
-				ret = build_func( location,
-					new ExpressionNode(
-						build_varref( location, new string( "intptr" ) ) ),
-					new ExpressionNode( ret ) );
+				ret = build_func( location, new ExpressionNode( build_varref( location, new string( "intptr" ) ) ), new ExpressionNode( ret ) );
 			} // if
 		} // if
 	} // if
@@ -377,8 +359,7 @@ static inline void checkFnxFloat( string & str, size_t last, bool & explnth, int
 } // checkFnxFloat
 
 
-ast::Expr * build_constantFloat(
-		const CodeLocation & location, string & str ) {
+ast::Expr * build_constantFloat( const CodeLocation & location, string & str ) {
 	static const ast::BasicKind kind[2][12] = {
 		{ ast::BasicKind::Float, ast::BasicKind::Double, ast::BasicKind::LongDouble, ast::BasicKind::Float80, ast::BasicKind::uuFloat128, ast::BasicKind::Float16, ast::BasicKind::Float32, ast::BasicKind::Float32x, ast::BasicKind::Float64, ast::BasicKind::Float64x, ast::BasicKind::Float128, ast::BasicKind::Float128x },
 		{ ast::BasicKind::FloatComplex, ast::BasicKind::DoubleComplex, ast::BasicKind::LongDoubleComplex, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::NUMBER_OF_BASIC_TYPES, ast::BasicKind::Float16Complex, ast::BasicKind::Float32Complex, ast::BasicKind::Float32xComplex, ast::BasicKind::Float64Complex, ast::BasicKind::Float64xComplex, ast::BasicKind::Float128Complex, ast::BasicKind::Float128xComplex },
@@ -418,16 +399,10 @@ ast::Expr * build_constantFloat(
 	} // if
 
 	assert( 0 <= type && type < 12 );
-	ast::Expr * ret = new ast::ConstantExpr( location,
-		new ast::BasicType( kind[complx][type] ),
-		str,
-		v );
+	ast::Expr * ret = new ast::ConstantExpr( location, new ast::BasicType( kind[complx][type] ), str, v );
 	// explicit length ?
 	if ( explnth ) {
-		ret = new ast::CastExpr( location,
-			ret,
-			new ast::BasicType( kind[complx][type] ),
-			ast::ExplicitCast );
+		ret = new ast::CastExpr( location, ret, new ast::BasicType( kind[complx][type] ), ast::ExplicitCast );
 	} // if
 
 	delete &str;										// created by lex
@@ -445,19 +420,19 @@ static void sepString( string & str, string & units, char delimit ) {
 static ast::Type * charstrKind( string & str ) {
 	ast::Type * kind;
 	switch ( str[0] ) {									// str has >= 2 characters, i.e, null string "" => safe to look at subscripts 0/1
-	case 'u':
+	  case 'u':
 		if ( str[1] == '8' ) goto Default;				// utf-8 characters => array of char (save check for char as no 8 allowed)
 		// lookup type of associated typedef
 		kind = new ast::TypeInstType( "char16_t", ast::TypeDecl::Dtype );
 		break;
-	case 'U':
+	  case 'U':
 		kind = new ast::TypeInstType( "char32_t", ast::TypeDecl::Dtype );
 		break;
-	case 'L':
+	  case 'L':
 		kind = new ast::TypeInstType( "wchar_t", ast::TypeDecl::Dtype );
 		break;
-	Default:											// char default string type
-	default:
+	  Default:											// char default string type
+	  default:
 		kind = new ast::BasicType( ast::BasicKind::Char );
 	} // switch
 	return kind;
@@ -543,70 +518,54 @@ ast::Expr * build_constantStr( const CodeLocation & location, string & str ) {
 	return ret;
 } // build_constantStr
 
-ast::Expr * build_field_name_FLOATING_FRACTIONconstant(
-		const CodeLocation & location, const string & str ) {
+ast::Expr * build_field_name_FLOATING_FRACTIONconstant( const CodeLocation & location, const string & str ) {
 	if ( str.find_first_not_of( "0123456789", 1 ) != string::npos ) SemanticError( yylloc, "invalid tuple index \"%s\".", str.c_str() );
-	ast::Expr * ret = build_constantInteger( location,
-		*new string( str.substr(1) ) );
+	ast::Expr * ret = build_constantInteger( location, *new string( str.substr(1) ) );
 	delete &str;
 	return ret;
 } // build_field_name_FLOATING_FRACTIONconstant
 
-ast::Expr * build_field_name_FLOATING_DECIMALconstant(
-		const CodeLocation & location, const string & str ) {
+ast::Expr * build_field_name_FLOATING_DECIMALconstant( const CodeLocation & location, const string & str ) {
 	if ( str[str.size() - 1] != '.' ) SemanticError( yylloc, "invalid tuple index \"%s\".", str.c_str() );
-	ast::Expr * ret = build_constantInteger(
-		location, *new string( str.substr( 0, str.size()-1 ) ) );
+	ast::Expr * ret = build_constantInteger( location, *new string( str.substr( 0, str.size()-1 ) ) );
 	delete &str;
 	return ret;
 } // build_field_name_FLOATING_DECIMALconstant
 
-ast::Expr * build_field_name_FLOATINGconstant( const CodeLocation & location,
-		const string & str ) {
+ast::Expr * build_field_name_FLOATINGconstant( const CodeLocation & location, const string & str ) {
 	// str is of the form A.B -> separate at the . and return member expression
 	int a, b;
 	char dot;
 	stringstream ss( str );
 	ss >> a >> dot >> b;
-	auto ret = new ast::UntypedMemberExpr( location,
-		ast::ConstantExpr::from_int( location, b ),
-		ast::ConstantExpr::from_int( location, a )
+	auto ret = new ast::UntypedMemberExpr( location, ast::ConstantExpr::from_int( location, b ), ast::ConstantExpr::from_int( location, a )
 	);
 	delete &str;
 	return ret;
 } // build_field_name_FLOATINGconstant
 
-ast::Expr * make_field_name_fraction_constants( const CodeLocation & location,
-		ast::Expr * fieldName,
-		ast::Expr * fracts ) {
+ast::Expr * make_field_name_fraction_constants( const CodeLocation & location, ast::Expr * fieldName, ast::Expr * fracts ) {
 	if ( nullptr == fracts ) {
 		return fieldName;
 	} else if ( auto memberExpr = dynamic_cast<ast::UntypedMemberExpr *>( fracts ) ) {
-		memberExpr->member = make_field_name_fraction_constants( location,
-			fieldName,
-			ast::mutate( memberExpr->aggregate.get() ) );
+		memberExpr->member = make_field_name_fraction_constants( location, fieldName, ast::mutate( memberExpr->aggregate.get() ) );
 		return memberExpr;
 	} else {
 		return new ast::UntypedMemberExpr( location, fracts, fieldName );
 	} // if
 } // make_field_name_fraction_constants
 
-ast::Expr * build_field_name_fraction_constants( const CodeLocation & location,
-		ast::Expr * fieldName,
-		ExpressionNode * fracts ) {
+ast::Expr * build_field_name_fraction_constants( const CodeLocation & location, ast::Expr * fieldName, ExpressionNode * fracts ) {
 	return make_field_name_fraction_constants( location, fieldName, maybeMoveBuild( fracts ) );
 } // build_field_name_fraction_constants
 
-ast::NameExpr * build_varref( const CodeLocation & location,
-		const string * name ) {
+ast::NameExpr * build_varref( const CodeLocation & location, const string * name ) {
 	ast::NameExpr * expr = new ast::NameExpr( location, *name );
 	delete name;
 	return expr;
 } // build_varref
 
-ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation & location,
-		const DeclarationNode * decl_node,
-		const ast::NameExpr * name ) {
+ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation & location, const DeclarationNode * decl_node, const ast::NameExpr * name ) {
 	ast::Decl * newDecl = maybeBuild( decl_node );
 	if ( ast::DeclWithType * newDeclWithType = dynamic_cast<ast::DeclWithType *>( newDecl ) ) {
 		if ( const ast::Type * t = newDeclWithType->get_type() ) {
@@ -618,14 +577,11 @@ ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation & location,
 	return new ast::QualifiedNameExpr( location, newDecl, name->name );
 }
 
-ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation & location,
-		const ast::EnumDecl * decl,
-		const ast::NameExpr * name ) {
+ast::QualifiedNameExpr * build_qualified_expr( const CodeLocation & location, const ast::EnumDecl * decl, const ast::NameExpr * name ) {
 	return new ast::QualifiedNameExpr( location, decl, name->name );
 }
 
-ast::DimensionExpr * build_dimensionref( const CodeLocation & location,
-		const string * name ) {
+ast::DimensionExpr * build_dimensionref( const CodeLocation & location, const string * name ) {
 	ast::DimensionExpr * expr = new ast::DimensionExpr( location, *name );
 	delete name;
 	return expr;
@@ -634,7 +590,7 @@ ast::DimensionExpr * build_dimensionref( const CodeLocation & location,
 // TODO: get rid of this and OperKinds and reuse code from OperatorTable
 static const char * OperName[] = {						// must harmonize with OperKinds
 	// diadic
-	"SizeOf", "AlignOf", "OffsetOf", "?+?", "?-?", "?\\?", "?*?", "?/?", "?%?", "||", "&&",
+	"SizeOf", "AlignOf", "__alignof", "OffsetOf", "?+?", "?-?", "?\\?", "?*?", "?/?", "?%?", "||", "&&",
 	"?|?", "?&?", "?^?", "Cast", "?<<?", "?>>?", "?<?", "?>?", "?<=?", "?>=?", "?==?", "?!=?",
 	"?=?", "?@=?", "?\\=?", "?*=?", "?/=?", "?%=?", "?+=?", "?-=?", "?<<=?", "?>>=?", "?&=?", "?^=?", "?|=?",
 	"?[?]", "...",
@@ -642,193 +598,109 @@ static const char * OperName[] = {						// must harmonize with OperKinds
 	"+?", "-?", "AddressOf", "*?", "!?", "~?", "++?", "?++", "--?", "?--",
 }; // OperName
 
-ast::Expr * build_cast( const CodeLocation & location,
-		DeclarationNode * decl_node,
-		ExpressionNode * expr_node,
-		ast::CastKind kind ) {
+ast::Expr * build_cast( const CodeLocation & location, DeclarationNode * decl_node, ExpressionNode * expr_node, ast::CastKind kind ) {
 	ast::Type * targetType = maybeMoveBuildType( decl_node );
 	if ( dynamic_cast<ast::VoidType *>( targetType ) ) {
 		delete targetType;
-		return new ast::CastExpr( location,
-			maybeMoveBuild( expr_node ),
-			ast::ExplicitCast, kind );
+		return new ast::CastExpr( location, maybeMoveBuild( expr_node ), ast::ExplicitCast, kind );
 	} else {
-		return new ast::CastExpr( location,
-			maybeMoveBuild( expr_node ),
-			targetType,
-			ast::ExplicitCast, kind );
+		return new ast::CastExpr( location, maybeMoveBuild( expr_node ), targetType, ast::ExplicitCast, kind );
 	} // if
 } // build_cast
 
-ast::Expr * build_keyword_cast( const CodeLocation & location,
-		ast::AggregateDecl::Aggregate target,
-		ExpressionNode * expr_node ) {
-	return new ast::KeywordCastExpr( location,
-		maybeMoveBuild( expr_node ),
-		target
-	);
+ast::Expr * build_keyword_cast( const CodeLocation & location, ast::AggregateDecl::Aggregate target, ExpressionNode * expr_node ) {
+	return new ast::KeywordCastExpr( location, maybeMoveBuild( expr_node ), target );
 }
 
-ast::Expr * build_virtual_cast( const CodeLocation & location,
-		DeclarationNode * decl_node,
-		ExpressionNode * expr_node ) {
-	return new ast::VirtualCastExpr( location,
-		maybeMoveBuild( expr_node ),
-		maybeMoveBuildType( decl_node )
-	);
+ast::Expr * build_virtual_cast( const CodeLocation & location, DeclarationNode * decl_node, ExpressionNode * expr_node ) {
+	return new ast::VirtualCastExpr( location, maybeMoveBuild( expr_node ), maybeMoveBuildType( decl_node ) );
 } // build_virtual_cast
 
-ast::Expr * build_fieldSel( const CodeLocation & location,
-		ExpressionNode * expr_node,
-		ast::Expr * member ) {
-	return new ast::UntypedMemberExpr( location,
-		member,
-		maybeMoveBuild( expr_node )
-	);
+ast::Expr * build_fieldSel( const CodeLocation & location, ExpressionNode * expr_node, ast::Expr * member ) {
+	return new ast::UntypedMemberExpr( location, member, maybeMoveBuild( expr_node ) );
 } // build_fieldSel
 
-ast::Expr * build_pfieldSel( const CodeLocation & location,
-		ExpressionNode * expr_node,
-		ast::Expr * member ) {
-	auto deref = new ast::UntypedExpr( location,
-		new ast::NameExpr( location, "*?" )
-	);
+ast::Expr * build_pfieldSel( const CodeLocation & location, ExpressionNode * expr_node, ast::Expr * member ) {
+	auto deref = new ast::UntypedExpr( location, new ast::NameExpr( location, "*?" ) );
 	deref->location = expr_node->location;
 	deref->args.push_back( maybeMoveBuild( expr_node ) );
 	auto ret = new ast::UntypedMemberExpr( location, member, deref );
 	return ret;
 } // build_pfieldSel
 
-ast::Expr * build_offsetOf( const CodeLocation & location,
-		DeclarationNode * decl_node,
-		ast::NameExpr * member ) {
-	ast::Expr * ret = new ast::UntypedOffsetofExpr( location,
-		maybeMoveBuildType( decl_node ),
-		member->name
-	);
+ast::Expr * build_offsetOf( const CodeLocation & location, DeclarationNode * decl_node, ast::NameExpr * member ) {
+	ast::Expr * ret = new ast::UntypedOffsetofExpr( location, maybeMoveBuildType( decl_node ), member->name );
 	ret->result = new ast::BasicType( ast::BasicKind::LongUnsignedInt );
 	delete member;
 	return ret;
 } // build_offsetOf
 
-ast::Expr * build_and_or( const CodeLocation & location,
-		ExpressionNode * expr_node1,
-		ExpressionNode * expr_node2,
-		ast::LogicalFlag flag ) {
-	return new ast::LogicalExpr( location,
-		maybeMoveBuild( expr_node1 ),
-		maybeMoveBuild( expr_node2 ),
-		flag
-	);
+ast::Expr * build_and_or( const CodeLocation & location, ExpressionNode * expr_node1, ExpressionNode * expr_node2, ast::LogicalFlag flag ) {
+	return new ast::LogicalExpr( location, maybeMoveBuild( expr_node1 ), maybeMoveBuild( expr_node2 ), flag );
 } // build_and_or
 
-ast::Expr * build_unary_val( const CodeLocation & location,
-		OperKinds op,
-		ExpressionNode * expr_node ) {
+ast::Expr * build_unary_val( const CodeLocation & location, OperKinds op, ExpressionNode * expr_node ) {
 	std::vector<ast::ptr<ast::Expr>> args;
 	args.push_back( maybeMoveBuild( expr_node ) );
-	return new ast::UntypedExpr( location,
-		new ast::NameExpr( location, OperName[ (int)op ] ),
-		std::move( args )
-	);
+	return new ast::UntypedExpr( location, new ast::NameExpr( location, OperName[ (int)op ] ), std::move( args ) );
 } // build_unary_val
 
-ast::Expr * build_binary_val( const CodeLocation & location,
-		OperKinds op,
-		ExpressionNode * expr_node1,
-		ExpressionNode * expr_node2 ) {
+ast::Expr * build_binary_val( const CodeLocation & location, OperKinds op, ExpressionNode * expr_node1, ExpressionNode * expr_node2 ) {
 	std::vector<ast::ptr<ast::Expr>> args;
 	args.push_back( maybeMoveBuild( expr_node1 ) );
 	args.push_back( maybeMoveBuild( expr_node2 ) );
-	return new ast::UntypedExpr( location,
-		new ast::NameExpr( location, OperName[ (int)op ] ),
-		std::move( args )
-	);
+	return new ast::UntypedExpr( location, new ast::NameExpr( location, OperName[ (int)op ] ), std::move( args ) );
 } // build_binary_val
 
-ast::Expr * build_cond( const CodeLocation & location,
-		ExpressionNode * expr_node1,
-		ExpressionNode * expr_node2,
-		ExpressionNode * expr_node3 ) {
-	return new ast::ConditionalExpr( location,
-		maybeMoveBuild( expr_node1 ),
-		maybeMoveBuild( expr_node2 ),
-		maybeMoveBuild( expr_node3 )
-	);
+ast::Expr * build_cond( const CodeLocation & location, ExpressionNode * expr_node1, ExpressionNode * expr_node2, ExpressionNode * expr_node3 ) {
+	return new ast::ConditionalExpr( location, maybeMoveBuild( expr_node1 ), maybeMoveBuild( expr_node2 ), maybeMoveBuild( expr_node3 ) );
 } // build_cond
 
-ast::Expr * build_tuple( const CodeLocation & location,
-		ExpressionNode * expr_node ) {
+ast::Expr * build_tuple( const CodeLocation & location, ExpressionNode * expr_node ) {
 	std::vector<ast::ptr<ast::Expr>> exprs;
 	buildMoveList( expr_node, exprs );
 	return new ast::UntypedTupleExpr( location, std::move( exprs ) );
 } // build_tuple
 
-ast::Expr * build_func( const CodeLocation & location,
-		ExpressionNode * function,
-		ExpressionNode * expr_node ) {
+ast::Expr * build_func( const CodeLocation & location, ExpressionNode * function, ExpressionNode * expr_node ) {
 	std::vector<ast::ptr<ast::Expr>> args;
 	buildMoveList( expr_node, args );
-	return new ast::UntypedExpr( location,
-		maybeMoveBuild( function ),
-		std::move( args )
-	);
+	return new ast::UntypedExpr( location, maybeMoveBuild( function ), std::move( args ) );
 } // build_func
 
-ast::Expr * build_compoundLiteral( const CodeLocation & location,
-		DeclarationNode * decl_node,
-		InitializerNode * kids ) {
+ast::Expr * build_compoundLiteral( const CodeLocation & location, DeclarationNode * decl_node, InitializerNode * kids ) {
 	// compound literal type
 	ast::Decl * newDecl = maybeBuild( decl_node );
 	// non-sue compound-literal type
 	if ( ast::DeclWithType * newDeclWithType = dynamic_cast<ast::DeclWithType *>( newDecl ) ) {
-		return new ast::CompoundLiteralExpr( location,
-			newDeclWithType->get_type(),
-			maybeMoveBuild( kids ) );
+		return new ast::CompoundLiteralExpr( location, newDeclWithType->get_type(), maybeMoveBuild( kids ) );
 	// these types do not have associated type information
 	} else if ( auto newDeclStructDecl = dynamic_cast<ast::StructDecl *>( newDecl ) ) {
 		if ( newDeclStructDecl->body ) {
-			return new ast::CompoundLiteralExpr( location,
-				new ast::StructInstType( newDeclStructDecl ),
-				maybeMoveBuild( kids ) );
+			return new ast::CompoundLiteralExpr( location, new ast::StructInstType( newDeclStructDecl ), maybeMoveBuild( kids ) );
 		} else {
-			return new ast::CompoundLiteralExpr( location,
-				new ast::StructInstType( newDeclStructDecl->name ),
-				maybeMoveBuild( kids ) );
+			return new ast::CompoundLiteralExpr( location, new ast::StructInstType( newDeclStructDecl->name ), maybeMoveBuild( kids ) );
 		} // if
 	} else if ( auto newDeclUnionDecl = dynamic_cast<ast::UnionDecl *>( newDecl )  ) {
 		if ( newDeclUnionDecl->body ) {
-			return new ast::CompoundLiteralExpr( location,
-				new ast::UnionInstType( newDeclUnionDecl ),
-				maybeMoveBuild( kids ) );
+			return new ast::CompoundLiteralExpr( location, new ast::UnionInstType( newDeclUnionDecl ), maybeMoveBuild( kids ) );
 		} else {
-			return new ast::CompoundLiteralExpr( location,
-				new ast::UnionInstType( newDeclUnionDecl->name ),
-				maybeMoveBuild( kids ) );
+			return new ast::CompoundLiteralExpr( location, new ast::UnionInstType( newDeclUnionDecl->name ), maybeMoveBuild( kids ) );
 		} // if
 	} else if ( auto newDeclEnumDecl = dynamic_cast<ast::EnumDecl *>( newDecl )  ) {
 		if ( newDeclEnumDecl->body ) {
-			return new ast::CompoundLiteralExpr( location,
-				new ast::EnumInstType( newDeclEnumDecl ),
-				maybeMoveBuild( kids ) );
+			return new ast::CompoundLiteralExpr( location, new ast::EnumInstType( newDeclEnumDecl ), maybeMoveBuild( kids ) );
 		} else {
-			return new ast::CompoundLiteralExpr( location,
-				new ast::EnumInstType( newDeclEnumDecl->name ),
-				maybeMoveBuild( kids ) );
+			return new ast::CompoundLiteralExpr( location, new ast::EnumInstType( newDeclEnumDecl->name ), maybeMoveBuild( kids ) );
 		} // if
 	} else {
 		assert( false );
 	} // if
 } // build_compoundLiteral
 
-ast::Expr * build_va_arg( const CodeLocation & location,
-		ExpressionNode * function, DeclarationNode * declaration ) {
-	return build_func( location,
-		new ExpressionNode(
-			build_varref( location, new std::string( "__builtin_va_arg" ) ) ),
-		function->set_last( new ExpressionNode( new ast::TypeExpr( location,
-			maybeMoveBuildType( declaration ) ) ) )
-	);
+ast::Expr * build_va_arg( const CodeLocation & location, ExpressionNode * function, DeclarationNode * declaration ) {
+	return build_func( location, new ExpressionNode( build_varref( location, new std::string( "__builtin_va_arg" ) ) ),
+		function->set_last( new ExpressionNode( new ast::TypeExpr( location, maybeMoveBuildType( declaration ) ) ) ) );
 }
 
 // Local Variables: //

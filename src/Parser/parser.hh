@@ -161,62 +161,63 @@ extern int yydebug;
     ASM = 362,                     /* ASM  */
     ALIGNAS = 363,                 /* ALIGNAS  */
     ALIGNOF = 364,                 /* ALIGNOF  */
-    GENERIC = 365,                 /* GENERIC  */
-    STATICASSERT = 366,            /* STATICASSERT  */
-    IDENTIFIER = 367,              /* IDENTIFIER  */
-    TYPEDIMname = 368,             /* TYPEDIMname  */
-    TYPEDEFname = 369,             /* TYPEDEFname  */
-    TYPEGENname = 370,             /* TYPEGENname  */
-    TIMEOUT = 371,                 /* TIMEOUT  */
-    WAND = 372,                    /* WAND  */
-    WOR = 373,                     /* WOR  */
-    CATCH = 374,                   /* CATCH  */
-    RECOVER = 375,                 /* RECOVER  */
-    CATCHRESUME = 376,             /* CATCHRESUME  */
-    FIXUP = 377,                   /* FIXUP  */
-    FINALLY = 378,                 /* FINALLY  */
-    INTEGERconstant = 379,         /* INTEGERconstant  */
-    CHARACTERconstant = 380,       /* CHARACTERconstant  */
-    STRINGliteral = 381,           /* STRINGliteral  */
-    DIRECTIVE = 382,               /* DIRECTIVE  */
-    C23_ATTRIBUTE = 383,           /* C23_ATTRIBUTE  */
-    FLOATING_DECIMALconstant = 384, /* FLOATING_DECIMALconstant  */
-    FLOATING_FRACTIONconstant = 385, /* FLOATING_FRACTIONconstant  */
-    FLOATINGconstant = 386,        /* FLOATINGconstant  */
-    ARROW = 387,                   /* ARROW  */
-    ICR = 388,                     /* ICR  */
-    DECR = 389,                    /* DECR  */
-    LS = 390,                      /* LS  */
-    RS = 391,                      /* RS  */
-    LE = 392,                      /* LE  */
-    GE = 393,                      /* GE  */
-    EQ = 394,                      /* EQ  */
-    NE = 395,                      /* NE  */
-    ANDAND = 396,                  /* ANDAND  */
-    OROR = 397,                    /* OROR  */
-    ATTR = 398,                    /* ATTR  */
-    ELLIPSIS = 399,                /* ELLIPSIS  */
-    EXPassign = 400,               /* EXPassign  */
-    MULTassign = 401,              /* MULTassign  */
-    DIVassign = 402,               /* DIVassign  */
-    MODassign = 403,               /* MODassign  */
-    PLUSassign = 404,              /* PLUSassign  */
-    MINUSassign = 405,             /* MINUSassign  */
-    LSassign = 406,                /* LSassign  */
-    RSassign = 407,                /* RSassign  */
-    ANDassign = 408,               /* ANDassign  */
-    ERassign = 409,                /* ERassign  */
-    ORassign = 410,                /* ORassign  */
-    ErangeUpLt = 411,              /* ErangeUpLt  */
-    ErangeUpLe = 412,              /* ErangeUpLe  */
-    ErangeEq = 413,                /* ErangeEq  */
-    ErangeNe = 414,                /* ErangeNe  */
-    ErangeDownGt = 415,            /* ErangeDownGt  */
-    ErangeDownGe = 416,            /* ErangeDownGe  */
-    ErangeDownEq = 417,            /* ErangeDownEq  */
-    ErangeDownNe = 418,            /* ErangeDownNe  */
-    ATassign = 419,                /* ATassign  */
-    THEN = 420                     /* THEN  */
+    __ALIGNOF = 365,               /* __ALIGNOF  */
+    GENERIC = 366,                 /* GENERIC  */
+    STATICASSERT = 367,            /* STATICASSERT  */
+    IDENTIFIER = 368,              /* IDENTIFIER  */
+    TYPEDIMname = 369,             /* TYPEDIMname  */
+    TYPEDEFname = 370,             /* TYPEDEFname  */
+    TYPEGENname = 371,             /* TYPEGENname  */
+    TIMEOUT = 372,                 /* TIMEOUT  */
+    WAND = 373,                    /* WAND  */
+    WOR = 374,                     /* WOR  */
+    CATCH = 375,                   /* CATCH  */
+    RECOVER = 376,                 /* RECOVER  */
+    CATCHRESUME = 377,             /* CATCHRESUME  */
+    FIXUP = 378,                   /* FIXUP  */
+    FINALLY = 379,                 /* FINALLY  */
+    INTEGERconstant = 380,         /* INTEGERconstant  */
+    CHARACTERconstant = 381,       /* CHARACTERconstant  */
+    STRINGliteral = 382,           /* STRINGliteral  */
+    DIRECTIVE = 383,               /* DIRECTIVE  */
+    C23_ATTRIBUTE = 384,           /* C23_ATTRIBUTE  */
+    FLOATING_DECIMALconstant = 385, /* FLOATING_DECIMALconstant  */
+    FLOATING_FRACTIONconstant = 386, /* FLOATING_FRACTIONconstant  */
+    FLOATINGconstant = 387,        /* FLOATINGconstant  */
+    ARROW = 388,                   /* ARROW  */
+    ICR = 389,                     /* ICR  */
+    DECR = 390,                    /* DECR  */
+    LS = 391,                      /* LS  */
+    RS = 392,                      /* RS  */
+    LE = 393,                      /* LE  */
+    GE = 394,                      /* GE  */
+    EQ = 395,                      /* EQ  */
+    NE = 396,                      /* NE  */
+    ANDAND = 397,                  /* ANDAND  */
+    OROR = 398,                    /* OROR  */
+    ATTR = 399,                    /* ATTR  */
+    ELLIPSIS = 400,                /* ELLIPSIS  */
+    EXPassign = 401,               /* EXPassign  */
+    MULTassign = 402,              /* MULTassign  */
+    DIVassign = 403,               /* DIVassign  */
+    MODassign = 404,               /* MODassign  */
+    PLUSassign = 405,              /* PLUSassign  */
+    MINUSassign = 406,             /* MINUSassign  */
+    LSassign = 407,                /* LSassign  */
+    RSassign = 408,                /* RSassign  */
+    ANDassign = 409,               /* ANDassign  */
+    ERassign = 410,                /* ERassign  */
+    ORassign = 411,                /* ORassign  */
+    ErangeUpLt = 412,              /* ErangeUpLt  */
+    ErangeUpLe = 413,              /* ErangeUpLe  */
+    ErangeEq = 414,                /* ErangeEq  */
+    ErangeNe = 415,                /* ErangeNe  */
+    ErangeDownGt = 416,            /* ErangeDownGt  */
+    ErangeDownGe = 417,            /* ErangeDownGe  */
+    ErangeDownEq = 418,            /* ErangeDownEq  */
+    ErangeDownNe = 419,            /* ErangeDownNe  */
+    ATassign = 420,                /* ATassign  */
+    THEN = 421                     /* THEN  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -332,62 +333,63 @@ extern int yydebug;
 #define ASM 362
 #define ALIGNAS 363
 #define ALIGNOF 364
-#define GENERIC 365
-#define STATICASSERT 366
-#define IDENTIFIER 367
-#define TYPEDIMname 368
-#define TYPEDEFname 369
-#define TYPEGENname 370
-#define TIMEOUT 371
-#define WAND 372
-#define WOR 373
-#define CATCH 374
-#define RECOVER 375
-#define CATCHRESUME 376
-#define FIXUP 377
-#define FINALLY 378
-#define INTEGERconstant 379
-#define CHARACTERconstant 380
-#define STRINGliteral 381
-#define DIRECTIVE 382
-#define C23_ATTRIBUTE 383
-#define FLOATING_DECIMALconstant 384
-#define FLOATING_FRACTIONconstant 385
-#define FLOATINGconstant 386
-#define ARROW 387
-#define ICR 388
-#define DECR 389
-#define LS 390
-#define RS 391
-#define LE 392
-#define GE 393
-#define EQ 394
-#define NE 395
-#define ANDAND 396
-#define OROR 397
-#define ATTR 398
-#define ELLIPSIS 399
-#define EXPassign 400
-#define MULTassign 401
-#define DIVassign 402
-#define MODassign 403
-#define PLUSassign 404
-#define MINUSassign 405
-#define LSassign 406
-#define RSassign 407
-#define ANDassign 408
-#define ERassign 409
-#define ORassign 410
-#define ErangeUpLt 411
-#define ErangeUpLe 412
-#define ErangeEq 413
-#define ErangeNe 414
-#define ErangeDownGt 415
-#define ErangeDownGe 416
-#define ErangeDownEq 417
-#define ErangeDownNe 418
-#define ATassign 419
-#define THEN 420
+#define __ALIGNOF 365
+#define GENERIC 366
+#define STATICASSERT 367
+#define IDENTIFIER 368
+#define TYPEDIMname 369
+#define TYPEDEFname 370
+#define TYPEGENname 371
+#define TIMEOUT 372
+#define WAND 373
+#define WOR 374
+#define CATCH 375
+#define RECOVER 376
+#define CATCHRESUME 377
+#define FIXUP 378
+#define FINALLY 379
+#define INTEGERconstant 380
+#define CHARACTERconstant 381
+#define STRINGliteral 382
+#define DIRECTIVE 383
+#define C23_ATTRIBUTE 384
+#define FLOATING_DECIMALconstant 385
+#define FLOATING_FRACTIONconstant 386
+#define FLOATINGconstant 387
+#define ARROW 388
+#define ICR 389
+#define DECR 390
+#define LS 391
+#define RS 392
+#define LE 393
+#define GE 394
+#define EQ 395
+#define NE 396
+#define ANDAND 397
+#define OROR 398
+#define ATTR 399
+#define ELLIPSIS 400
+#define EXPassign 401
+#define MULTassign 402
+#define DIVassign 403
+#define MODassign 404
+#define PLUSassign 405
+#define MINUSassign 406
+#define LSassign 407
+#define RSassign 408
+#define ANDassign 409
+#define ERassign 410
+#define ORassign 411
+#define ErangeUpLt 412
+#define ErangeUpLe 413
+#define ErangeEq 414
+#define ErangeNe 415
+#define ErangeDownGt 416
+#define ErangeDownGe 417
+#define ErangeDownEq 418
+#define ErangeDownNe 419
+#define ATassign 420
+#define THEN 421
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -426,7 +428,7 @@ union YYSTYPE
 	ast::WaitUntilStmt::ClauseNode * wucn;
 	ast::GenericExpr * genexpr;
 
-#line 430 "Parser/parser.hh"
+#line 432 "Parser/parser.hh"
 
 };
 typedef union YYSTYPE YYSTYPE;

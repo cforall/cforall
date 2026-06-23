@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun May 18 08:23:40 2025
-// Update Count     : 2175
+// Last Modified On : Mon May  4 12:00:48 2026
+// Update Count     : 2310
 //
 
 #include "iostream.hfa"
@@ -51,7 +51,7 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype & os, char c ) with ( basic_ostream_table ) {
 		fmt( os, "%c", c );
 		if ( c == '\n' ) setNL$( os, true );
-		return nosep( os );
+		return nosep( os );								// no separator after char
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, char )
 
@@ -203,7 +203,6 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 	ostype & ?|?( ostype & os, float _Complex fc ) with ( basic_ostream_table ) {
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
-//		os | crealf( fc ) | nonl;
 		PRINT_WITH_DP( os, "%'g", crealf( fc ) );
 		PRINT_WITH_DP( os, "%'+g", cimagf( fc ) );
 		fmt( os, "i" );
@@ -270,7 +269,6 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		} // if
 		if ( ch == '\n' ) setNL$( os, true );			// check *AFTER* sepPrt$ call above as it resets NL flag
 		return os;
-//		return write( os, s, len );
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, const char * )
 
@@ -600,13 +598,23 @@ static const char *suffixes[] = {
 #define SUFFIXES_START (-24) /* Smallest power for which there is a suffix defined. */
 #define SUFFIXES_END (SUFFIXES_START + (int)((sizeof(suffixes) / sizeof(char *) - 1) * 3))
 
+// Float-point numbers without a fraction are always printed with a decimal point to reflect the constant type.
+// Programmers must explicitly disable printing the decimal point for values with no fraction using manipulator nodp.
+// printf supports printing the decimal point using flag #. However specifier g is broken with #.
+//
+//   printf( "%g %#g %g %#g\n", 4., 4., 4.5, 4.5 );
+//   4 4.00000 4.5 4.50000
+//
+// when # is specified, g incorrectly prints 6 significant digits. As a result, # cannot be used to force printing of
+// the decimal point. Instead, any missing decimal point is manually added.
+
 #define PRINT_WITH_DP2( os, format, ... ) \
 	{ \
 		if ( ! f.flags.eng ) { \
 			len = snprintf( buf, size, format, ##__VA_ARGS__ ); \
 			if ( isfinite( f.val ) && ! f.flags.nobsdp ) { /* if number, print decimal point when no fraction or exponent */ \
 				for ( i = 0; i < len && buf[i] != '.' && buf[i] != 'e' && buf[i] != 'E' && \
-							 buf[i] != 'p' && buf[i] != 'P'; i += 1 ); /* decimal point or scientific ? */ \
+						buf[i] != 'p' && buf[i] != 'P'; i += 1 ); /* decimal point or scientific ? */ \
 				if ( i == len ) { \
 					if ( ! f.flags.left ) { \
 						buf[i] = '.'; buf[i + 1] = '\0'; \
@@ -620,7 +628,7 @@ static const char *suffixes[] = {
 			} /* if */ \
 		} else { \
 			int exp10, len2; \
-			eng( f.val, f.pc, exp10 );					/* changes arguments */ \
+			eng( f.val, f.pc, exp10 ); /* changes arguments */ \
 			/* printf( "%g %d %d %d %s\n", f.val, f.wd, f.pc, exp10, format ); */ \
 			if ( ! f.flags.left && f.wd > 1 ) { \
 				/* Exponent size: 'e', optional minus sign, number of digits: log10(0) => undefined */ \
@@ -644,7 +652,7 @@ static const char *suffixes[] = {
 
 #define FLOATING_POINT_FMT_IMPL( T, DFMTNP, DFMTP ) \
 forall( ostype & | basic_ostream( ostype ) ) { \
-	static void eng( T &value, int & pc, int & exp10 ) { \
+	static void eng( T & value, int & pc, int & exp10 ) { \
 		exp10 = lrint( floor( log10( abs( value ) ) ) ); /* round to desired precision */ \
 		if ( exp10 < 0 ) exp10 -= 2; \
 		exp10 = floor( exp10, 3 ); \
@@ -658,25 +666,26 @@ forall( ostype & | basic_ostream( ostype ) ) { \
 		int bufbeg = 0, i, len; \
 \
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) ); \
-		char fmtstr[sizeof(DFMTP) + 8];					/* sizeof includes '\0' */ \
+		char fmtstr[sizeof(DFMTP) + 8]; /* sizeof includes '\0' */ \
 		if ( ! f.flags.pc ) memcpy( &fmtstr, DFMTNP, sizeof(DFMTNP) ); \
 		else memcpy( &fmtstr, DFMTP, sizeof(DFMTP) ); \
-		int star = 5;									/* position before first '*' */ \
+		int star = 5; /* position before first '*' */ \
 \
 		/* Insert flags into spaces before '*', from right to left. */ \
 		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; } \
 		if ( f.flags.sign ) { fmtstr[star] = '+'; star -= 1; } \
 		if ( f.flags.pad0 ) { fmtstr[star] = '0'; star -= 1; } \
-		fmtstr[star] = '\''; star -= 1;					/* locale */ \
+		if ( f.base == 'f' && f.base == 'F' && f.base == 'g' && f.base == 'G' ) { fmtstr[star] = '\''; star -= 1; }	/* locale only for f andg */ \
+		else if ( ! f.flags.nobsdp && (f.base == 'a' || f.base == 'A') ) { fmtstr[star] = '#'; star -= 1; } /* hex special case  to get decimal point */ \
 		fmtstr[star] = '%'; \
 \
-		if ( ! f.flags.pc ) {							/* no precision */ \
-			fmtstr[sizeof(DFMTNP)-2] = f.base;			/* sizeof includes '\0' */ \
-			/* printf( "%g %d %s\n", f.val, f.wd, &fmtstr[star] ); */ \
+		if ( ! f.flags.pc ) { /* no precision */ \
+			fmtstr[sizeof(DFMTNP)-2] = f.base; /* sizeof includes '\0' */ \
+			/* printf( "[%g %c %d %s]\n", f.val, f.base, f.wd, &fmtstr[star] ); */ \
 			PRINT_WITH_DP2( os, &fmtstr[star], f.wd, f.val ) \
-		} else {										/* precision */ \
-			fmtstr[sizeof(DFMTP)-2] = f.base;			/* sizeof includes '\0' */ \
-			/* printf( "%g %d %d %s\n", f.val, f.wd, f.pc, &fmtstr[star] ); */ \
+		} else { /* precision */ \
+			fmtstr[sizeof(DFMTP)-2] = f.base; /* sizeof includes '\0' */ \
+			/* printf( "[%g %c %d %d %s]\n", f.val, f.base, f.wd, f.pc, &fmtstr[star] ); */ \
 			PRINT_WITH_DP2( os, &fmtstr[star], f.wd, f.pc, f.val ) \
 		} /* if */ \
 		return os; \
@@ -696,14 +705,19 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			_Ostream_Manip(unsigned char) fmtuc @= { f.val, f.wd, f.pc, f.base, {'\0'} };
 			fmtuc.flags.pc = f.flags.pc;
 			fmtuc.flags.nobsdp = f.flags.nobsdp;
-//			os | fmtuc | nonl;
+			return (ostype &)(os | fmtuc);
+		} // if
+		if ( f.flags.quote ) {							// print as string
+			char qv[] = { f.qleft, f.val, f.qright ? : f.qleft, '\0' };
+			f.flags.quote = false;						// already quoted
+			_Ostream_Manip(const char *) fmtuc @= { qv, f.wd, f.pc, 's', {f.all} };
 			(ostype &)(os | fmtuc);
-			return os;
+			return nosep( os );							// no separator after char
 		} // if
 
 		if ( sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 
-		#define CFMTNP "% * "
+		#define CFMTNP "% *c"
 		char fmtstr[sizeof(CFMTNP)];					// sizeof includes '\0'
 		memcpy( &fmtstr, CFMTNP, sizeof(CFMTNP) );
 		int star = 1;									// position before first '*'
@@ -712,10 +726,9 @@ forall( ostype & | basic_ostream( ostype ) ) {
 		if ( f.flags.left ) { fmtstr[star] = '-'; star -= 1; }
 		fmtstr[star] = '%';
 
-		fmtstr[sizeof(CFMTNP)-2] = f.base;				// sizeof includes '\0'
 		// printf( "%d %s\n", f.wd, &fmtstr[star] );
 		fmt( os, &fmtstr[star], f.wd, f.val );
-		return os;
+		return nosep( os );								// no separator after char
 	} // ?|?
 	OSTYPE_VOID_IMPL( os, _Ostream_Manip(char) )
 } // distribution
@@ -732,17 +745,25 @@ forall( ostype & | basic_ostream( ostype ) ) {
 			fmtuc.flags.nobsdp = f.flags.nobsdp;
 			for ( i; 0 ~ @ : @; f.val[i] != '\0' ) {
 				fmtuc.val = f.val[i];
-//				os | fmtuc | nonl;
 				(ostype &)(os | fmtuc);
 			} // for
 			return os;
+		} // if
+		if ( f.flags.quote ) {							// print as string
+			int len = strlen( f.val );
+			char qv[len + 3];							// space for quotes and '\0'
+			qv[0] = f.qleft; strcpy( &qv[1], f.val );
+			qv[len + 1] = f.qright ? : f.qleft; qv[len + 2] = '\0'; // copy string surrounded with quotes
+			f.flags.quote = false;						// already quoted
+			_Ostream_Manip(const char *) fmtuc @= { qv, f.wd, f.pc, 's', {f.all} };
+			return (ostype &)(os | fmtuc);
 		} // if
 
 		if ( f.val[0] != '\0' &&						// null string => no leading separator
 			 sepPrt$( os ) ) fmt( os, "%s", sepGetCur$( os ) );
 
-		#define SFMTNP "% * "
-		#define SFMTP "% *.* "
+		#define SFMTNP "% *s"
+		#define SFMTP "% *.*s"
 		char fmtstr[sizeof(SFMTP)];						// sizeof includes '\0'
 		if ( ! f.flags.pc ) memcpy( &fmtstr, SFMTNP, sizeof(SFMTNP) );
 		else memcpy( &fmtstr, SFMTP, sizeof(SFMTP) );
@@ -754,10 +775,8 @@ forall( ostype & | basic_ostream( ostype ) ) {
 
 		if ( ! f.flags.pc ) {							// no precision
 			// printf( "%d %s\n", f.wd, &fmtstr[star] );
-			fmtstr[sizeof(SFMTNP)-2] = f.base;			// sizeof includes '\0'
 			fmt( os, &fmtstr[star], f.wd, f.val );
 		} else {										// precision
-			fmtstr[sizeof(SFMTP)-2] = f.base;			// sizeof includes '\0'
 			// printf( "%d %d %s\n", f.wd, f.pc, &fmtstr[star] );
 			fmt( os, &fmtstr[star], f.wd, f.pc, f.val );
 		} // if
@@ -795,10 +814,10 @@ forall( istype & | basic_istream( istype ) ) {
 		char temp;
 		for () {
 			int args = fmt( is, "%c", &temp );			// can be called with EOF on
-			if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
+		  if ( eof( is ) ) throwResume ExceptionInst( end_of_file );
 			assert( args == 1 );						// if not EOF => a single character must be read
 			// do not overwrite parameter with newline unless appropriate
-			if ( temp != '\n' || getANL$( is ) ) { c = temp; break; }
+		  if ( temp != '\n' || getANL$( is ) ) { c = temp; break; }
 		} // for
 		return is;
 	} // ?|?

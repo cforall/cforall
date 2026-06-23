@@ -9,8 +9,8 @@
 // Author           : Michael L. Brooks
 // Created On       : Fri Sep 03 11:00:00 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Apr 13 21:03:37 2025
-// Update Count     : 79
+// Last Modified On : Mon May 11 18:56:08 2026
+// Update Count     : 84
 //
 
 #pragma once
@@ -30,7 +30,7 @@ struct HandleNode {
 	VbyteHeap * ulink;									// upward link
 
 	char * s;											// pointer to byte string
-	unsigned int lnth;									// length of byte string
+	size_t lnth;										// length of byte string
 }; // HandleNode
 
 VbyteHeap * DEBUG_string_heap();
@@ -93,8 +93,8 @@ static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mo
 static inline void ?{}(string_res & s, const string_res & src, StrResInitMode mode, size_t maxlen ) {
 	?{}( s, src, mode, 0, (len(src) > maxlen)?maxlen:len(src) );
 }
-void ?{}( string_res & s, ssize_t rhs );
 void ?{}( string_res & s, size_t rhs );
+void ?{}( string_res & s, ssize_t rhs );
 void ?{}( string_res & s, double rhs );
 void ?{}( string_res & s, long double rhs );
 void ?{}( string_res & s, double _Complex rhs );
@@ -221,7 +221,6 @@ static inline bool ?<=?( const char * s1, const string_res & s2 ) { return strcm
 static inline bool ?<? ( const char * s1, const string_res & s2 ) { return strcmp( s1, s2 ) <  0; }
 
 // String search
-bool contains( const string_res & s, char ch); // single character
 
 int find$( const string_res & s, ssize_t start, ssize_t len, const string_res & key, ssize_t kstart, ssize_t klen );
 

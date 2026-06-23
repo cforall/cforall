@@ -8,9 +8,9 @@
 //
 // Author           : Andrew Beach
 // Created On       : Mon Aug 31 11:11:00 2020
-// Last Modified By : Andrew Beach
-// Last Modified On : Fri Mar 11 10:40:00 2022
-// Update Count     : 3
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Tue Jun 23 12:31:00 2026
+// Update Count     : 4
 //
 
 #include "AST/Attribute.hpp"
@@ -114,7 +114,7 @@ static std::vector<ast::ptr<ast::Init>> buildInits(
 			) );
 		} else if ( std::string( "align" ) == field->name ) {
 			inits.push_back( new ast::SingleInit( location,
-				new ast::AlignofExpr( location, objectType )
+				new ast::AlignofExpr( location, objectType, ast::AlignofExpr::Alignof )
 			) );
 		} else {
 			inits.push_back( new ast::SingleInit( location,

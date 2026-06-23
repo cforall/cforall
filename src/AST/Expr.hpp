@@ -10,7 +10,7 @@
 // Created On       : Fri May 10 10:30:00 2019
 // Last Modified By : Peter A. Buhr
 // Created On       : Fri May 10 10:30:00 2019
-// Update Count     : 8
+// Update Count     : 24
 //
 
 #pragma once
@@ -494,9 +494,10 @@ private:
 class AlignofExpr final : public Expr {
 public:
 	ptr<Type> type;
+	enum Alignment { Alignof, __Alignof } kind;
 
-	AlignofExpr( const CodeLocation & loc, const Type * t );
-	AlignofExpr( const CodeLocation & loc, const Type * t, const Type * r );
+	AlignofExpr( const CodeLocation & loc, const Type * t, const Alignment kind );
+	AlignofExpr( const CodeLocation & loc, const Type * t, const Type * r, const Alignment kind );
 
 	const Expr * accept( Visitor & v ) const override { return v.visit( this ); }
 private:

@@ -157,8 +157,6 @@ int main () {
     }
 
 
-
-
     sout | len(s); // 5
 
     //
@@ -265,7 +263,7 @@ int main () {
     //
 
     s += '?'; // already tested
-    sout | contains( s, 'h' ) | contains( s, '?' ) | contains( s, 'o' ); // true true false
+    sout | includes( s, 'h' ) | includes( s, '?' ) | includes( s, 'o' ); // true true false
 
     sout
         | find( s, 'h' )  // 0
@@ -409,21 +407,21 @@ int main () {
 
 	sout
 		| (return size_t)include( "1FeC34aB", isxdigit )
-		| (return size_t)include( ".,;’!\"", ispunct )
+		| (return size_t)include( ".,;'!\"", ispunct )
 		| (return size_t)include( "XXXx", isupper );
 
 	sout
 		| (return string)include( "1FeC34aB", isxdigit )
-		| (return string)include( ".,;’!\"", ispunct )
+		| (return string)include( ".,;'!\"", ispunct )
 		| (return string)include( "XXXx", isupper );
 
 	sout
 		| (return size_t)exclude( "1FeC34aB", isdigit )
-		| (return size_t)exclude( ".,;’!\"", ispunct )
+		| (return size_t)exclude( ".,;'!\"", ispunct )
 		| (return size_t)exclude( "XXXx", islower );
 
 	sout
 		| (return string)exclude( "1FeC34aB", isalpha )
-		| (return string)exclude( ".,;’!\"", ispunct )
+		| (return string)exclude( ".,;'!\"", ispunct )
 		| (return string)exclude( "XXXx", islower );
 }

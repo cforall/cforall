@@ -10,7 +10,7 @@
 // Created On       : Wed May 15 17:00:00 2019
 // Last Modified By : Peter A. Buhr
 // Created On       : Wed May 18 13:56:00 2022
-// Update Count     : 12
+// Update Count     : 18
 //
 
 #include "Expr.hpp"
@@ -45,9 +45,8 @@ bool Expr::get_lvalue() const {
 
 // --- ApplicationExpr
 
-ApplicationExpr::ApplicationExpr( const CodeLocation & loc, const Expr * f,
-	std::vector<ptr<Expr>> && as )
-: Expr( loc ), func( f ), args( std::move(as) ) {
+ApplicationExpr::ApplicationExpr( const CodeLocation & loc, const Expr * f,	std::vector<ptr<Expr>> && as )
+		: Expr( loc ), func( f ), args( std::move(as) ) {
 	// ensure that `ApplicationExpr` result type is `FuncExpr`
 	const PointerType * pt = strict_dynamic_cast< const PointerType * >( f->result.get() );
 	const FunctionType * fn = strict_dynamic_cast< const FunctionType * >( pt->base.get() );
@@ -102,19 +101,16 @@ UntypedExpr * UntypedExpr::createAssign( const CodeLocation & loc, const Expr * 
 	return ret;
 }
 
-UntypedExpr * UntypedExpr::createCall( const CodeLocation & loc,
-		const std::string & name, std::vector<ptr<Expr>> && args ) {
+UntypedExpr * UntypedExpr::createCall( const CodeLocation & loc, const std::string & name, std::vector<ptr<Expr>> && args ) {
 	return new UntypedExpr( loc,
 			new NameExpr( loc, name ), std::move( args ) );
 }
 
 // --- VariableExpr
 
-VariableExpr::VariableExpr( const CodeLocation & loc )
-: Expr( loc ), var( nullptr ) {}
+VariableExpr::VariableExpr( const CodeLocation & loc ) : Expr( loc ), var( nullptr ) {}
 
-VariableExpr::VariableExpr( const CodeLocation & loc, const DeclWithType * v )
-: Expr( loc ), var( v ) {
+VariableExpr::VariableExpr( const CodeLocation & loc, const DeclWithType * v ) : Expr( loc ), var( v ) {
 	assert( var );
 	assert( var->get_type() );
 	result = shallowCopy( var->get_type() );
@@ -129,8 +125,7 @@ bool VariableExpr::get_lvalue() const {
 	return true;
 }
 
-VariableExpr * VariableExpr::functionPointer(
-		const CodeLocation & loc, const FunctionDecl * decl ) {
+VariableExpr * VariableExpr::functionPointer( const CodeLocation & loc, const FunctionDecl * decl ) {
 	// wrap usually-determined result type in a pointer
 	VariableExpr * funcExpr = new VariableExpr{ loc, decl };
 	funcExpr->result = new PointerType{ funcExpr->result };
@@ -177,9 +172,7 @@ namespace {
 	}
 }
 
-AddressExpr::AddressExpr( const CodeLocation & loc, const Expr * a ) :
-	Expr( loc, addrExprType( loc, a ) ), arg( a )
-{}
+AddressExpr::AddressExpr( const CodeLocation & loc, const Expr * a ) : Expr( loc, addrExprType( loc, a ) ), arg( a ) {}
 
 // --- LabelAddressExpr
 
@@ -190,7 +183,7 @@ LabelAddressExpr::LabelAddressExpr( const CodeLocation & loc, Label && a )
 // --- CastExpr
 
 CastExpr::CastExpr( const CodeLocation & loc, const Expr * a, GeneratedFlag g, CastKind kind )
-: Expr( loc, new VoidType{} ), arg( a ), isGenerated( g ), kind( kind ) {}
+		: Expr( loc, new VoidType{} ), arg( a ), isGenerated( g ), kind( kind ) {}
 
 bool CastExpr::get_lvalue() const {
 	// This is actually wrong by C, but it works with our current set-up.
@@ -212,7 +205,7 @@ bool UntypedMemberExpr::get_lvalue() const {
 // --- MemberExpr
 
 MemberExpr::MemberExpr( const CodeLocation & loc, const DeclWithType * mem, const Expr * agg )
-: Expr( loc ), member( mem ), aggregate( agg ) {
+		: Expr( loc ), member( mem ), aggregate( agg ) {
 	assert( member );
 	assert( aggregate );
 	assert( aggregate->result );
@@ -248,19 +241,15 @@ long long int ConstantExpr::intValue() const {
 }
 
 ConstantExpr * ConstantExpr::from_bool( const CodeLocation & loc, bool b ) {
-	return new ConstantExpr{
-		loc, new BasicType{ BasicKind::Bool }, b ? "1" : "0", (unsigned long long)b };
+	return new ConstantExpr{ loc, new BasicType{ BasicKind::Bool }, b ? "1" : "0", (unsigned long long)b };
 }
 
 ConstantExpr * ConstantExpr::from_int( const CodeLocation & loc, int i ) {
-	return new ConstantExpr{
-		loc, new BasicType{ BasicKind::SignedInt }, std::to_string( i ), (unsigned long long)i };
+	return new ConstantExpr{ loc, new BasicType{ BasicKind::SignedInt }, std::to_string( i ), (unsigned long long)i };
 }
 
 ConstantExpr * ConstantExpr::from_ulong( const CodeLocation & loc, unsigned long i ) {
-	return new ConstantExpr{
-		loc, new BasicType{ BasicKind::LongUnsignedInt }, std::to_string( i ),
-		(unsigned long long)i };
+	return new ConstantExpr{ loc, new BasicType{ BasicKind::LongUnsignedInt }, std::to_string( i ), (unsigned long long)i };
 }
 
 ConstantExpr * ConstantExpr::from_string( const CodeLocation & loc, const std::string & str ) {
@@ -273,51 +262,44 @@ ConstantExpr * ConstantExpr::from_string( const CodeLocation & loc, const std::s
 }
 
 ConstantExpr * ConstantExpr::null( const CodeLocation & loc, const Type * ptrType ) {
-	return new ConstantExpr{
-		loc, ptrType ? ptrType : new PointerType{ new VoidType{} }, "0", (unsigned long long)0 };
+	return new ConstantExpr{ loc, ptrType ? ptrType : new PointerType{ new VoidType{} }, "0", (unsigned long long)0 };
 }
 
 // --- SizeofExpr
 
-SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * type )
-: SizeofExpr( loc, type, nullptr ) {}
+SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * type ) : SizeofExpr( loc, type, nullptr ) {}
 
-SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * type, const Type * result )
-: Expr( loc, result ), type( type ) {}
+SizeofExpr::SizeofExpr( const CodeLocation & loc, const Type * type, const Type * result ) : Expr( loc, result ), type( type ) {}
 
 // --- AlignofExpr
 
-AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * type )
-: AlignofExpr( loc, type, nullptr ) {}
+AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * type, const Alignment kind ) : AlignofExpr( loc, type, nullptr, kind ) {}
 
-AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * type, const Type * result )
-: Expr( loc, result ), type( type ) {}
+AlignofExpr::AlignofExpr( const CodeLocation & loc, const Type * type, const Type * result, const Alignment kind )
+		: Expr( loc, result ), type( type ), kind( kind ) {}
 
 // --- CountofExpr
 
-CountofExpr::CountofExpr( const CodeLocation & loc, const Type * t )
-: Expr( loc ), type( t ) {}
+CountofExpr::CountofExpr( const CodeLocation & loc, const Type * t ) : Expr( loc ), type( t ) {}
 
 // --- OffsetofExpr
 
 OffsetofExpr::OffsetofExpr( const CodeLocation & loc, const Type * ty, const DeclWithType * mem, const Type * res )
-: Expr( loc, res ), type( ty ), member( mem ) {
+		: Expr( loc, res ), type( ty ), member( mem ) {
 	assert( type );
 	assert( member );
 }
 
 // --- OffsetPackExpr
 
-OffsetPackExpr::OffsetPackExpr( const CodeLocation & loc, const StructInstType * ty )
-: Expr( loc ), type( ty ) {
+OffsetPackExpr::OffsetPackExpr( const CodeLocation & loc, const StructInstType * ty ) : Expr( loc ), type( ty ) {
 	assert( type );
 }
 
 // --- LogicalExpr
 
-LogicalExpr::LogicalExpr(
-	const CodeLocation & loc, const Expr * a1, const Expr * a2, LogicalFlag ia )
-: Expr( loc, new BasicType{ BasicKind::SignedInt } ), arg1( a1 ), arg2( a2 ), isAnd( ia ) {}
+LogicalExpr::LogicalExpr( const CodeLocation & loc, const Expr * a1, const Expr * a2, LogicalFlag ia )
+		: Expr( loc, new BasicType{ BasicKind::SignedInt } ), arg1( a1 ), arg2( a2 ), isAnd( ia ) {}
 
 // --- CommaExpr
 
@@ -329,8 +311,7 @@ bool CommaExpr::get_lvalue() const {
 
 // --- ConstructorExpr
 
-ConstructorExpr::ConstructorExpr( const CodeLocation & loc, const Expr * call )
-: Expr( loc ), callExpr( call ) {
+ConstructorExpr::ConstructorExpr( const CodeLocation & loc, const Expr * call ) : Expr( loc ), callExpr( call ) {
 	// allow resolver to type a constructor used as an expression if it has the same type as its
 	// first argument
 	assert( callExpr );
@@ -341,8 +322,7 @@ ConstructorExpr::ConstructorExpr( const CodeLocation & loc, const Expr * call )
 
 // --- CompoundLiteralExpr
 
-CompoundLiteralExpr::CompoundLiteralExpr( const CodeLocation & loc, const Type * t, const Init * i )
-: Expr( loc ), init( i ) {
+CompoundLiteralExpr::CompoundLiteralExpr( const CodeLocation & loc, const Type * t, const Init * i ) : Expr( loc ), init( i ) {
 	assert( t && i );
 	result = t;
 }
@@ -353,13 +333,11 @@ bool CompoundLiteralExpr::get_lvalue() const {
 
 // --- TupleExpr
 
-TupleExpr::TupleExpr( const CodeLocation & loc, std::vector<ptr<Expr>> && xs )
-: Expr( loc, Tuples::makeTupleType( xs ) ), exprs( xs ) {}
+TupleExpr::TupleExpr( const CodeLocation & loc, std::vector<ptr<Expr>> && xs ) : Expr( loc, Tuples::makeTupleType( xs ) ), exprs( xs ) {}
 
 // --- TupleIndexExpr
 
-TupleIndexExpr::TupleIndexExpr( const CodeLocation & loc, const Expr * t, unsigned i )
-: Expr( loc ), tuple( t ), index( i ) {
+TupleIndexExpr::TupleIndexExpr( const CodeLocation & loc, const Expr * t, unsigned i ) : Expr( loc ), tuple( t ), index( i ) {
 	const TupleType * type = strict_dynamic_cast< const TupleType * >( tuple->result.get() );
 	assertf( type->size() > index, "TupleIndexExpr index out of bounds: tuple size %d, requested "
 		"index %d in expr %s", type->size(), index, toString( tuple ).c_str() );
@@ -373,10 +351,8 @@ bool TupleIndexExpr::get_lvalue() const {
 
 // --- TupleAssignExpr
 
-TupleAssignExpr::TupleAssignExpr(
-	const CodeLocation & loc, std::vector<ptr<Expr>> && assigns,
-	std::vector<ptr<ObjectDecl>> && tempDecls )
-: Expr( loc, Tuples::makeTupleType( assigns ) ), stmtExpr() {
+TupleAssignExpr::TupleAssignExpr( const CodeLocation & loc, std::vector<ptr<Expr>> && assigns, std::vector<ptr<ObjectDecl>> && tempDecls )
+		: Expr( loc, Tuples::makeTupleType( assigns ) ), stmtExpr() {
 	// convert internally into a StmtExpr which contains the declarations and produces the tuple of
 	// the assignments
 	std::list<ptr<Stmt>> stmts;
@@ -391,8 +367,7 @@ TupleAssignExpr::TupleAssignExpr(
 
 // --- StmtExpr
 
-StmtExpr::StmtExpr( const CodeLocation & loc, const CompoundStmt * ss )
-: Expr( loc ), stmts( ss ) { computeResult(); }
+StmtExpr::StmtExpr( const CodeLocation & loc, const CompoundStmt * ss ) : Expr( loc ), stmts( ss ) { computeResult(); }
 
 void StmtExpr::computeResult() {
 	assert( stmts );
@@ -410,8 +385,7 @@ void StmtExpr::computeResult() {
 
 unsigned long long UniqueExpr::nextId = 0;
 
-UniqueExpr::UniqueExpr( const CodeLocation & loc, const Expr * e, unsigned long long i )
-: Expr( loc, e->result ), expr( e ), id( i ) {
+UniqueExpr::UniqueExpr( const CodeLocation & loc, const Expr * e, unsigned long long i ) : Expr( loc, e->result ), expr( e ), id( i ) {
 	assert( expr );
 	if ( id == -1ull ) {
 		assert( nextId != -1ull );

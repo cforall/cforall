@@ -1,20 +1,31 @@
-void iota1( int n, float * a, float base ) {
+// Purpose:  Demonstrate that aruably-dependent types, like `void (*)( size_t n, float[n] )`,
+// which are valid in C, work also in CFA.  It's a C-compatibility test.
+// So, here we exercise code that a C compiler that omnisciently warns about bounds would accept.
+
+// Note this test was once written with a broader intent, articulated after the fact as either of:
+// - demonstrate how permissive this C-compatibility feature is,
+//   even though gcc continually works to clamp down in these areas
+// - demonstrate that CFA lowering does not get in the way of C's warnings in these areas
+// Current decision is these qualities (while desirable) are too fickle to be pursued practically.
+
+void iota1( size_t n, float * a, float base ) {
     for (i; n) {
         a[i] = base + 0.1f * (float)(i + 1);
     }
 }
 
-void f__bound_ptr_allow( int n, float a[n] ) {
-    printf( "bound_ptr_allow %d: %.1f %.1f %.1f\n", n, a[0], a[1], a[2] );
+void f__bound_ptr_allow( size_t n, float a[n] ) {
+    printf( "bound_ptr_allow %zd: %.1f %.1f %.1f\n", n, a[0], a[1], a[2] );
 }
 void bound_ptr_allow() {
     float a[42];
     iota1( 42, a, 1.0 );
-    f__bound_ptr_allow( 999, a );
+    f__bound_ptr_allow( 42, a );  // pass actual size (42)  ==>  bounds ok
 }
 
-void f__bound_ar_allow( int n, float a[][n + 1] ) {
-    printf( "bound_ar_allow %d:\n", n );
+// note dimension `n + 1`, exercising nontrivial dim-expression
+void f__bound_ar_allow( size_t n, float a[][n + 1] ) {
+    printf( "bound_ar_allow %zd:\n", n );
     printf( "%.1f %.1f %.1f\n", a[0][0], a[0][1], a[0][2] );
     printf( "%.1f %.1f %.1f\n", a[1][0], a[1][1], a[1][2] );
     printf( "%.1f %.1f %.1f\n", a[2][0], a[2][1], a[2][2] );
@@ -24,7 +35,7 @@ void bound_ar_allow() {
     iota1( 42, a[0], 1.0 );
     iota1( 42, a[1], 2.0 );
     iota1( 42, a[2], 3.0 );
-    f__bound_ar_allow( 41, a );
+    f__bound_ar_allow( 41, a );  // n == 41  ==>  len(a) == 42  =>  bounds ok
 }
 
 
