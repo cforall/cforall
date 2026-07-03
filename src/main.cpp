@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Mar 20 08:10:38 2026
-// Update Count     : 710
+// Last Modified On : Tue Jun 23 13:56:23 2026
+// Update Count     : 712
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -280,7 +280,11 @@ int main( int argc, char * argv[] ) {
 		DUMP( ctordtorp, transUnit );
 
 		// Currently not working due to unresolved issues with UniqueExpr
-		PASS( "Expand Unique Expr", Tuples::expandUniqueExpr, transUnit ); // xxx - is this the right place for this? want to expand ASAP so tha, sequent passes don't need to worry about double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations are reused
+
+		// xxx - is this the right place for this? Want to expand ASAP so that, sequent passes don't need to worry about
+		// double-visiting a unique expr - needs to go after InitTweak::fix so that copy constructed return declarations
+		// are reused
+		PASS( "Expand Unique Expr", Tuples::expandUniqueExpr, transUnit );
 
 		PASS( "Translate Tries", ControlStruct::translateTries, transUnit );
 		PASS( "Gen Waitfor", Concurrency::generateWaitFor, transUnit );

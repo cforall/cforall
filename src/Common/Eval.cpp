@@ -9,8 +9,8 @@
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug  6 12:11:59 2022
-// Update Count     : 119
+// Last Modified On : Sun Jun 28 21:50:29 2026
+// Update Count     : 121
 //
 
 #include "Eval.hpp"
@@ -199,12 +199,10 @@ struct EvalNew : public ast::WithShortCircuiting {
 
 Evaluation eval( const ast::Expr * expr ) {
 	if ( expr ) {
-
 		return ast::Pass<EvalNew>::read(expr);
 		// Evaluation ret = ast::Pass<EvalNew>::read(expr);
 		// ret.knownValue = 777;
 		// return ret;
-
 	} else {
 		return { 0, false, false };
 	}

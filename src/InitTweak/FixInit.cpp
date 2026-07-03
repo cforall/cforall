@@ -815,7 +815,11 @@ const ast::DeclWithType * FixInit::postvisit( const ast::ObjectDecl *_objDecl ) 
 	assert( ! ctorInit->ctor || ! ctorInit->init );
 	if ( const ast::Stmt * ctor = ctorInit->ctor ) {
 		if ( objDecl->storage.is_static ) {
-			addDataSectionAttribute(objDecl);
+			// Remove const qualifier from definition and there can be no forward declarations.
+			if ( objDecl->type->is_const() ) {
+				ast::Type * fred = const_cast<ast::Type *>(objDecl->get_type());
+				fred->set_const( false );
+			}
 			// originally wanted to take advantage of gcc nested functions, but
 			// we get memory errors with this approach. To remedy this, the static
 			// variable is hoisted when the destructor needs to be called.

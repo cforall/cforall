@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Sep 22  9:50:00 2022
-// Update Count     : 21
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jul  2 16:47:11 2026
+// Update Count     : 44
 //
 
 #include "InitTweak.hpp"
@@ -425,22 +425,6 @@ bool isConstExpr( const ast::Expr * expr ) {
 bool isConstExpr( const ast::Init * init ) {
 	// for all intents and purposes, no initializer means const expr
 	return ( init ) ? ast::Pass<ConstExprChecker>::read( init ) : true;
-}
-
-#if defined( __x86_64 ) || defined( __i386 ) // assembler comment to prevent assembler warning message
-	#define ASM_COMMENT "#"
-#else // defined( __ARM_ARCH )
-	#define ASM_COMMENT "//"
-#endif
-static const char * const data_section =  ".data" ASM_COMMENT;
-static const char * const tlsd_section = ".tdata" ASM_COMMENT;
-
-void addDataSectionAttribute( ast::ObjectDecl * objDecl ) {
-	const bool is_tls = objDecl->storage.is_threadlocal_any();
-	const char * section = is_tls ? tlsd_section : data_section;
-	objDecl->attributes.push_back(new ast::Attribute("section", {
-		ast::ConstantExpr::from_string(objDecl->location, section)
-	}));
 }
 
 InitExpander::InitExpander( const ast::Init * init )

@@ -9,12 +9,13 @@
 // Author           : Rob Schluntz
 // Created On       : Mon May 04 15:14:56 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Dec 13 23:41:10 2019
-// Update Count     : 19
+// Last Modified On : Thu Jul  2 16:39:52 2026
+// Update Count     : 35
 //
 
 #include "FixGlobalInit.hpp"
 
+#include <set>
 #include <cassert>                 // for assert
 #include <stddef.h>                // for NULL
 #include <algorithm>               // for replace_if
@@ -39,34 +40,47 @@ public:
 	void previsit(const ast::TraitDecl *) { visit_children = false; }
 	void previsit(const ast::TypeDecl *) { visit_children = false; }
 
+	bool pass = false;
 	std::list< ast::ptr<ast::Stmt> > initStmts;
 	std::list< ast::ptr<ast::Stmt> > destroyStmts;
+	std::set< std::string > constDeclsMnames;
 };
 
 void GlobalFixer::previsit(const ast::ObjectDecl * objDecl) {
 	auto mutDecl = mutate(objDecl);
 	assertf(mutDecl == objDecl, "Global object decl must be unique");
-	auto ctorInit = objDecl->init.as<ast::ConstructorInit>();
-	if ( nullptr == ctorInit ) return;
+	if ( ! pass ) {										// pass 1
+		auto ctorInit = objDecl->init.as<ast::ConstructorInit>();
+		if ( nullptr == ctorInit ) return;
 
-	// a decision should have been made by the resolver, so ctor and init are not both non-NULL
-	assert( !ctorInit->ctor || !ctorInit->init );
+		// a decision should have been made by the resolver, so ctor and init are not both non-NULL
+		assert( !ctorInit->ctor || !ctorInit->init );
 
-	const ast::Stmt * dtor = ctorInit->dtor;
-	if ( dtor && !isIntrinsicSingleArgCallStmt( dtor ) ) {
-		// don't need to call intrinsic dtor, because it does nothing, but
-		// non-intrinsic dtors must be called
-		destroyStmts.push_front( dtor );
-	} // if
-	if ( const ast::Stmt * ctor = ctorInit->ctor ) {
-		addDataSectionAttribute(mutDecl);
-		initStmts.push_back( ctor );
-		mutDecl->init = nullptr;
-	} else if ( const ast::Init * init = ctorInit->init ) {
-		mutDecl->init = init;
-	} else {
-		// no constructor and no initializer, which is okay
-		mutDecl->init = nullptr;
+		const ast::Stmt * dtor = ctorInit->dtor;
+		if ( dtor && !isIntrinsicSingleArgCallStmt( dtor ) ) {
+			// don't need to call intrinsic dtor, because it does nothing, but
+			// non-intrinsic dtors must be called
+			destroyStmts.push_front( dtor );
+		} // if
+		if ( const ast::Stmt * ctor = ctorInit->ctor ) {
+			if ( mutDecl->type->is_const() ) {
+				// Store names of all declarations with const qualifier and initializer for second pass.
+				constDeclsMnames.emplace( mutDecl->mangleName );
+			}
+			initStmts.push_back( ctor );
+			mutDecl->init = nullptr;
+		} else if ( const ast::Init * init = ctorInit->init ) {
+			mutDecl->init = init;
+		} else {
+			// no constructor and no initializer, which is okay
+			mutDecl->init = nullptr;
+		}
+	} else {										// pass 2
+		// Remove const qualifier from matching names, covering all forward declaration(s) and definition.
+		if ( constDeclsMnames.find( objDecl->mangleName ) != constDeclsMnames.end() ) {
+			ast::Type * fred = const_cast<ast::Type *>(mutDecl->get_type());
+			fred->set_const( false );
+		} // if
 	}
 }
 
@@ -74,7 +88,9 @@ void GlobalFixer::previsit(const ast::ObjectDecl * objDecl) {
 
 void fixGlobalInit(ast::TranslationUnit & translationUnit, bool inLibrary) {
 	ast::Pass<GlobalFixer> fixer;
-	accept_all(translationUnit, fixer);
+
+	// First pass fixes global initialization.
+	accept_all( translationUnit, fixer );
 
 	// Say these magic declarations come at the end of the file.
 	CodeLocation const & location = translationUnit.decls.back()->location;
@@ -102,6 +118,11 @@ void fixGlobalInit(ast::TranslationUnit & translationUnit, bool inLibrary) {
 
 		translationUnit.decls.emplace_back(destroyFunction);
 	} // if
+
+	fixer.core.pass = ! fixer.core.pass;
+	// Second pass, removes const qualifiers so declarations appear in mutable .data section.
+	// Note, the resolver has already checked for const-ness, so C only has to get the initialization correct.
+	accept_all(translationUnit, fixer);
 }
 
 } // namespace InitTweak

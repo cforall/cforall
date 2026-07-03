@@ -8,9 +8,9 @@
 //
 // Author           : Aaron B. Moss
 // Created On       : Thu May 9 10:00:00 2019
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Apr  5 10:42:00 2023
-// Update Count     : 35
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Jun 28 21:54:18 2026
+// Update Count     : 36
 //
 
 #pragma once
@@ -107,7 +107,7 @@ public:
 	: DeclWithType( loc, name, storage, linkage, std::move(attrs), fs ), type( type ),
 	  init( init ), bitfieldWidth( bitWd ) {}
 
-	const Type* get_type() const override { return type; }
+	const Type * get_type() const override { return type; }
 	void set_type( const Type * ty ) override { type = ty; }
 
 	const DeclWithType * accept( Visitor& v ) const override { return v.visit( this ); }

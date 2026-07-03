@@ -9,8 +9,8 @@
 // Author           : Zhenyan Zhu
 // Created On       : Sat Aug 6 16:29:18 2022
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Apr 25 07:28:01 2025
-// Update Count     : 4
+// Last Modified On : Thu Jul  2 17:16:03 2026
+// Update Count     : 5
 //
 
 #define __cforall_thread__
@@ -18,6 +18,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <errno.h>
+#include <limits.h>
 #include "locks.hfa"
 
 #define check_nonnull(x) asm("": "+rm"(x)); if( x == 0p ) return EINVAL;
@@ -26,8 +27,6 @@
 static simple_owner_lock once_lock,key_lock,magic_mutex_check, concurrency_lock;
 
 //######################### Local Storage Helpers #########################
-
-enum { PTHREAD_KEYS_MAX = 1024 };
 
 struct pthread_values{
 	inline dlink(pthread_values);

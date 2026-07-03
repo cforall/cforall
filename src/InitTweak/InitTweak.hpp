@@ -8,9 +8,9 @@
 //
 // Author           : Rob Schluntz
 // Created On       : Fri May 13 11:26:36 2016
-// Last Modified By : Andrew Beach
-// Last Modified On : Wed Sep 22  9:21:00 2022
-// Update Count     : 9
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Thu Jul  2 16:45:44 2026
+// Update Count     : 12
 //
 
 #pragma once
@@ -67,17 +67,6 @@ std::vector< const ast::Expr * > collectCtorDtorCalls( const ast::Stmt * stmt );
 /// returns true if expr is trivially a compile-time constant
 bool isConstExpr( const ast::Expr * expr );
 bool isConstExpr( const ast::Init * init );
-
-/// Modifies objDecl to have:
-///    __attribute__((section (".data#")))
-/// which makes gcc put the declared variable in the data section,
-/// which is helpful for global constants on newer gcc versions,
-/// so that CFA's generated initialization won't segfault when writing it via a const cast.
-/// The trailing # is an injected assembly comment, to suppress the "a" in
-///    .section .data,"a"
-///    .section .data#,"a"
-/// to avoid assembler warning "ignoring changed section attributes for .data"
-void addDataSectionAttribute( ast::ObjectDecl * objDecl );
 
 class InitExpander final {
 public:

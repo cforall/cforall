@@ -8,9 +8,9 @@
 //
 // Author           : Richard C. Bilson
 // Created On       : Mon May 18 07:44:20 2015
-// Last Modified By : Andrew Beach
-// Last Modified On : Mon Oct 24 15:19:00 2022
-// Update Count     : 17
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Jun 28 21:49:48 2026
+// Update Count     : 18
 //
 
 #include "GenPoly.hpp"
@@ -251,8 +251,7 @@ namespace {
 // the case for matching ArrayType.
 bool typesPolyCompatible( ast::Type const * lhs, ast::Type const * rhs );
 
-static bool exprsPolyCompatibleByStaticValue(
-		const ast::Expr * e1, const ast::Expr * e2 ) {
+static bool exprsPolyCompatibleByStaticValue( const ast::Expr * e1, const ast::Expr * e2 ) {
 	Evaluation r1 = eval(e1);
 	Evaluation r2 = eval(e2);
 
