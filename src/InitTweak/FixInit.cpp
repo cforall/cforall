@@ -817,8 +817,8 @@ const ast::DeclWithType * FixInit::postvisit( const ast::ObjectDecl *_objDecl ) 
 		if ( objDecl->storage.is_static ) {
 			// Remove const qualifier from definition and there can be no forward declarations.
 			if ( objDecl->type->is_const() ) {
-				ast::Type * fred = const_cast<ast::Type *>(objDecl->get_type());
-				fred->set_const( false );
+				// SKULLDUGGERY: change value through const pointer.
+				const_cast<ast::Type *>(objDecl->get_type())->set_const( false );
 			}
 			// originally wanted to take advantage of gcc nested functions, but
 			// we get memory errors with this approach. To remedy this, the static

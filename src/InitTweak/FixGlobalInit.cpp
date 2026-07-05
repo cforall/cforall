@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Mon May 04 15:14:56 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Jul  2 16:39:52 2026
-// Update Count     : 35
+// Last Modified On : Fri Jul  3 08:41:54 2026
+// Update Count     : 37
 //
 
 #include "FixGlobalInit.hpp"
@@ -78,8 +78,8 @@ void GlobalFixer::previsit(const ast::ObjectDecl * objDecl) {
 	} else {										// pass 2
 		// Remove const qualifier from matching names, covering all forward declaration(s) and definition.
 		if ( constDeclsMnames.find( objDecl->mangleName ) != constDeclsMnames.end() ) {
-			ast::Type * fred = const_cast<ast::Type *>(mutDecl->get_type());
-			fred->set_const( false );
+			// SKULLDUGGERY: change value through const pointer.
+			const_cast<ast::Type *>(objDecl->get_type())->set_const( false );
 		} // if
 	}
 }
