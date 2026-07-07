@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Sep  3 08:25:21 2023
-// Update Count     : 105
+// Last Modified On : Sat Jul  4 15:21:11 2026
+// Update Count     : 106
 //
 
 #define __cforall_thread__
@@ -53,7 +53,7 @@ void ?{}( thread$ & this, const char * const name, cluster & cl, void * storage,
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
     link_node = 0p;
-	PRNG_SET_SEED( random_state, __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl() );
+	PRNG_SET_SEED( random_state, __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtsc() );
 	#if defined( __CFA_WITH_VERIFY__ )
 		executing = 0p;
 		canary = 0x0D15EA5E0D15EA5Ep;

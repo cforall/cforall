@@ -51,7 +51,7 @@ static inline void push( __intrusive_lane_t & this, thread$ * node ) {
 
 	// Get the relevant nodes locally
 	this.l.prev->rdy_link.next = node;
-	__atomic_store_n(&this.l.prev->rdy_link.ts, rdtscl(), __ATOMIC_RELAXED);
+	__atomic_store_n(&this.l.prev->rdy_link.ts, rdtsc(), __ATOMIC_RELAXED);
 	this.l.prev = node;
 	#if !defined(__CFA_NO_STATISTICS__)
 		this.l.cnt++;

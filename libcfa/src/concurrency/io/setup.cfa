@@ -216,7 +216,7 @@
 		// completion queue
 		cq.try_lock  = false;
 		cq.id        = MAX;
-		cq.ts        = rdtscl();
+		cq.ts        = rdtsc();
 		cq.head      = (volatile __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.head);
 		cq.tail      = (volatile __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.tail);
 		cq.mask      = (   const __u32 *)(((intptr_t)cq.ring_ptr) + params.cq_off.ring_mask);

@@ -121,7 +121,7 @@ __attribute__((hot)) struct thread$ * pop_fast(struct cluster * cltr) with (cltr
 
 	// Figure out the current cache is
 	const unsigned this_cache = cache_id(cltr, this / __shard_factor.readyq);
-	const unsigned long long ctsc = rdtscl();
+	const unsigned long long ctsc = rdtsc();
 
 	if(proc->rdq.target == UINT_MAX) {
 		uint64_t chaos = __tls_rand();

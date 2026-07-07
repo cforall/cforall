@@ -508,7 +508,7 @@ static void ?{}( thread$ & this, current_stack_info_t * info ) with( this ) {
 	cltr_link.prev = 0p;
 	preferred = ready_queue_new_preferred();
 	last_proc = 0p;
-	PRNG_SET_SEED( random_state, __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtscl() );
+	PRNG_SET_SEED( random_state, __global_random_mask ? __global_random_prime : __global_random_prime ^ rdtsc() );
 	#if defined( __CFA_WITH_VERIFY__ )
 		executing = 0p;
 		canary = 0x0D15EA5E0D15EA5Ep;
@@ -867,7 +867,7 @@ unsigned set_concurrency( cluster & this, unsigned new ) libcfa_public {
 
 #if defined(__CFA_WITH_VERIFY__)
 static bool verify_fwd_bck_rng(void) {
-	__cfaabi_tls.ready_rng.fwd_seed = 25214903917_l64u * (rdtscl() ^ (uintptr_t)&verify_fwd_bck_rng);
+	__cfaabi_tls.ready_rng.fwd_seed = 25214903917_l64u * (rdtsc() ^ (uintptr_t)&verify_fwd_bck_rng);
 
 	unsigned values[10];
 	for(i; 10) {

@@ -277,7 +277,7 @@ static void reassign_cltr_id(struct cluster * cltr) {
 static void fix_times( __timestamp_t * volatile & tscs, unsigned count ) {
 	tscs = alloc(count, tscs`realloc);
 	for(i; count) {
-		tscs[i].t.tv = rdtscl();
+		tscs[i].t.tv = rdtsc();
 		tscs[i].t.ma = 0;
 	}
 }

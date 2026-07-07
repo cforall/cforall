@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 29 21:20:54 2026
-// Update Count     : 83
+// Last Modified On : Sat Jul  4 15:23:42 2026
+// Update Count     : 84
 //
 
 #define __cforall_thread__
@@ -149,8 +149,8 @@ extern void __enable_interrupts_hard();
 void main(processorCtx_t & runner) {
 	// Because of a bug, we couldn't initialized the seed on construction
 	// Do it here
-	PRNG_SET_SEED( __cfaabi_tls.random_state, rdtscl() );
-	__cfaabi_tls.ready_rng.fwd_seed = 25214903917_l64u * (rdtscl() ^ (uintptr_t)&runner);
+	PRNG_SET_SEED( __cfaabi_tls.random_state, rdtsc() );
+	__cfaabi_tls.ready_rng.fwd_seed = 25214903917_l64u * (rdtsc() ^ (uintptr_t)&runner);
 	__tls_rand_advance_bck();
 
 	processor * this = runner.proc;
@@ -691,7 +691,7 @@ void __wake_proc(processor * this) {
 
 	this->idle_wctx.sem = 1;
 
-	this->idle_wctx.wake__time = rdtscl();
+	this->idle_wctx.wake__time = rdtsc();
 
 	eventfd_t val;
 	val = 1;
@@ -722,7 +722,7 @@ static void idle_sleep(processor * this) {
 
 	#if ! defined(__CFA_NO_STATISTICS__)
 		if (this->print_halts) {
-			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtscl());
+			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 0\n", this->unique_id, rdtsc());
 		}
 	#endif
 
@@ -748,7 +748,7 @@ static void idle_sleep(processor * this) {
 
 	#if ! defined(__CFA_NO_STATISTICS__)
 		if (this->print_halts) {
-			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtscl());
+			__cfaabi_bits_print_safe( STDOUT_FILENO, "PH:%d - %lld 1\n", this->unique_id, rdtsc());
 		}
 	#endif
 }

@@ -18,12 +18,12 @@ static const unsigned long N = 600_000ul;
 static const unsigned long N = 1_000ul;
 #endif
 
-#if !defined(TEST_FOREVER)
+#if ! defined(TEST_FOREVER)
 	static inline void print(const char * const text ) {
 		write( STDOUT_FILENO, text, strlen(text) );
 	}
 #else
-	static inline void print(Printer & this, const char * const text ) {}
+	static inline void print( Printer & this, const char * const text ) {}
 #endif
 
 generator Coroutine { int i; };
@@ -32,29 +32,27 @@ volatile bool done = false;
 Coroutine * volatile the_cor = 0p;
 
 void store(Coroutine & cor) {
-	__atomic_store_n(&the_cor, &cor, __ATOMIC_SEQ_CST);
+	__atomic_store_n( &the_cor, &cor, __ATOMIC_SEQ_CST );
 }
 
-Coroutine * take(void) {
+Coroutine * take( void ) {
 	Coroutine * val = 0p;
-	Coroutine * ret = __atomic_exchange_n(&the_cor, val, __ATOMIC_SEQ_CST);
-	assert(!ret || !the_cor);
+	Coroutine * ret = __atomic_exchange_n( &the_cor, val, __ATOMIC_SEQ_CST );
+	assert( ! ret || ! the_cor );
 	return ret;
 }
 
-void main(Coroutine& this) {
-	this.i = 0;
+void main( Coroutine & this ) with( this ) {
 	suspend;
-	for(;TEST(this.i < N); this.i++) {
-
-		print("C - Suspending\n");
+	for( i = 0; TEST( i < N ); i++ ) {
+		print( "C - Suspending\n" );
 		suspend{
-			print("C - Publishing\n");
-			assert(!the_cor);
+			print( "C - Publishing\n" );
+			assert( ! the_cor );
 			store( this );
 		}
-		assert(!the_cor);
-		print("C - Back\n");
+		assert( ! the_cor );
+		print( "C - Back\n" );
 		KICK_WATCHDOG;
 		yield();
 	}
@@ -65,14 +63,13 @@ void main(Coroutine& this) {
 thread Thread {};
 void main( Thread & ) {
 	Coroutine * mine = 0p;
-	while(!done) {
+	while ( ! done ) {
 		yield();
-
 		mine = take();
-		if(!mine) continue;
+		if ( ! mine ) continue;
 
-		print("T - took\n");
-		resume(*mine);
+		print( "T - took\n" );
+		resume( *mine );
 	}
 }
 
@@ -80,8 +77,17 @@ void main( Thread & ) {
 int main() {
 	processor p[2];
 	Coroutine c;
-	resume(c); // Prime the coroutine to avoid one of the threads being its starter
+	resume( c ); // Prime the coroutine to avoid one of the threads being its starter
+
+#if defined(__GNUC__) && __GNUC__ == 12
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wdangling-pointer"	// this assignment is ok
+#endif // defined(__GNUC__) && __GNUC__ == 12
 	the_cor = &c;
+#if defined(__GNUC__) && __GNUC__ == 12
+	#pragma GCC diagnostic pop
+#endif // defined(__GNUC__) && __GNUC__ == 12
+
 	{
 		Thread t[2];
 	}

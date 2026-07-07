@@ -10,8 +10,8 @@
 ## Author           : Peter A. Buhr
 ## Created On       : Sun May 31 08:54:01 2015
 ## Last Modified By : Peter A. Buhr
-## Last Modified On : Wed Nov  1 19:03:42 2023
-## Update Count     : 266
+## Last Modified On : Sat Jul  4 07:27:10 2026
+## Update Count     : 267
 ###############################################################################
 
 # create object files in directory with source files
@@ -59,7 +59,7 @@ inst_headers_nosrc = \
 	bits/stack.hfa \
 	bits/queue.hfa \
 	bits/sequence.hfa \
-	concurrency/atomic.hfa \
+	bits/atomic.hfa \
 	concurrency/iofwd.hfa \
 	concurrency/barrier.hfa \
 	collections/array.hfa \

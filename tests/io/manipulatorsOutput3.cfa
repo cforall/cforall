@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 13 17:54:23 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug  8 22:37:20 2021
-// Update Count     : 2
+// Last Modified On : Sat Jul  4 14:53:56 2026
+// Update Count     : 41
 // 
 
 #include <fstream.hfa>
@@ -243,7 +243,7 @@ int main() {
 	y += 0123;
 	y |= 0x8000000000000000;
 
-	for ( int128 i = 0; i < 8; i += 1 ) {
+	for ( int128 i; 8 ) {
 		sout | nobase(oct(z + 0x8000000000000000 * i));
 	} // for
 
@@ -298,9 +298,7 @@ int main() {
 	i128 <<= 64;
 	i128 += 0xfffffffffffffffa;
 
-//	for ( 20 ) {
-	volatile int stop = 20;								// gcc compiler bug
-	for ( int i = 0; i < stop; i += 1 ) {
+	for ( volatile int i; 20 ) {						// FIX ME: without volatile -O3 bug that loops
 		sout | i128;
 		sout | left( sign( wd( 45, i128 ) ) ) | left( wd( 45, hex( i128 ) ) ) | left( wd( 45, oct( i128 ) ) );
 		sout | left( wd( 45, bin( i128 ) ) );
@@ -311,7 +309,7 @@ int main() {
 	ui128 = 0x7fffffffffffffff;
 	ui128 <<= 64;
 	ui128 += 0xfffffffffffffffa;
-	
+
 	for ( 20 ) {
 		sout | ui128;
 		ui128 += 1;

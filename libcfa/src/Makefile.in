@@ -298,7 +298,7 @@ am__nobase_cfa_include_HEADERS_DIST = $(shell find $(srcdir)/stdhdr \
 	bits/algorithm.hfa bits/align.hfa bits/collections.hfa \
 	bits/debug.hfa bits/defs.hfa bits/locks.hfa \
 	bits/collection.hfa bits/stack.hfa bits/queue.hfa \
-	bits/sequence.hfa concurrency/atomic.hfa concurrency/iofwd.hfa \
+	bits/sequence.hfa bits/atomic.hfa concurrency/iofwd.hfa \
 	concurrency/barrier.hfa collections/array.hfa \
 	collections/list.hfa collections/list2.hfa \
 	collections/lockfree.hfa collections/string_sharectx.hfa \
@@ -560,7 +560,7 @@ AM_CCASFLAGS = -g -Wall -Werror=return-type -Wno-unused-function @ARCH_FLAGS@ @C
 @BUILDLIB_TRUE@	bits/stack.hfa \
 @BUILDLIB_TRUE@	bits/queue.hfa \
 @BUILDLIB_TRUE@	bits/sequence.hfa \
-@BUILDLIB_TRUE@	concurrency/atomic.hfa \
+@BUILDLIB_TRUE@	bits/atomic.hfa \
 @BUILDLIB_TRUE@	concurrency/iofwd.hfa \
 @BUILDLIB_TRUE@	concurrency/barrier.hfa \
 @BUILDLIB_TRUE@	collections/array.hfa \

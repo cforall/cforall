@@ -204,7 +204,7 @@ static inline void ?{}( worker_info & this ) {
 	this.empty_stolen = 0;								// queues empty after steal
 	this.msgs_stolen = 0;								// number of messages stolen
 	#endif
-	this.stamp = rdtscl();
+	this.stamp = rdtsc();
 }
 
 // #ifdef ACTOR_STATS
@@ -630,7 +630,7 @@ void main( worker & this ) with(this) {
 
 			CHECK_TERMINATION; // check for termination
 
-			__atomic_store_n( &executor_->w_infos[id].stamp, rdtscl(), __ATOMIC_RELAXED );
+			__atomic_store_n( &executor_->w_infos[id].stamp, rdtsc(), __ATOMIC_RELAXED );
 			
 			#ifdef ACTOR_STATS
 			executor_->w_infos[id].try_steal++;

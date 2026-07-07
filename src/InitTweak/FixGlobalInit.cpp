@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Mon May 04 15:14:56 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul  3 08:41:54 2026
-// Update Count     : 37
+// Last Modified On : Fri Jul  3 15:57:20 2026
+// Update Count     : 38
 //
 
 #include "FixGlobalInit.hpp"
@@ -81,7 +81,7 @@ void GlobalFixer::previsit(const ast::ObjectDecl * objDecl) {
 			// SKULLDUGGERY: change value through const pointer.
 			const_cast<ast::Type *>(objDecl->get_type())->set_const( false );
 		} // if
-	}
+	} // if
 }
 
 } // namespace

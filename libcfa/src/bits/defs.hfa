@@ -12,8 +12,8 @@
 // Author           : Thierry Delisle
 // Created On       : Thu Nov  9 13:24:10 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon Oct 27 22:40:05 2025
-// Update Count     : 23
+// Last Modified On : Sat Jul  4 15:04:20 2026
+// Update Count     : 26
 //
 
 #pragma once
@@ -65,30 +65,6 @@ void __cabi_abort( const char fmt[], ... ) __attribute__ (( format(printf, 1, 2)
 #define OPTIONAL_THREAD
 #else
 #define OPTIONAL_THREAD __attribute__((weak))
-#endif
-
-static inline long long int rdtscl(void) {
-	#if defined( __i386 ) || defined( __x86_64 )
-	unsigned int lo, hi;
-	__asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-	return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
-	#elif defined( __aarch64__ ) || defined( __arm__ )
-	// https://github.com/google/benchmark/blob/v1.1.0/src/cycleclock.h#L116
-	long long int virtual_timer_value;
-	asm volatile("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
-	return virtual_timer_value;
-	#else
-		#error unsupported hardware architecture
-	#endif
-}
-
-// pause to prevent excess processor bus usage
-#if defined( __i386 ) || defined( __x86_64 )
-	#define Pause() __asm__ __volatile__ ( "pause" : : : )
-#elif defined( __ARM_ARCH )
-	#define Pause() __asm__ __volatile__ ( "YIELD" : : : )
-#else
-	#error unsupported architecture
 #endif
 
 #define CFA_IO_LAZY (1_l64u << 32_l64u)

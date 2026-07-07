@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 17:12:35 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Dec 18 22:25:25 2024
-// Update Count     : 965
+// Last Modified On : Sat Jul  4 15:28:46 2026
+// Update Count     : 970
 //
 
 #pragma once
@@ -18,6 +18,7 @@
 #include "bits/defs.hfa"								// OPTIONAL_THREAD
 #include "bits/align.hfa"								// libAlign
 #include "bits/random.hfa"								// prng
+#include "bits/atomic.hfa"								// rdtsc
 #include <Exception.hfa>
 #include <heap.hfa>
 
@@ -483,7 +484,7 @@ static inline {
 	void set_seed( PRNG32 & prng, uint32_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_32( state, seed ); }
 	uint32_t get_seed( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; }
 	void ?{}( PRNG32 & prng, uint32_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
-	void ?{}( PRNG32 & prng ) with( prng ) { ?{}( prng, rdtscl() ); } // random seed
+	void ?{}( PRNG32 & prng ) with( prng ) { ?{}( prng, rdtsc() ); } // random seed
 	uint32_t prng( PRNG32 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_32( state ); } // [0,UINT_MAX]
 	uint32_t prng( PRNG32 & prng, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint32_t prng( PRNG32 & prng, uint32_t l, uint32_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]
@@ -503,7 +504,7 @@ static inline {
 	void set_seed( PRNG64 & prng, uint64_t seed_ ) with( prng ) { seed = seed_; PRNG_SET_SEED_64( state, seed ); }
 	uint64_t get_seed( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { return seed; }
 	void ?{}( PRNG64 & prng, uint64_t seed ) with( prng ) { callcnt = 0; set_seed( prng, seed ); } // fixed seed
-	void ?{}( PRNG64 & prng ) with( prng ) { ?{}( prng, rdtscl() ); } // random seed
+	void ?{}( PRNG64 & prng ) with( prng ) { ?{}( prng, rdtsc() ); } // random seed
 	uint64_t prng( PRNG64 & prng ) __attribute__(( warn_unused_result )) with( prng ) { callcnt += 1; return PRNG_NAME_64( state ); } // [0,UINT_MAX]
 	uint64_t prng( PRNG64 & prng, uint64_t u ) __attribute__(( warn_unused_result )) { return prng( prng ) % u; } // [0,u)
 	uint64_t prng( PRNG64 & prng, uint64_t l, uint64_t u ) __attribute__(( warn_unused_result )) { return prng( prng, u - l + 1 ) + l; } // [l,u]

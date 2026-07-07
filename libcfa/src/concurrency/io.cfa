@@ -205,7 +205,7 @@
 
 			// update the timestamps accordingly
 			// keep a local copy so we can update the relaxed copy
-			ts_next = ctx->cq.ts = rdtscl();
+			ts_next = ctx->cq.ts = rdtsc();
 
 			// Mark to the kernel that the cqe has been seen
 			// Ensure that the kernel only sees the new value of the head index after the CQEs have been read.
@@ -273,7 +273,7 @@
 			/* paranoid */ verify( ctx->cq.id < ctxs_count );
 
 			const unsigned this_cache = cache_id(cltr, ctx->cq.id / __shard_factor.io);
-			const unsigned long long ctsc = rdtscl();
+			const unsigned long long ctsc = rdtsc();
 
 			// only help once every other time
 			// pick a target when not helping

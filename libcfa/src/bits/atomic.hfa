@@ -1,0 +1,81 @@
+//
+// Cforall Version 1.0.0 Copyright (C) 2022 University of Waterloo
+//
+// The contents of this file are covered under the licence agreement in the
+// file "LICENCE" distributed with Cforall.
+//
+// atomic.hfa -- simpler macros to access atomic instructions 
+//
+// Author           : Peter A. Buhr
+// Created On       : Thu May 25 15:22:46 2023
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Jul  5 23:03:28 2026
+// Update Count     : 78
+// 
+
+#pragma once
+
+static inline __attribute__((always_inline)) unsigned long long int rdtsc( void ) { // read processor's time-stamp counter
+	#if defined( __x86_64__ )
+	uint64_t rax, rdx, ecx;
+	__asm__ __volatile__ ( "rdtscp; " : "=a" (rax), "=d" (rdx), "=c" (ecx) :: );
+	return (rdx << 32) + rax;
+	#elif defined( __i386__ )
+	uint64_t count;
+	asm volatile ( "rdtsc" : "=A" (count) );
+	return count;
+	#elif defined( __aarch64__ )
+	// https://github.com/google/benchmark/blob/v1.1.0/src/cycleclock.h#L116
+	uint64_t count;
+	asm volatile ( "mrs %0, cntvct_el0" : "=r" (count) );
+	return count;
+	#else
+		#error unsupported architecture
+	#endif
+} // rdtsc
+
+static inline __attribute__((always_inline)) void Fence( void ) { // fence to prevent code movement
+	#if defined( __x86_64 )
+	// __asm__ __volatile__ ( "mfence" )
+	__asm__ __volatile__ ( "lock; addq $0,128(%%rsp);" ::: "cc" );
+	#elif defined(__i386)
+	__asm__ __volatile__ ( "lock; addl $0,128(%%esp);" ::: "cc" );
+	#elif defined( __ARM_ARCH )
+	__asm__ __volatile__ ( "DMB ISH" ::: );
+	#else
+		#error unsupported architecture
+	#endif
+} // Fence
+
+static inline __attribute__((always_inline)) void Pause( void ) { // pause to prevent excess processor bus usage
+	#if defined( __i386 ) || defined( __x86_64 )
+	__asm__ __volatile__ ( "lfence" );
+	#elif defined( __aarch64__ )
+	__asm__ __volatile__ ( "DMB ISH" ::: );
+	#else
+		#error unsupported architecture
+	#endif
+} // Pause
+
+// Short Names and reference parameters.
+
+#define AtomicLdm( lock, memorder ) __atomic_load_n( (&(lock)), memorder )
+#define AtomicLd( lock ) AtomicLdm( lock, __ATOMIC_ACQUIRE )
+#define AtomicStrm( lock, value, memorder ) __atomic_store_n( (&(lock)), value, memorder )
+#define AtomicStr( lock, value ) AtomicStrm( lock, value, __ATOMIC_RELEASE ) 
+#define AtomicClrm( lock, memorder ) __atomic_clear( (&(lock)), memorder )
+#define AtomicClr( lock ) AtomicClrm( lock, __ATOMIC_RELEASE )
+#define AtomicTasm( lock, memorder ) __atomic_test_and_set( (&(lock)), memorder )
+#define AtomicTas( lock ) AtomicTasm( lock, __ATOMIC_ACQUIRE )
+#define AtomicCasm( change, comp, assn, smemorder, fmemorder ) ({TYPEOF(comp) __temp = (comp); __atomic_compare_exchange_n( (&(change)), (&(__temp)), (assn), false, smemorder, fmemorder ); })
+#define AtomicCas( change, comp, assn ) AtomicCasm( change, comp, assn, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST )
+#define AtomicCaswm( change, comp, assn, smemorder, fmemorder ) ({TYPEOF(comp) __temp = (comp); __atomic_compare_exchange_n( (&(change)), (&(__temp)), (assn), true, smemorder, fmemorder ); })
+#define AtomicCasw( change, comp, assn ) AtomicCaswm( change, comp, assn, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST )
+#define AtomicCasvm( change, comp, assn, smemorder, fmemorder ) __atomic_compare_exchange_n( (&(change)), (&(comp)), (assn), false, smemorder, fmemorder )
+#define AtomicCasv( change, comp, assn ) AtomicCasvm( change, comp, assn, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST )
+#define AtomicCasvwm( change, comp, assn, smemorder, fmemorder ) __atomic_compare_exchange_n( (&(change)), (&(comp)), (assn), true, smemorder, fmemorder )
+#define AtomicCasvw( change, comp, assn ) AtomicCasvwm( change, comp, assn, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST )
+#define AtomicFasm( change, assn, memorder ) __atomic_exchange_n( (&(change)), (assn), memorder )
+#define AtomicFas( change, assn ) AtomicFasm( change, assn, __ATOMIC_SEQ_CST )
+#define AtomicFaim( change, Inc, memorder ) __atomic_fetch_add( (&(change)), (Inc), memorder )
+#define AtomicFai( change, Inc ) AtomicFaim( change, Inc, __ATOMIC_SEQ_CST )

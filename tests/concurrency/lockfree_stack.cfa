@@ -9,12 +9,12 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu May 25 15:36:50 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jun  9 14:01:07 2023
-// Update Count     : 68
+// Last Modified On : Sat Jul  4 15:59:49 2026
+// Update Count     : 74
 //
 
 #include <thread.hfa>
-#include <atomic.hfa>									// CASV
+#include <bits/atomic.hfa>								// AtomicCasv
 #include <fstream.hfa>
 
 struct Node;											// forward declaration
@@ -42,7 +42,7 @@ void push( Stack & s, Node & n ) with(s) {
 	n.next = stack;										// atomic assignment unnecessary
 	for () {											// busy wait
 		Link temp{ { &n, n.next.count + 1 } };
-		if ( CASV( s.stack.atom, n.next.atom, temp.atom ) ) break; // attempt to update top node
+		if ( AtomicCasv( s.stack.atom, n.next.atom, temp.atom ) ) break; // attempt to update top node
 	}
 }
 
@@ -51,7 +51,7 @@ Node * pop( Stack & s ) with(s) {
 	for () {											// busy wait
 		if ( t.top == NULL ) return NULL;				// empty stack ?
 		Link temp{ { t.top->next.top, t.count } };
-		if ( CASV( stack.atom, t.atom, temp.atom ) ) return t.top; // attempt to update top node
+		if ( AtomicCasv( stack.atom, t.atom, temp.atom ) ) return t.top; // attempt to update top node
 	}
 }
 void ?{}( Stack & s ) with(s) { stack.atom = 0; }

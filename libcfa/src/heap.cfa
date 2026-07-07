@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Dec 19 21:58:35 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu May 15 16:47:35 2025
-// Update Count     : 1647
+// Last Modified On : Sat Jul  4 16:17:06 2026
+// Update Count     : 1658
 //
 
 #include <stdio.h>
@@ -24,8 +24,7 @@ extern "C" {
 } // extern "C"
 
 #include "heap.hfa"
-#include "bits/align.hfa"								// libAlign
-#include "bits/defs.hfa"								// likely, unlikely
+#include "bits/align.hfa"								// libAlign, Pause, likely, unlikely
 #include "concurrency/kernel/fwd.hfa"					// disable_interrupts, enable_interrupts
 #include "startup.hfa"									// STARTUP_PRIORITY_MEMORY
 #include "math.hfa"										// ceiling, min
@@ -128,16 +127,6 @@ static size_t Bsearchl( unsigned int key, const unsigned int vals[], size_t dim 
 	return l;
 } // Bsearchl
 
-
-// pause to prevent excess processor bus usage
-#if defined( __i386 ) || defined( __x86_64 )
-	#define Pause() __asm__ __volatile__ ( "pause" : : : )
-#elif defined(__ARM_ARCH)
-	#define Pause() __asm__ __volatile__ ( "YIELD" : : : )
-#else
-	#error unsupported architecture
-#endif
-
 typedef volatile uintptr_t SpinLock_t;
 
 static inline __attribute__((always_inline)) void lock( volatile SpinLock_t & slock ) {
@@ -145,7 +134,7 @@ static inline __attribute__((always_inline)) void lock( volatile SpinLock_t & sl
 	unsigned int spin = SPIN_START;
 
 	for ( unsigned int i = 1;; i += 1 ) {
-	  if ( slock == 0 && __atomic_test_and_set( &slock, __ATOMIC_ACQUIRE ) == 0 ) break; // Fence
+	  if ( slock == 0 && AtomicTas( slock ) == 0 ) break; // Fence
 		for ( volatile unsigned int s = 0; s < spin; s += 1 ) Pause(); // exponential spin
 		spin += spin;									// powers of 2
 		//if ( i % 64 == 0 ) spin += spin;				// slowly increase by powers of 2
@@ -154,7 +143,7 @@ static inline __attribute__((always_inline)) void lock( volatile SpinLock_t & sl
 } // spin_lock
 
 static inline __attribute__((always_inline)) void unlock( volatile SpinLock_t & slock ) {
-	__atomic_clear( &slock, __ATOMIC_RELEASE );			// Fence
+	AtomicClr( slock );									// Fence
 } // spin_unlock
 
 
@@ -1002,7 +991,7 @@ static void * doMalloc( size_t size STAT_PARM ) libcfa_nopreempt with( *heapMana
 				freeHead->returnList = 0p;
 				unlock( freeHead->returnLock );
 				#else
-				block = __atomic_exchange_n( &freeHead->returnList, 0p, __ATOMIC_SEQ_CST );
+				block = AtomicFas( freeHead->returnList, 0p );
 				#endif // RETURNSPIN
 
 				verify( block );
@@ -1167,8 +1156,7 @@ static void doFree( void * addr ) libcfa_nopreempt with( *heapManager ) {
 			#else										// lock free
 			header->kind.real.next = freeHead->returnList; // link new node to top node
 			// CAS resets header->kind.real.next = freeHead->returnList on failure
-			while ( ! __atomic_compare_exchange_n( &freeHead->returnList, &header->kind.real.next, (Heap.Storage *)header,
-												   false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST ) );
+			while ( ! AtomicCasv( freeHead->returnList, header->kind.real.next, (Heap.Storage *)header );
 
 			#ifdef __STATISTICS__
 			stats.return_pushes += 1;

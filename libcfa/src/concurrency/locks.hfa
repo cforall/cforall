@@ -10,8 +10,8 @@
 // Author           : Colby Alexander Parsons
 // Created On       : Thu Jan 21 19:46:50 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 29 22:46:39 2026
-// Update Count     : 68
+// Last Modified On : Sat Jul  4 06:52:06 2026
+// Update Count     : 70
 //
 
 #pragma once
@@ -20,6 +20,7 @@
 #include <stdio.h>
 
 #include "bits/weakso_locks.hfa"
+#include "bits/atomic.hfa"
 #include "collections/lockfree.hfa"
 #include "collections/list.hfa"
 

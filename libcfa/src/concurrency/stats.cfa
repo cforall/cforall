@@ -220,7 +220,7 @@
 
 			if(external) unlock(stats_lock);
 
-			this->array.values[idx].ts = rdtscl();
+			this->array.values[idx].ts = rdtsc();
 			this->array.values[idx].value = value;
 		}
 	#endif

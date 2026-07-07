@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Mon May  4 12:00:48 2026
-// Update Count     : 2310
+// Last Modified On : Sat Jul  4 14:54:12 2026
+// Update Count     : 2317
 //
 
 #include "iostream.hfa"
@@ -130,12 +130,9 @@ forall( ostype & | basic_ostream( ostype ) ) {
 	#define P10_UINT64 10_000_000_000_000_000_000_ULL	// 19 zeroes
 
 	static inline void base10_128( ostype & os, unsigned int128 val ) with ( basic_ostream_table ) {
-		#if defined(__GNUC__) && __GNUC_PREREQ(7,0)		// gcc version >= 7
-		if ( val > P10_UINT64 ) {
-		#else
-		if ( (uint64_t)(val >> 64) != 0 || (uint64_t)val > P10_UINT64 ) { // patch gcc 5 & 6 -O3 bug
-		#endif // __GNUC_PREREQ(7,0)
-			base10_128( os, val / P10_UINT64 );			// recursive
+//		if ( val > P10_UINT64 ) {
+		if ( (uint64_t)(val >> 64) != 0 || (uint64_t)val > P10_UINT64 ) { // FIX ME: -O3 bug
+			base10_128( os, val / P10_UINT64 );			// RECURSIVE
 			fmt( os, "%.19lu", (uint64_t)(val % P10_UINT64) );
 		} else {
 			fmt( os, "%lu", (uint64_t)val );

@@ -18,6 +18,7 @@
 
 #include "bits/defs.hfa"
 #include "bits/debug.hfa"
+#include "bits/atomic.hfa"								// Pause
 
 #ifdef __cforall
 #include "bits/random.hfa"
