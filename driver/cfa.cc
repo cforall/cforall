@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Aug 20 13:44:49 2002
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Sep 28 21:53:54 2023
-// Update Count     : 484
+// Last Modified On : Wed Jul  8 17:45:04 2026
+// Update Count     : 487
 //
 
 #include <iostream>
@@ -454,7 +454,8 @@ int main( int argc, char * argv[] ) {
 		args[nargs++] = "-lm";
 	} // if
 
-	args[nargs++] = "-fexceptions";						// add exception flags (unconditionally)
+	args[nargs++] = "-fexceptions";						// Generates code to propagate exceptions
+	args[nargs++] = "-fwrapv";							// fully define integer signed overflow
 	args[nargs++] = "-D_GNU_SOURCE";					// force gnu libraries
 
 	// add flags based on the type of compile
@@ -470,21 +471,21 @@ int main( int argc, char * argv[] ) {
 		args[nargs++] = "-D__CPP__";
 	} // if
 
-	if ( CFA_flag ) {
-		Putenv( argv, "-N" );
-		Putenv( argv, "-CFA" );
-		// -CFA implies cc1 stage 2, but gcc does not pass the -o file to this stage because it believe the file is for
-		// the linker. Hence, the -o file is explicit passed to cc1 stage 2 and used as cfa-cpp's output file.
-		if ( o_file ) Putenv( argv, string( "-o=" ) + argv[o_file] );
-	} else {
-		Putenv( argv, "-L" );
-	} // if
-
 	if ( debug ) {
 		heading += " (debug)";
 		args[nargs++] = "-D__CFA_DEBUG__";
 	} else {
 		heading += " (no debug)";
+	} // if
+
+	if ( CFA_flag ) {
+		Putenv( argv, "-N" );
+		Putenv( argv, "-CFA" );
+		// -CFA implies cc1 stage 2, but gcc does not pass the -o file to this stage because it believes the file is for
+		// the linker. Hence, the -o file is explicit passed to cc1 stage 2 and used as cfa-cpp's output file.
+		if ( o_file ) Putenv( argv, string( "-o=" ) + argv[o_file] );
+	} else {
+		Putenv( argv, "-L" );
 	} // if
 
 	if ( bprefix.length() == 0 ) {

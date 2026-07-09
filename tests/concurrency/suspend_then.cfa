@@ -4,6 +4,7 @@
 #include <time.hfa>
 #include <stdlib.hfa>
 #include <string.h>
+#include <bits/atomic.hfa>
 
 #define __kick_rate 150000ul
 #include "long_tests.hfa"
@@ -29,15 +30,16 @@ static const unsigned long N = 1_000ul;
 generator Coroutine { int i; };
 
 volatile bool done = false;
-Coroutine * volatile the_cor = 0p;
+Coroutine c;
+Coroutine * the_cor = &c;
 
-void store(Coroutine & cor) {
-	__atomic_store_n( &the_cor, &cor, __ATOMIC_SEQ_CST );
+void store( Coroutine & cor ) {
+	AtomicStr( the_cor, &cor );
 }
 
 Coroutine * take( void ) {
 	Coroutine * val = 0p;
-	Coroutine * ret = __atomic_exchange_n( &the_cor, val, __ATOMIC_SEQ_CST );
+	Coroutine * ret = AtomicFas( the_cor, val );
 	assert( ! ret || ! the_cor );
 	return ret;
 }
@@ -67,7 +69,6 @@ void main( Thread & ) {
 		yield();
 		mine = take();
 		if ( ! mine ) continue;
-
 		print( "T - took\n" );
 		resume( *mine );
 	}
@@ -76,18 +77,7 @@ void main( Thread & ) {
 
 int main() {
 	processor p[2];
-	Coroutine c;
-	resume( c ); // Prime the coroutine to avoid one of the threads being its starter
-
-#if defined(__GNUC__) && __GNUC__ == 12
-	#pragma GCC diagnostic push
-	#pragma GCC diagnostic ignored "-Wdangling-pointer"	// this assignment is ok
-#endif // defined(__GNUC__) && __GNUC__ == 12
-	the_cor = &c;
-#if defined(__GNUC__) && __GNUC__ == 12
-	#pragma GCC diagnostic pop
-#endif // defined(__GNUC__) && __GNUC__ == 12
-
+	resume( c );										// prime coroutine to make program main its starter
 	{
 		Thread t[2];
 	}

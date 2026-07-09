@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu May 25 15:22:46 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jul  5 23:03:28 2026
-// Update Count     : 78
+// Last Modified On : Mon Jul  6 16:29:38 2026
+// Update Count     : 86
 // 
 
 #pragma once
@@ -58,6 +58,9 @@ static inline __attribute__((always_inline)) void Pause( void ) { // pause to pr
 } // Pause
 
 // Short Names and reference parameters.
+
+// Cforall polymorphism does not work because it takes the address of the builtin atomic and C does not generate a
+// wrapper function for builtins.
 
 #define AtomicLdm( lock, memorder ) __atomic_load_n( (&(lock)), memorder )
 #define AtomicLd( lock ) AtomicLdm( lock, __ATOMIC_ACQUIRE )

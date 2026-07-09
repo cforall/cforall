@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Apr 13 17:54:23 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  4 14:53:56 2026
-// Update Count     : 41
+// Last Modified On : Wed Jul  8 18:08:44 2026
+// Update Count     : 42
 // 
 
 #include <fstream.hfa>
@@ -298,7 +298,7 @@ int main() {
 	i128 <<= 64;
 	i128 += 0xfffffffffffffffa;
 
-	for ( volatile int i; 20 ) {						// FIX ME: without volatile -O3 bug that loops
+	for ( i; 20 ) {
 		sout | i128;
 		sout | left( sign( wd( 45, i128 ) ) ) | left( wd( 45, hex( i128 ) ) ) | left( wd( 45, oct( i128 ) ) );
 		sout | left( wd( 45, bin( i128 ) ) );
