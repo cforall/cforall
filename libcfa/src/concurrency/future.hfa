@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle & Peiran Hong & Colby Parsons & Peter Buhr
 // Created On       : Wed Jan 06 17:33:18 2021
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar 29 22:47:01 2026
-// Update Count     : 224
+// Last Modified On : Fri Jul 10 07:16:22 2026
+// Update Count     : 232
 //
 
 #pragma once
@@ -38,12 +38,12 @@ forall( T ) {
 		void copy_T$( T & to, T & from ) { memcpy( (void *)&to, (void *)&from, sizeof(T) ); }
 	} // distribution
 
-	enum { FUTURE_EMPTY$ = 0, FUTURE_FULFILLED$ = 1 };
+	enum future_state$ ! { EMPTY, FULFILLED };
 
 	// PUBLIC
 
 	struct future {
-		int state;
+		future_state$ state;
 		T result;
 		exception_t * except;
 		futex_mutex lock;
@@ -58,7 +58,7 @@ forall( T ) {
 			lock( lock );
 
 			// check if we can complete operation. If so race to establish winner in special OR case
-			if ( !s.park_counter && state != FUTURE_EMPTY$ ) {
+			if ( !s.park_counter && state != future_state$.EMPTY ) {
 				if ( !__make_select_node_available( s ) ) { // we didn't win the race so give up on registering
 					unlock( lock );
 					return false;
@@ -66,7 +66,7 @@ forall( T ) {
 			}
 
 			// future not ready -> insert select node and return
-		  if ( state == FUTURE_EMPTY$ ) {
+		  if ( state == future_state$.EMPTY ) {
 				insert_last( waiters, s );
 				unlock( lock );
 				return false;
@@ -98,7 +98,7 @@ forall( T ) {
 
  		void ?{}( future(T) & fut ) with( fut ) {
  			except = 0p;
- 			state = FUTURE_EMPTY$;
+ 			state = future_state$.EMPTY;
  		}
 
 		void ^?{}( future(T) & fut ) with( fut ) {
@@ -122,7 +122,7 @@ forall( T ) {
 			T ret_val;
 
 			// LOCK ACQUIRED IN PUBLIC get
-			if ( state == FUTURE_FULFILLED$ ) {
+			if ( state == future_state$.FULFILLED ) {
 				exceptCheck();
 				copy_T$( ret_val, result );
 				unlock( lock );
@@ -139,12 +139,12 @@ forall( T ) {
 
 		// PUBLIC
 
-		bool available( future( T ) & fut ) { return __atomic_load_n( &fut.state, __ATOMIC_RELAXED ); } // future result available ?
+		bool available( future( T ) & fut ) { return fut.state == future_state$.FULFILLED; } // future result available ?
 
 		// Return a value/exception from the future.
 		[T, bool] get( future(T) & fut ) with( fut ) {
 			lock( lock );
-			bool ret = state == FUTURE_EMPTY$;
+			bool ret = state == future_state$.EMPTY;
 			return [ get$( fut ), ret ];
 		}
 
@@ -158,7 +158,7 @@ forall( T ) {
 		[T, bool] try_get( future(T) & fut ) with( fut ) {
 			lock( lock );
 			T ret_val;
-			if ( state == FUTURE_FULFILLED$ ) {
+			if ( state == future_state$.FULFILLED ) {
 				copy_T$( ret_val, result );
 				unlock( lock );
 				return [ret_val, true];
@@ -173,7 +173,7 @@ forall( T ) {
 
 		bool fulfil$( future(T) & fut ) with( fut ) {	// helper
 			bool ret_val = ! empty( waiters );
-			state = FUTURE_FULFILLED$;
+			state = future_state$.FULFILLED;
 			while ( ! empty( waiters ) ) {
 				if ( !__handle_waituntil_OR( waiters ) ) // handle special waituntil OR case
 					break; // if handle_OR returns false then waiters is empty so break
@@ -193,7 +193,7 @@ forall( T ) {
 		// Load a value/exception into the future, returns whether or not waiting threads.
 		bool fulfil( future(T) & fut, T val ) with( fut ) {
 			lock( lock );
-		  if ( state != FUTURE_EMPTY$ ) abort("Attempting to fulfil a future that has already been fulfilled");
+		  if ( state != future_state$.EMPTY ) abort("Attempting to fulfil a future that has already been fulfilled");
 			copy_T$( result, val );
 			return fulfil$( fut );
 		}
@@ -201,7 +201,7 @@ forall( T ) {
 
 		bool fulfil( future(T) & fut, exception_t * ex ) with( fut ) {
 			lock( lock );
-		  if ( state != FUTURE_EMPTY$ ) abort( "Attempting to fulfil a future that has already been fulfilled" );
+		  if ( state != future_state$.EMPTY ) abort( "Attempting to fulfil a future that has already been fulfilled" );
 			except = ( exception_t * ) malloc( ex->virtual_table->size );
 			ex->virtual_table->copy( except, ex );
 			return fulfil$( fut );
@@ -211,7 +211,7 @@ forall( T ) {
 		void reset( future(T) & fut ) with( fut ) {		// mark future as empty (for reuse)
 			lock( lock );
 		  if ( ! empty( waiters ) ) abort( "Attempting to reset a future with blocked waiters" );
-			state = FUTURE_EMPTY$;
+			state = future_state$.EMPTY;
 			free( except );
 			except = 0p;
 			unlock( lock );

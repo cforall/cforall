@@ -35,7 +35,19 @@ int main() {
 	double earthMass = earthWeight / surfaceGravity( EARTH );
 
 //	Planet rp = fromInt( prng( countof( Planet ) ) );	// select random orbiting body
+
+	#if __GNUC__ >= 12									// valid GNU compiler diagnostic ?
+	#pragma GCC diagnostic push
+	// FIX ME: false positive with gcc > 11, so disable.
+	#pragma GCC diagnostic ignored "-Wdangling-pointer"
+	#endif // __GNUC__ >= 12
+
 	Planet rp = fromInt( countof( Planet ) - 1 );		// non-random for test suite
+
+	#if __GNUC__ >= 12									// valid GNU compiler diagnostic ?
+	#pragma GCC diagnostic pop
+	#endif // __GNUC__ >= 12
+
 	choose( rp ) {										// implicit breaks
 	  case MERCURY, VENUS, EARTH, MARS:
 		sout | rp | "is a rocky planet";

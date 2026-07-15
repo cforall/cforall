@@ -70,7 +70,7 @@ int main() {
 	a[0]`mary;
 	a[0]`mary`mary;
 	s{0}`mary;
-	a[3]`jane++;
+	a[2]`jane++;
 	jack(3)`mary;
 	s.i`mary;
 	t.0`mary;
