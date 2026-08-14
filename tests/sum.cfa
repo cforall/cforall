@@ -10,8 +10,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Feb 24 22:52:12 2023
-// Update Count     : 347
+// Last Modified On : Thu Aug 13 20:35:26 2026
+// Update Count     : 349
 //
 
 #include <fstream.hfa>
@@ -92,7 +92,7 @@ int main( void ) {
 	S ?+?( S t1, S t2 ) { return (S){ t1.i + t2.i, t1.j + t2.j }; }
 	S ?+=?( S & t1, S t2 ) { t1 = t1 + t2; return t1; }
 	ofstream & ?|?( ofstream & os, S v ) { return os | v.i | v.j; }
-	void ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
+	OFSTREAM_VOID_IMPL( os, S )							// void version
 
 	S s = 0, a[size], v = { low, low };
 	for ( int i = 0; i < size; i += 1, v += (S){1} ) {

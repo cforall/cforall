@@ -15,8 +15,8 @@ S ?+=?( S & t1, S t2 ) { t1.i += t2.i; t1.j += t2.j; return t1; }
 S ?+=?( S & t, one_t ) { t.i += 1; t.j += 1; return t; }
 S ?-=?( S & t1, S t2 ) { t1.i -= t2.i; t1.j -= t2.j; return t1; }
 S ?-=?( S & t, one_t ) { t.i -= 1; t.j -= 1; return t; }
-ofstream & ?|?( ofstream & os, S v ) { return os | '(' | v.i | v.j | ')'; }
-void & ?|?( ofstream & os, S v ) { (ofstream &)(os | v); ends( os ); }
+ofstream & ?|?( ofstream & os, S s ) { return os | '(' | s.i | s.j | ')'; }
+OFSTREAM_VOID_IMPL( os, S )								// void version
 
 int main() {
 	sout | nlOff;										// turn off auto newline

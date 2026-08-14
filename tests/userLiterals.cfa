@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Sep  6 21:40:50 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Feb 19 07:48:45 2020
-// Update Count     : 74
+// Last Modified On : Thu Aug 13 20:48:37 2026
+// Update Count     : 77
 //
 
 #include <fstream.hfa>
@@ -42,7 +42,7 @@ Weight ?+?( Weight l, Weight r ) {
 	return (Weight){ l.stones + r.stones };
 }
 ofstream & ?|?( ofstream & os, Weight w ) { return os | wd(1,1, w.stones); }
-void ?|?( ofstream & os, Weight w ) { (ofstream)(os | w); ends( os ); }
+OFSTREAM_VOID_IMPL( os, Weight )						// void version
 
 Weight ?`st( double w ) { return (Weight){ w }; }		// backquote for user literals
 Weight ?`lb( double w ) { return (Weight){ w / 14.0 }; }

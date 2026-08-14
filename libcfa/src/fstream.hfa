@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Wed Jan 14 21:11:16 2026
-// Update Count     : 280
+// Last Modified On : Thu Aug 13 20:56:42 2026
+// Update Count     : 284
 //
 
 #pragma once
@@ -35,6 +35,10 @@ struct ofstream {
 	char tupleSeparator$[ofstream_sepSize];
 	multiple_acquisition_lock lock$;					// used by trait is_lock for mutex statement
 }; // ofstream
+
+#define OFSTREAM_VOID( T ) void ?|?( ofstream &, T )
+#define OFSTREAM_VOID_IMPL( os, T ) void & ?|?( ofstream & os, T t ) { (typeof(os))(os | t); ends( os ); }
+
 
 // Satisfies ostream
 extern basic_ostream_data(ofstream) const & basic_ostream_table;

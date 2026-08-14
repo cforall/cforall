@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 11 17:54:36 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 24 08:01:36 2024
-// Update Count     : 43
+// Last Modified On : Thu Aug 13 16:33:06 2026
+// Update Count     : 44
 //
 
 #pragma once
@@ -89,8 +89,8 @@ static inline __attribute__((always_inline)) {
 	forall( T, Ts ... | { T min( T, T ); T min( Ts ); } )
 	T min( T arg, Ts args ) { return min( arg, min( args ) ); }
 
-	forall( T | { int ?>?( T, T ); } )
-	T max( T v1, T v2 ) { return v1 > v2 ? v1 : v2; }
+	forall( T | { int ?<?( T, T ); } )
+	T max( T v1, T v2 ) { return !(v1 < v2) ? v1 : v2; }
 
 	forall( T, Ts ... | { T max( T, T ); T max( Ts ); } )
 	T max( T arg, Ts args ) { return max( arg, max( args ) ); }

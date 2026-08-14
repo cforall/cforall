@@ -9,14 +9,21 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Aug 15 08:28:01 2020
-// Update Count     : 54
+// Last Modified On : Thu Aug 13 20:30:26 2026
+// Update Count     : 124
 //
 
-#include <fstream.hfa>
-#include <stdlib.hfa>										// min, max
+#include <fstream.hfa>									// I/O
+#include <stdlib.hfa>									// min, max
+
+// user type
+struct S { int i, j; };
+int ?<?( S lhs, S rhs ) with(lhs) { return i < rhs.i && j < rhs.j; }
+ofstream & ?|?( ofstream & os, S s ) with(s) { return os | "(" | i | "," | j | ")"; }
+OFSTREAM_VOID_IMPL( os, S )								// void version
 
 int main( void ) {
+	sout | "same mode";
 	sout | "char\t\t\t"					| 'z' | ' ' | 'a' | "\tmin " | min( 'z', 'a' );
 	sout | "signed int\t\t"				| 4 | -3 | "\tmin" | min( 4, -3 );
 	sout | "unsigned int\t\t"			| 4u | 3u | "\tmin" | min( 4u, 3u );
@@ -27,9 +34,20 @@ int main( void ) {
 	sout | "float\t\t\t" 				| 4.0f | 3.1f | "\tmin" | min( 4.0f, 3.1f );
 	sout | "double\t\t\t"				| 4.0 | 3.1 | "\tmin" | min( 4.0, 3.1 );
 	sout | "long double\t\t"			| 4.0l | 3.1l | "\tmin" | min( 4.0l, 3.1l );
-
 	sout | nl;
 
+	sout | "mixed mode";
+	sout | "char, int\t\t"				| quote( 'a' ) | sep | 3 | "\tmin" | min( 'a', 3 );
+	sout | "int, long int\t\t"			| 4 | -3l | "\tmin" | min( 4, -3l );
+	sout | "long int, double\t"			| 4 | 5.5 | "\tmin" | min( 4, 5.5 );
+	sout | nl;
+
+	S s1{ 2, 3 }, s2{ 3, 4 };
+	sout | "user mode";
+	sout | "struct S\t"					| s1 | s2 | "\tmin" | min( s1, s2 );
+	sout | nl;
+
+	sout | "same mode";
 	sout | "char\t\t\t"					| 'z' | ' ' | 'a' | "\tmax " | max( 'z', 'a' );
 	sout | "signed int\t\t"				| 4 | -3 | "\tmax" | max( 4, -3 );
 	sout | "unsigned int\t\t"			| 4u | 3u | "\tmax" | max( 4u, 3u );
@@ -40,17 +58,30 @@ int main( void ) {
 	sout | "float\t\t\t" 				| 4.0f | 3.1f | "\tmax" | max( 4.0f, 3.1f );
 	sout | "double\t\t\t"				| 4.0 | 3.1 | "\tmax" | max( 4.0, 3.1 );
 	sout | "long double\t\t"			| 4.0l | 3.1l | "\tmax" | max( 4.0l, 3.1l );
-
 	sout | nl;
 
+	sout | "mixed mode";
+	sout | "char, int\t\t"				| quote( 'a' ) | sep | 3 | "\tmax" | max( 'a', 3 );
+	sout | "int, long int\t\t"			| 4 | -3l | "\tmax" | max( 4, -3l );
+	sout | "long int, double\t"			| 4 | 5.5 | "\tmax" | max( 4, 5.5 );
+
+	sout | nl;
+	sout | "user mode";
+	sout | "struct S\t"					| s1 | s2 | "\tmax" | max( s1, s2 );
+	sout | nl;
+
+	S s3{ 4, 7 }, s4{ 3, 27 };
 	sout | "3 arguments";
-	sout | 2 | 3 | 4 | "\tmin" | min(2, 3, 4) | "\tmax" | max(2, 3, 4);
-	sout | 4 | 2 | 3 | "\tmin" | min(4, 2, 3) | "\tmax" | max(4, 2, 3);
-	sout | 3 | 4 | 2 | "\tmin" | min(3, 4, 2) | "\tmax" | max(3, 4, 2);
+	sout | 2 | 3 | 4 | "\tmin" | min( 2, 3, 4 ) | "\tmax" | max( 2, 3, 4 );
+	sout | 4 | 2 | 3 | "\tmin" | min( 4, 2, 3 ) | "\tmax" | max( 4, 2, 3 );
+	sout | 3 | 4 | 2 | "\tmin" | min( 3, 4, 2 ) | "\tmax" | max( 3, 4, 2 );
+	sout | s1 | s2 | s3 | "\tmin" | min( s1, s2, s3 ) | "\tmax" | max( s1, s2, s3 );
+	sout | nl;
 
 	sout | "4 arguments";
-	sout | 3 | 2 | 5 | 4 | "\tmin" | min(3, 2, 5, 4) | "\tmax" | max(3, 2, 5, 4);
-	sout | 5 | 3 | 4 | 2 | "\tmin" | min(5, 3, 4, 2) | "\tmax" | max(5, 3, 4, 2);
+	sout | 3 | 2 | 5 | 4 | "\tmin" | min( 3, 2, 5, 4 ) | "\tmax" | max( 3, 2, 5, 4 );
+	sout | 5 | 3 | 4 | 2 | "\tmin" | min( 5, 3, 4, 2 ) | "\tmax" | max( 5, 3, 4, 2 );
+	sout | s1 | s2 | s3 | s4 | "\tmin" | min( s1, s2, s3, s4 ) | "\tmax" | max( s1, s2, s3, s4 );
 } // main
 
 // Local Variables: //

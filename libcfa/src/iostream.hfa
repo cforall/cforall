@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun May  3 21:55:06 2026
-// Update Count     : 829
+// Last Modified On : Thu Aug 13 21:01:28 2026
+// Update Count     : 831
 //
 
 #pragma once
@@ -85,11 +85,7 @@ trait writeable {
 // implement writable for intrinsic types
 
 #define OSTYPE_VOID( T ) void ?|?( ostype &, T )
-#define OSTYPE_VOID_IMPL( os, T ) \
-	void ?|?( ostype & os, T t ) { \
-		(ostype &)(os | t); \
-		basic_ostream_table.ends( os ); \
-	} // ?|?
+#define OSTYPE_VOID_IMPL( os, T ) void ?|?( ostype & os, T t ) { (typeof(os))(os | t); basic_ostream_table.ends( os ); }
 
 forall( ostype & | basic_ostream( ostype ) ) {
 	ostype & ?|?( ostype &, bool );

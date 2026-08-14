@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jul 12 12:05:26 2019
-// Update Count     : 79
+// Last Modified On : Thu Aug 13 20:35:57 2026
+// Update Count     : 82
 //
 
 #include <fstream.hfa>
@@ -84,7 +84,7 @@ int main( void ) {
 
 	struct S { int i, j; } s1 = { 1, 2 }, s2 = { 2, 1 };
 	ofstream & ?|?( ofstream & os, S s ) { return os | s.i | s.j; }
-	void ?|?( ofstream & os, S s ) { (ofstream &)(os | s.i | s.j); ends( os ); }
+	OFSTREAM_VOID_IMPL( os, S )							// void version
 	sout | "struct S\t\t" | s1 | "," | s2 | "\t\tswap " | nonl;
 	swap( s1, s2 );
 	sout | '\t' | s1 | "," | s2;
