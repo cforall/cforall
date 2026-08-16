@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Jul 11 17:54:36 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 13 16:33:06 2026
-// Update Count     : 44
+// Last Modified On : Thu Aug 13 23:56:03 2026
+// Update Count     : 72
 //
 
 #pragma once
@@ -59,8 +59,10 @@ static inline __attribute__((always_inline)) {
 	long double abs( long double _Complex x ) { return cabsl( x ); }
 } // distribution
 
+static inline __attribute__((always_inline))
+//forall( T | { void ?{}( T &, zero_t ); int ?<?( T, T ); T -?( T ); } )
 forall( T | { void ?{}( T &, zero_t ); int ?<?( T, T ); T -?( T ); } )
-T abs( T );
+T abs( T v ) { return v < (T){0} ? -v : v; }
 
 //---------------------------------------
 
@@ -74,13 +76,13 @@ static inline __attribute__((always_inline)) {
 	long long int min( long long int v1, long long int v2 ) { return v1 < v2 ? v1 : v2; }
 	unsigned long long int min( unsigned long long int v1, unsigned long long int v2 ) { return v1 < v2 ? v1 : v2; }
 
-	char max( char v1, char v2 ) { return v1 > v2 ? v1 : v2; }
-	int max( int v1, int v2 ) { return v1 > v2 ? v1 : v2; }
-	unsigned int max( unsigned int v1, unsigned int v2 ) { return v1 > v2 ? v1 : v2; }
-	long int max( long int v1, long int v2 ) { return v1 > v2 ? v1 : v2; }
-	unsigned long int max( unsigned long int v1, unsigned long int v2 ) { return v1 > v2 ? v1 : v2; }
-	long long int max( long long int v1, long long int v2 ) { return v1 > v2 ? v1 : v2; }
-	unsigned long long int max( unsigned long long int v1, unsigned long long int v2 ) { return v1 > v2 ? v1 : v2; }
+	char max( char v1, char v2 ) { return !(v1 < v2) ? v1 : v2; }
+	int max( int v1, int v2 ) { return !(v1 < v2) ? v1 : v2; }
+	unsigned int max( unsigned int v1, unsigned int v2 ) { return !(v1 < v2) ? v1 : v2; }
+	long int max( long int v1, long int v2 ) { return !(v1 < v2) ? v1 : v2; }
+	unsigned long int max( unsigned long int v1, unsigned long int v2 ) { return !(v1 < v2) ? v1 : v2; }
+	long long int max( long long int v1, long long int v2 ) { return !(v1 < v2) ? v1 : v2; }
+	unsigned long long int max( unsigned long long int v1, unsigned long long int v2 ) { return !(v1 < v2) ? v1 : v2; }
 
 	// Polymorphic
 	forall( T | { int ?<?( T, T ); } )

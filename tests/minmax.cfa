@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 13 20:30:26 2026
-// Update Count     : 124
+// Last Modified On : Thu Aug 13 21:19:15 2026
+// Update Count     : 125
 //
 
 #include <fstream.hfa>									// I/O
@@ -64,8 +64,8 @@ int main( void ) {
 	sout | "char, int\t\t"				| quote( 'a' ) | sep | 3 | "\tmax" | max( 'a', 3 );
 	sout | "int, long int\t\t"			| 4 | -3l | "\tmax" | max( 4, -3l );
 	sout | "long int, double\t"			| 4 | 5.5 | "\tmax" | max( 4, 5.5 );
-
 	sout | nl;
+
 	sout | "user mode";
 	sout | "struct S\t"					| s1 | s2 | "\tmax" | max( s1, s2 );
 	sout | nl;

@@ -9,25 +9,37 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 18:26:16 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Dec  4 21:33:15 2018
-// Update Count     : 55
+// Last Modified On : Fri Aug 14 08:16:45 2026
+// Update Count     : 83
 //
 
 #include <fstream.hfa>
-#include <stdlib.hfa>										// abs
+#include <stdlib.hfa>									// abs
+
+// user type
+struct S { int i, j; };
+void ?{}( S & s ) { s.[i, j] = 0; }
+void ?{}( S & s, int i, int j ) { s.[i, j] = [i, j]; }
+void ?{}( S & s, zero_t ) { s.[i, j] = 0; }
+S -?( S s ) with(s) { return (S){ -i, -j }; }
+int ?<?( S lhs, S rhs ) with(lhs) { return i < rhs.i && j < rhs.j; }
+ofstream & ?|?( ofstream & os, S s ) with(s) { return os | "(" | i | "," | j | ")"; }
+OFSTREAM_VOID_IMPL( os, S )								// void version
 
 int main( void ) {
 	signed char ch = -65;
-	sout | "char\t\t\t"					| ch     | "\tabs " | abs( ch );
-	sout | "signed int\t\t"				| -65    | "\tabs" | abs( -65 );
-	sout | "signed long int\t\t" 		| -65l   | "\tabs" | abs( -65l );
-	sout | "signed long long int\t"		| -65ll  | "\tabs" | abs( -65ll );
-	sout | "float\t\t\t" 				| -65.0f | "\tabs" | abs( -65.0f );
-	sout | "double\t\t\t"				| -65.0  | "\tabs" | abs( -65.0 );
-	sout | "long double\t\t"			| -65.0l | "\tabs" | abs( -65.0l );
+	sout | "signed char\t\t"			| ch     | "\t\tabs " | abs( ch );
+	sout | "signed int\t\t"				| -65    | "\t\tabs" | abs( -65 );
+	sout | "signed long int\t\t" 		| -65l   | "\t\tabs" | abs( -65l );
+	sout | "signed long long int\t"		| -65ll  | "\t\tabs" | abs( -65ll );
+	sout | "float\t\t\t" 				| -65.0f | "\t\tabs" | abs( -65.0f );
+	sout | "double\t\t\t"				| -65.0  | "\t\tabs" | abs( -65.0 );
+	sout | "long double\t\t"			| -65.0l | "\t\tabs" | abs( -65.0l );
 	sout | "float _Complex\t\t"			| -65.0F-2.0iF | "\tabs" | abs( -65.0F-2.0iF );
 	sout | "double _Complex\t\t"		| -65.0D-2.0iD | "\tabs" | abs( -65.0D-2.0iD );
 	sout | "long double _Complex\t"		| -65.0L-2.0iL | "\tabs" | abs( -65.0L-2.0iL );
+	S s{ -3, -4 };
+	sout | "user type\t\t"				| s | "\tabs" | abs( s );
 } // main
 
 // Local Variables: //
