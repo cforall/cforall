@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Thu Jan 28 18:26:16 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Aug 14 08:16:45 2026
-// Update Count     : 83
+// Last Modified On : Sun Aug 16 07:04:15 2026
+// Update Count     : 84
 //
 
 #include <fstream.hfa>
@@ -22,7 +22,7 @@ void ?{}( S & s ) { s.[i, j] = 0; }
 void ?{}( S & s, int i, int j ) { s.[i, j] = [i, j]; }
 void ?{}( S & s, zero_t ) { s.[i, j] = 0; }
 S -?( S s ) with(s) { return (S){ -i, -j }; }
-int ?<?( S lhs, S rhs ) with(lhs) { return i < rhs.i && j < rhs.j; }
+int ?<?( S lhs, S rhs ) with(lhs) { return i < rhs.i || j < rhs.j; }
 ofstream & ?|?( ofstream & os, S s ) with(s) { return os | "(" | i | "," | j | ")"; }
 OFSTREAM_VOID_IMPL( os, S )								// void version
 

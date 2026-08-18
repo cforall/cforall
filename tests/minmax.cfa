@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed May 27 17:56:53 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 13 21:19:15 2026
-// Update Count     : 125
+// Last Modified On : Sun Aug 16 07:04:13 2026
+// Update Count     : 126
 //
 
 #include <fstream.hfa>									// I/O
@@ -18,7 +18,7 @@
 
 // user type
 struct S { int i, j; };
-int ?<?( S lhs, S rhs ) with(lhs) { return i < rhs.i && j < rhs.j; }
+int ?<?( S lhs, S rhs ) with(lhs) { return i < rhs.i || j < rhs.j; }
 ofstream & ?|?( ofstream & os, S s ) with(s) { return os | "(" | i | "," | j | ")"; }
 OFSTREAM_VOID_IMPL( os, S )								// void version
 
