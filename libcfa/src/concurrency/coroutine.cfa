@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon Nov 28 12:27:26 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar  1 20:35:45 2026
-// Update Count     : 116
+// Last Modified On : Sun Aug 23 08:10:26 2026
+// Update Count     : 120
 //
 
 #define __cforall_thread__
@@ -326,8 +326,8 @@ struct ehm_cleanup {
 void ^?{}( ehm_cleanup & this ) { free( this.ex ); }
 
 void * stack_pointer( coroutine$ * cor ) libcfa_public {
-	if ( active_coroutine() == cor ) {					// accessing myself ?
-		void * sp;										// use my current stack value
+	if ( active_coroutine() == cor ) {					// accessing self ?
+		void * sp;										// return current stack register
 		#if defined( __i386__ )
 		asm( "movl %%esp,%0" : "=m" (sp) : );
 		#elif defined( __x86_64__ )
@@ -347,8 +347,8 @@ void * stack_pointer() libcfa_public { return stack_pointer( active_coroutine() 
 
 #define xstr(s) str(s)
 #define str(s) #s
-#define STACK_ERROR 4
-#define STACK_WARNING 16
+#define STACK_ERROR 1
+#define STACK_WARNING 4
 
 void stack_verify( coroutine$ * cor ) libcfa_public {
 	void * sp = stack_pointer( cor );					// optimizations

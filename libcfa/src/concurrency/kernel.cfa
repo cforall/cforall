@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Tue Jan 17 12:27:26 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jul  4 15:23:42 2026
-// Update Count     : 84
+// Last Modified On : Sun Aug 23 23:52:10 2026
+// Update Count     : 89
 //
 
 #define __cforall_thread__
@@ -294,7 +294,7 @@ static void __run_thread(processor * this, thread$ * thrd_dst) {
 
 	// Actually run the thread
 	RUNNING:
-	while( true ) {
+	while () {
 		thrd_dst->preempted = __NO_PREEMPTION;
 
 		// Update global state
@@ -610,19 +610,18 @@ extern "C" {
 // KERNEL ONLY
 bool force_yield( __Preemption_Reason reason ) libcfa_public {
 	__disable_interrupts_checked();
-		thread$ * thrd = kernelTLS().this_thread;
-		/* paranoid */ verify(thrd->state == Active);
+	thread$ * thrd = kernelTLS().this_thread;
+	/* paranoid */ verify(thrd->state == Active);
 
-		// SKULLDUGGERY: It is possible that we are preempting this thread just before
-		// it was going to park itself. If that is the case and it is already using the
-		// intrusive fields then we can't use them to preempt the thread
-		// If that is the case, abandon the preemption.
-		bool preempted = false;
-		if (thrd->rdy_link.next == 0p) {
-			preempted = true;
-			thrd->preempted = reason;
-			returnToKernel();
-		}
+	// SKULLDUGGERY: It is possible that we are preempting this thread just before it was going to park itself. If that
+	// is the case and it is already using the intrusive fields then we can't use them to preempt the thread If that is
+	// the case, abandon the preemption.
+	bool preempted = false;
+	if ( thrd->rdy_link.next == 0p ) {
+		preempted = true;
+		thrd->preempted = reason;
+		returnToKernel();
+	}
 	__enable_interrupts_checked( false );
 	return preempted;
 }

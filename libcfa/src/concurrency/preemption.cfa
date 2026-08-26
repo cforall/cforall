@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon Jun 5 14:20:42 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Mar  1 10:00:18 2026
-// Update Count     : 68
+// Last Modified On : Sun Aug 23 23:50:44 2026
+// Update Count     : 93
 //
 
 #define __cforall_thread__
@@ -32,13 +32,13 @@
 #include "kernel/private.hfa"
 
 
-#if !defined(__CFA_DEFAULT_PREEMPTION__)
+#if ! defined(__CFA_DEFAULT_PREEMPTION__)
 #define __CFA_DEFAULT_PREEMPTION__ 10`ms
 #endif
 
 __attribute__((weak)) Duration default_preemption() libcfa_public {
 	const char * preempt_rate_s = getenv("CFA_DEFAULT_PREEMPTION");
-	if ( !preempt_rate_s) {
+	if ( ! preempt_rate_s) {
 		__cfadbg_print_safe(preemption, "No CFA_DEFAULT_PREEMPTION in ENV\n");
 		return __CFA_DEFAULT_PREEMPTION__;
 	}
@@ -290,7 +290,7 @@ extern "C" {
 	void enable_interrupts( bool poll ) libcfa_nopreempt libcfa_public {
 		// Cache the processor now since interrupts can start happening after the atomic store
 		processor   * proc = __cfaabi_tls.this_processor;
-		/* paranoid */ verify( !poll || proc );
+		/* paranoid */ verify( ! poll || proc );
 
 		with( __cfaabi_tls.preemption_state ){
 			unsigned short prev = disable_count;
@@ -346,7 +346,7 @@ extern "C" {
 // Kernel Signal Debug
 void __cfaabi_check_preemption() libcfa_public {
 	bool ready = __preemption_enabled();
-	if ( !ready) { abort("Preemption should be ready"); }
+	if ( ! ready) { abort("Preemption should be ready"); }
 
 	sigset_t oldset;
 	int ret;
@@ -368,7 +368,7 @@ void __cfaabi_check_preemption() libcfa_public {
 
 #ifdef __CFA_WITH_VERIFY__
 bool __cfaabi_dbg_in_kernel() {
-	return !__preemption_enabled();
+	return ! __preemption_enabled();
 }
 #endif
 
@@ -451,17 +451,11 @@ void __enable_interrupts_hard() {
 // If false : preemption is unsafe and marked as pending
 static inline bool preemption_ready( void * ip ) {
 	// Check if preemption is safe
-	bool ready = true;
-	if ( __cfaabi_in( ip, __libcfa_nopreempt ) ) { ready = false; goto EXIT; };
-	if ( __cfaabi_in( ip, __libcfathrd_nopreempt ) ) { ready = false; goto EXIT; };
-
-	if ( !__cfaabi_tls.preemption_state.enabled) { ready = false; goto EXIT; };
-	if ( __cfaabi_tls.preemption_state.in_progress ) { ready = false; goto EXIT; };
-
-EXIT:
 	// Adjust the pending flag accordingly
-	__cfaabi_tls.this_processor->pending_preemption = !ready;
-	return ready;
+	__cfaabi_tls.this_processor->pending_preemption = __cfaabi_in( ip, __libcfa_nopreempt ) ||
+		__cfaabi_in( ip, __libcfathrd_nopreempt ) || ! __cfaabi_tls.preemption_state.enabled ||
+		__cfaabi_tls.preemption_state.in_progress;
+	return __cfaabi_tls.this_processor->pending_preemption;
 }
 
 //=============================================================================================
@@ -561,8 +555,8 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 	}
 
 	// Check if it is safe to preempt here
-	if ( !preemption_ready( ip ) ) {
-		#if !defined(__CFA_NO_STATISTICS__)
+	if ( preemption_ready( ip ) ) {
+		#if ! defined(__CFA_NO_STATISTICS__)
 			__cfaabi_tls.this_stats->ready.threads.preempt.rllfwd++;
 		#endif
 		return;
@@ -571,16 +565,20 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 	__cfaabi_dbg_print_buffer_decl( " KERNEL: preempting core %p (%p @ %p).\n", __cfaabi_tls.this_processor, __cfaabi_tls.this_thread, (void *)(cxt->uc_mcontext.CFA_REG_IP) );
 
 	#if defined( __CFA_DEBUG__ )
-	stack_verify();										// good place to check for stack overflow
+	// The coroutine context switch is preemptable, but while unloading and reloading registers, the stack, base and
+	// limit pointers can refer to either the previous or the current stack. Hence, stack_verify can see a mixture of
+	// state information from the two coroutines and trigger a false positive violation. The paranoid flag, corctx_flag,
+	// is used in debugging to verify coroutine correctness in debug mode. It is stolen for use here to skip the stack
+	// verify, if the time slice occurs in the middle of a coroutine context-switch.
+
+	if ( ! active_thread()->corctx_flag ) stack_verify(); // good place to check for stack overflow
 	#endif // __CFA_DEBUG__
 
 	// Sync flag : prevent recursive calls to the signal handler
 	__cfaabi_tls.preemption_state.in_progress = true;
 
 	// Clear sighandler mask before context switching.
-	#if GCC_VERSION > 50000
 	static_assert( sizeof( sigset_t ) == sizeof( cxt->uc_sigmask ), "Expected cxt->uc_sigmask to be of sigset_t" );
-	#endif
 	if ( __cfaabi_pthread_sigmask( SIG_SETMASK, (sigset_t *)&(cxt->uc_sigmask), 0p ) == -1 ) {
 		abort( "internal error, sigprocmask" );
 	}
@@ -590,7 +588,7 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 
 	// Preemption can occur here
 
-	#if !defined(__CFA_NO_STATISTICS__)
+	#if ! defined(__CFA_NO_STATISTICS__)
 		__cfaabi_tls.this_stats->ready.threads.preempt.yield++;
 	#endif
 
@@ -617,7 +615,7 @@ static void * alarm_loop( __attribute__((unused)) void * args ) {
 	sigaddset( &mask, SIGALRM );
 
 	// Main loop
-	while( true ) {
+  EXIT: while () {
 		// Wait for a sigalrm
 		siginfo_t info;
 		int sig = sigwaitinfo( &mask, &info );
@@ -644,8 +642,7 @@ static void * alarm_loop( __attribute__((unused)) void * args ) {
 		assertf(sig == SIGALRM, "Kernel Internal Error, sigwait: Unexpected signal %d (%d : %d)\n", sig, info.si_code, info.si_value.sival_int);
 
 		// Switch on the code (a.k.a. the sender) to
-		switch( info.si_code )
-		{
+		switch( info.si_code ) {
 		// Signal was not sent by the kernel but by an other thread
 		case SI_QUEUE:
 			// other threads may signal the alarm thread to shut it down
@@ -653,7 +650,7 @@ static void * alarm_loop( __attribute__((unused)) void * args ) {
 			// use info.si_value and handle the case here
 			switch( info.si_value.sival_int ) {
 			case 0:
-				goto EXIT;
+				break EXIT;
 			default:
 				abort( "SI_QUEUE with val %d", info.si_value.sival_int);
 			}
@@ -667,10 +664,9 @@ static void * alarm_loop( __attribute__((unused)) void * args ) {
 			tick_preemption();
 			unlock( event_kernel->lock );
 			break;
-		}
-	}
+		} // switch
+	} // while
 
-EXIT:
 	__cfaabi_dbg_print_safe( "Kernel : Preemption thread stopping\n" );
 	unregister_proc_id(id);
 

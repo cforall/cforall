@@ -87,7 +87,7 @@ static void arrive_h( __snzi_node_t & this ) {
 }
 
 static void depart_h( __snzi_node_t & this ) {
-	while(true) {
+	while () {
 		const __snzi_val_t x = { this.value };
 		/* paranoid */ verifyf(x.cnt >= 1, "%d", x.cnt);
 		if( cas( this.value, x, x.cnt - 1, x.ver ) ) {
