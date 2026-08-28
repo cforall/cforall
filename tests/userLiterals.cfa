@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Wed Sep  6 21:40:50 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 13 20:48:37 2026
-// Update Count     : 77
+// Last Modified On : Thu Aug 27 09:53:03 2026
+// Update Count     : 79
 //
 
 #include <fstream.hfa>
@@ -71,27 +71,27 @@ int main() {
 	23u`m;
 	23l`h;
 	23_ul`_A_;
-	1_234_LL`__thingy_;
+	1'234'LL`__thingy_;
 
 	0xff_ffl;
 	0xff_ff`s;
 	0xff_ffu`m;
 	0xff_ffl`h;
 	0xff_fful`_A_;
-	0xff_ffLL`__thingy_;
+	0xff ffLL`__thingy_;
 
 	'\n'`s;
 	L'\n'`h;
 	u'\n'`m;
-	L_'\n'`_A_;
-	U_'\n'`__thingy_;
+	L'\n'`_A_;
+	U'\n'`__thingy_;
 
 	"abc"`s;
 	// FIX ME: requires char16_t, char32_t, and wchar_t be unique types
 	// u"abc"`m;
 	// U_"abc"`h;
 	// L"abc"`_A_;
-	u8_"abc"`__thingy_;
+	u8"abc"`__thingy_;
 } // main
 
 // Local Variables: //

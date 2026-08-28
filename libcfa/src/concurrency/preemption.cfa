@@ -9,8 +9,8 @@
 // Author           : Thierry Delisle
 // Created On       : Mon Jun 5 14:20:42 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Aug 23 23:50:44 2026
-// Update Count     : 93
+// Last Modified On : Mon Aug 24 13:22:10 2026
+// Update Count     : 94
 //
 
 #define __cforall_thread__
@@ -568,8 +568,8 @@ static void sigHandler_ctxSwitch( __CFA_SIGPARMS__ ) {
 	// The coroutine context switch is preemptable, but while unloading and reloading registers, the stack, base and
 	// limit pointers can refer to either the previous or the current stack. Hence, stack_verify can see a mixture of
 	// state information from the two coroutines and trigger a false positive violation. The paranoid flag, corctx_flag,
-	// is used in debugging to verify coroutine correctness in debug mode. It is stolen for use here to skip the stack
-	// verify, if the time slice occurs in the middle of a coroutine context-switch.
+	// is used in debug mode to verify coroutine correctness. It is stolen for use here to skip the stack verify, if the
+	// time slice occurs in the middle of a coroutine context-switch.
 
 	if ( ! active_thread()->corctx_flag ) stack_verify(); // good place to check for stack overflow
 	#endif // __CFA_DEBUG__

@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Tue Jun 23 07:44:07 2026
- * Update Count     : 888
+ * Last Modified On : Thu Aug 27 09:53:33 2026
+ * Update Count     : 965
  */
 
 %option yylineno
@@ -80,67 +80,71 @@ string * strtext;										// accumulate parts of character and string constant 
 
 void rm_underscore() {
 	// SKULLDUGGERY: remove underscores (ok to shorten?)
+//	fprintf( stderr, "XXX %d `%s`\n", yyleng, yytext );
+	if ( yyleng <= 2 ) return;							// ignore simple_escape, \'
+	size_t len = yyleng;
 	yyleng = 0;
-	for ( int i = 0; yytext[i] != '\0'; i += 1 ) {		// copying non-underscore characters to front of string
-		if ( yytext[i] != '_' ) {
+	for ( size_t i = 0;i < len; i += 1 ) {				// copying non-underscore characters to front of string
+		if ( yytext[i] != '_' && yytext[i] != ' ' && yytext[i] != '\'' ) {
 			yytext[yyleng] = yytext[i];
 			yyleng += 1;
 		} // if
 	} // for
 	yytext[yyleng] = '\0';
+//	fprintf( stderr, "YYY %d `%s`\n", yyleng, yytext );
 } // rm_underscore
 
 // Stop warning due to incorrectly generated flex code.
 #pragma GCC diagnostic ignored "-Wsign-compare"
 %}
-
 binary [0-1]
 octal [0-7]
 nonzero [1-9]
 decimal [0-9]
 hex [0-9a-fA-F]
-universal_char "\\"((u"_"?{hex_quad})|(U"_"?{hex_quad}{2}))
+universal_char "\\"((u{digit_separator}?{hex_quad})|(U{digit_separator}?{hex_quad}{2}))
 
-				// identifier, GCC: $ in identifier
-identifier ([a-zA-Z_$]|{universal_char})([0-9a-zA-Z_$]|{universal_char})*
+				// CFA: digit separator characters '_' and ' ', and C23 '\''
+digit_separator [_ ']
 
-				// numeric constants, CFA: '_' in constant
-hex_quad {hex}("_"?{hex}){3}
+				// numeric constants
+hex_quad {hex}({digit_separator}?{hex}){3}
 size_opt (8|16|32|64|128)?
 				// CFA: explicit l8/l16/l32/l64/l128, char 'hh', short 'h', int 'n'
 length ("ll"|"LL"|[lL]{size_opt})|("hh"|"HH"|[hHnN])
 				// CFA: size_t 'z', pointer 'p', which define a sign and length
-integer_suffix_opt ("_"?(([uU]({length}?[iI]?)|([iI]{length}))|([iI]({length}?[uU]?)|([uU]{length}))|({length}([iI]?[uU]?)|([uU][iI]))|[zZ]|[pP]))?
+integer_suffix_opt ({digit_separator}?(([uU]({length}?[iI]?)|([iI]{length}))|([iI]({length}?[uU]?)|([uU]{length}))|({length}([iI]?[uU]?)|([uU][iI]))|[zZ]|[pP]))?
 
-octal_digits ({octal})|({octal}({octal}|"_")*{octal})
-octal_prefix "0""_"?
+octal_digits {octal}({octal}|{digit_separator}{octal})*
+octal_prefix "0"{digit_separator}?
 octal_constant (("0")|({octal_prefix}{octal_digits})){integer_suffix_opt}
 
-nonzero_digits ({nonzero})|({nonzero}({decimal}|"_")*{decimal})
+decimal_body ({decimal}|{digit_separator}{decimal})*
+nonzero_digits {nonzero}|{nonzero}{decimal_body}
 decimal_constant {nonzero_digits}{integer_suffix_opt}
 
-binary_digits ({binary})|({binary}({binary}|"_")*{binary})
-binary_prefix "0"[bB]"_"?
+binary_digits {binary}({binary}|{digit_separator}{binary})*
+binary_prefix "0"[bB]{digit_separator}?
 binary_constant {binary_prefix}{binary_digits}{integer_suffix_opt}
 
-hex_digits ({hex})|({hex}({hex}|"_")*{hex})
-hex_prefix "0"[xX]"_"?
+hex_digits {hex}({hex}|{digit_separator}{hex})*
+hex_prefix "0"[xX]{digit_separator}?
 hex_constant {hex_prefix}{hex_digits}{integer_suffix_opt}
 
 				// GCC: floating D (double), imaginary iI, and decimal floating DF, DD, DL
-exponent "_"?[eE]"_"?[+-]?{decimal_digits}
+exponent {digit_separator}?[eE]{digit_separator}?[+-]?{decimal_digits}
 floating_size 16|32|32x|64|64x|80|128|128x
 floating_length ([fFdDlLwWqQ]|[fF]{floating_size})
 floating_suffix ({floating_length}?[iI]?)|([iI]{floating_length})
 decimal_floating_suffix [dD][fFdDlL]
-floating_suffix_opt ("_"?({floating_suffix}|{decimal_floating_suffix}))?
-decimal_digits ({decimal})|({decimal}({decimal}|"_")*{decimal})
+floating_suffix_opt ({digit_separator}?({floating_suffix}|{decimal_floating_suffix}))?
+decimal_digits {decimal}{decimal_body}
 floating_decimal {decimal_digits}"."{exponent}?{floating_suffix_opt}
 floating_fraction "."{decimal_digits}{exponent}?{floating_suffix_opt}
 floating_constant ({decimal_digits}{exponent}{floating_suffix_opt})|({decimal_digits}{floating_fraction})
 
-binary_exponent "_"?[pP]"_"?[+-]?{decimal_digits}
-hex_floating_suffix_opt ("_"?({floating_suffix}))?
+binary_exponent {digit_separator}?[pP]{digit_separator}?[+-]?{decimal_digits}
+hex_floating_suffix_opt ({digit_separator}?({floating_suffix}))?
 hex_floating_fraction ({hex_digits}?"."{hex_digits})|({hex_digits}".")
 hex_floating_constant {hex_prefix}(({hex_floating_fraction}{binary_exponent})|({hex_digits}{binary_exponent})){hex_floating_suffix_opt}
 
@@ -162,6 +166,9 @@ c_return "\r"
 h_white " "|{h_tab}
 v_white {v_tab}|{c_return}|{form_feed}
 hv_white {h_white}|{v_tab}|{new_line}|{c_return}|{form_feed}
+
+				// identifier, GCC: $ in identifier
+identifier ([a-zA-Z_$]|{universal_char})([0-9a-zA-Z_$]|{universal_char})*
 
 				// overloadable operators
 op_unary_only "~"|"!"
@@ -309,7 +316,7 @@ monitor			{ KEYWORD_RETURN(MONITOR); }			// CFA
 mutex			{ KEYWORD_RETURN(MUTEX); }				// CFA
 _Noreturn		{ KEYWORD_RETURN(NORETURN); }			// C11
 __builtin_offsetof { KEYWORD_RETURN(OFFSETOF); }		// GCC
-one_t			{ NUMERIC_RETURN(ONE_T); }				// CFA
+one_t			{ RETURN_VAL(ONE_T); }					// CFA
 or				{ QKEYWORD_RETURN(WOR); }				// CFA
 otype			{ KEYWORD_RETURN(OTYPE); }				// CFA
 recover			{ QKEYWORD_RETURN(RECOVER); }			// CFA
@@ -363,7 +370,7 @@ waituntil		{ KEYWORD_RETURN(WAITUNTIL); }			// CFA
 when			{ KEYWORD_RETURN(WHEN); }				// CFA
 while			{ KEYWORD_RETURN(WHILE); }
 with			{ KEYWORD_RETURN(WITH); }				// CFA
-zero_t			{ NUMERIC_RETURN(ZERO_T); }				// CFA
+zero_t			{ RETURN_VAL(ZERO_T); }					// CFA
 
 				/* identifier */
 {identifier}	{ IDENTIFIER_RETURN(); }
@@ -389,13 +396,13 @@ zero_t			{ NUMERIC_RETURN(ZERO_T); }				// CFA
 {hex_floating_constant}	{ NUMERIC_RETURN(FLOATINGconstant); }
 
 				/* character constant, allows empty value, CPP also handles missing quote delimiter */
-({cwide_prefix}[_]?)?['] { BEGIN QUOTE; rm_underscore(); strtext = new string( yytext, yyleng ); }
+({cwide_prefix})?['] { BEGIN QUOTE; strtext = new string( yytext, yyleng ); }
 <QUOTE>[^'\\\n]* { strtext->append( yytext, yyleng ); }
 <QUOTE>['\n]	{ BEGIN 0; strtext->append( yytext, yyleng ); RETURN_STR(CHARACTERconstant); }
 				/* ' stop editor highlighting */
 
 				/* string constant, CPP also handles missing quote delimiter */
-({swide_prefix}[_]?)?["] { BEGIN STRING; rm_underscore(); strtext = new string( yytext, yyleng ); }
+({swide_prefix})?["] { BEGIN STRING; strtext = new string( yytext, yyleng ); }
 <STRING>[^"\\\n]* { strtext->append( yytext, yyleng ); }
 <STRING>["\n]	{ BEGIN 0; strtext->append( yytext, yyleng ); RETURN_STR(STRINGliteral); }
 				/* " stop editor highlighting */
