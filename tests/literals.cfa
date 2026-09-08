@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  9 16:34:38 2017
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Jun 19 15:47:49 2021
-// Update Count     : 237
+// Last Modified On : Mon Sep  7 08:49:24 2026
+// Update Count     : 238
 //
 
 #include <features.h>									// __GNUC_PREREQ
@@ -318,10 +318,11 @@ int main() {
 	' ';  'a';  '"';  '_';
 	'\'';  '\"';  '\?';  '\\';							// simple escape
 	'\a';  '\b';  '\e'; /* GCC */  '\f';  '\n';  '\r';  '\t';  '\v';
-	'\0'; '\377';										// octal escape
-	'\xf';  '\xff';										// hex escape
+	'\0'; '\3 77';										// octal escape
+	'\xf';  '\x_ff';									// hex escape
 
 	u' ';  u'a';  u'"';  u'_';
+	u"a\x_ff_ee;b"; u"a\x ff ee;b"; u"a\x'ff'ee;b";
 	U' ';  U'a';  U'"';  U'_';
 	L' ';  L'a';  L'"';  L'_';
 
@@ -354,6 +355,7 @@ int main() {
 	u" ";  u"a";  u"'";  u'_';  u"abcdefghijklmnopqrstuvwxyz";
 	U" ";  U"a";  U"'";  U'_';  U"abcdefghijklmnopqrstuvwxyz";
 	L" ";  L"a";  L"'";  L'_';  L"abcdefghijklmnopqrstuvwxyz";
+	L"a\U_0010_FFFFb";  L"a\U 0010 FFFFb"; L"a\U'0010'FFFFb";
 
 	"\xFF";  u"\xFFFF";  U"\xFFFFFFFF";  L"\xFFFFFFFF";	// maximum size
 

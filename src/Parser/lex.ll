@@ -9,8 +9,8 @@
  * Author           : Peter A. Buhr
  * Created On       : Sat Sep 22 08:58:10 2001
  * Last Modified By : Peter A. Buhr
- * Last Modified On : Thu Aug 27 09:53:33 2026
- * Update Count     : 965
+ * Last Modified On : Sun Sep  6 20:47:54 2026
+ * Update Count     : 983
  */
 
 %option yylineno
@@ -102,13 +102,14 @@ octal [0-7]
 nonzero [1-9]
 decimal [0-9]
 hex [0-9a-fA-F]
-universal_char "\\"((u{digit_separator}?{hex_quad})|(U{digit_separator}?{hex_quad}{2}))
+universal_char "\\"((u?{hex_quad})|(U?{hex_quad}{2}))
 
-				// CFA: digit separator characters '_' and ' ', and C23 '\''
+				// CFA: digit separator characters '_', ' ', and C23 '\''
 digit_separator [_ ']
 
 				// numeric constants
-hex_quad {hex}({digit_separator}?{hex}){3}
+hex_quad {hex}{4}
+hex_quad_sep {hex}({digit_separator}?{hex}){3}
 size_opt (8|16|32|64|128)?
 				// CFA: explicit l8/l16/l32/l64/l128, char 'hh', short 'h', int 'n'
 length ("ll"|"LL"|[lL]{size_opt})|("hh"|"HH"|[hHnN])
@@ -151,9 +152,10 @@ hex_floating_constant {hex_prefix}(({hex_floating_fraction}{binary_exponent})|({
 				// character escape sequence, GCC: \e => esc character
 simple_escape "\\"[abefnrtv'"?\\]
 				// " stop editor highlighting
-octal_escape "\\"{octal}("_"?{octal}){0,2}
-hex_escape "\\""x""_"?{hex_digits}
-escape_seq {simple_escape}|{octal_escape}|{hex_escape}|{universal_char}
+octal_escape "\\"{octal}({digit_separator}?{octal}){0,2}
+hex_escape "\\""x"{digit_separator}?{hex_digits}
+universal_char_escape "\\"((u{digit_separator}?{hex_quad_sep})|(U({digit_separator}?{hex_quad_sep}){2}))
+escape_seq {simple_escape}|{octal_escape}|{hex_escape}|{universal_char_escape}
 cwide_prefix "L"|"U"|"u"
 swide_prefix {cwide_prefix}|"u8"
 
@@ -410,7 +412,7 @@ zero_t			{ RETURN_VAL(ZERO_T); }					// CFA
 				/* common character/string constant */
 <QUOTE,STRING>{escape_seq} { rm_underscore(); strtext->append( yytext, yyleng ); }
 <QUOTE,STRING>"\\"{h_white}*"\n" {}						// continuation (ALSO HANDLED BY CPP)
-<QUOTE,STRING>"\\" { strtext->append( yytext, yyleng ); } // unknown escape character
+<QUOTE,STRING>"\\" { strtext->append( yytext, yyleng ); } // unknown escape character, let C figure it out
 
 				/* punctuation */
 "@"				{ ASCIIOP_RETURN(); }
