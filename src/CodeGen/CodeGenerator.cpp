@@ -9,8 +9,8 @@
 // Author           : Andrew Beach
 // Created On       : Tue Oct 17 15:54:00 2023
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 23 13:42:15 2026
-// Update Count     : 34
+// Last Modified On : Sat Oct  3 10:42:29 2026
+// Update Count     : 35
 //
 
 #include "CodeGenerator.hpp"
@@ -1258,7 +1258,7 @@ void CodeGenerator::postvisit( ast::WhileDoStmt const * stmt ) {
 	}
 
 	if ( stmt->else_ ) {
-		stmt->else_->accept( *visitor );				// not converted in AST pass
+		stmt->else_->accept( *visitor );				// SKULLDUGGERY: not converted to C in AST pass, as no C form
 	}
 }
 
@@ -1284,7 +1284,7 @@ void CodeGenerator::postvisit( ast::ForStmt const * stmt ) {
 	}
 
 	if ( nullptr != stmt->else_ ) {
-		stmt->else_->accept( *visitor );				// not converted in AST pass
+		stmt->else_->accept( *visitor );				// SKULLDUGGERY: not converted to C in AST pass, as no C form
 	}
 }
 
