@@ -131,7 +131,10 @@ namespace {
 		// produce a filtered list of candidates
 		CandidateList candidates;
 		for ( auto & cand : finder.candidates ) {
-			if ( pred( *cand ) ) { candidates.emplace_back( cand ); }
+			if ( pred( *cand ) ) { 
+				//cand->expr = referenceToRvalueConversion(cand->expr, cand->cost);
+				candidates.emplace_back( cand ); 
+			}
 		}
 
 		// produce invalid error if no candidates
@@ -324,18 +327,26 @@ namespace {
 		return dynamic_cast< const ast::StructInstType * >( t ) || dynamic_cast< const ast::UnionInstType * >( t ) || dynamic_cast< const ast::EnumInstType * >( t );
 	}
 	/// Predicate for "Candidate has integral type"
-	bool hasIntegralType( const Candidate & i ) {
-		const ast::Type * type = i.expr->result;
+	bool hasIntegralType( const Candidate & i ){
+		// xxx - need a way to remove references on the candidate
+		// otherwise generated code becomes wrong
+		// no clear solution for this right now since it is passed as a
+		// function argument. has to violate const here
+		const ast::Type * type = i.expr->result->stripReferences();
 
 		if ( auto bt = dynamic_cast< const ast::BasicType * >( type ) ) {
-			return bt->isInteger();
+			if (! bt->isInteger()) return false;
 		} else if (
 			dynamic_cast< const ast::EnumInstType * >( type )
 			|| dynamic_cast< const ast::ZeroType * >( type )
 			|| dynamic_cast< const ast::OneType * >( type )
 		) {
-			return true;
+			// do nothing
 		} else return false;
+		// unfortunately has to do const hacking
+		Candidate & mut = const_cast<Candidate &>(i);
+		mut.expr = referenceToRvalueConversion(mut.expr, mut.cost);
+		return true;
 	}
 
 	/// Resolve `untyped` as an integral expression, returning the resolved version
