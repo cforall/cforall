@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar  7 15:39:59 2026
-// Update Count     : 14
+// Last Modified On : Fri Sep 25 08:10:39 2026
+// Update Count     : 16
 //
 
 extern int yydebug;                   // set for -g flag (Grammar)
@@ -32,9 +32,9 @@ extern int
 	deterministic_output,
 	useNewAST,
 	nomainp,
-	resolvep,
-	resolvprotop,
-	symtabp,
+	rprotop,
+	rstepsp,
+	// symevt,
 	treep,
 	tuplep,
 	valideclp,

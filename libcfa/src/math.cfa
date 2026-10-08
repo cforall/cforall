@@ -19,7 +19,23 @@
 
 #pragma GCC visibility push(default)
 
+// Method:
+//   - The integer part is the position of the most significant set bit,
+//     found with __builtin_clzll.
+//   - The bits below the MSB form the mantissa fraction f (0 <= f < 1),
+//     kept as a 32-bit fraction.
+//   - log2(1 + f) is approximated by quadratic (Lagrange) interpolation
+//     over a 64-entry lookup table of log2(1 + k/64) in 32.32 format. The
+//     top TABLE_BITS bits of f select the first of three consecutive samples
+//     and the remaining bits give the offset within that interval. The table
+//     has 2 extra entries so the last interval still has 3 sample points.
+//
+// (LLM-assisted comment and edge-case handling, with prompt including
+// unverified comments found in the implementation)
+//
 unsigned long long log2_u32_32( unsigned long long val ) {
+	// saturation choice explained in %.h; avoids UB on __builtin_clzll
+	if ( val == 0 ) return 0;
 	enum {
 		TABLE_BITS = 6,
 		TABLE_SIZE = (1 << TABLE_BITS) + 2,
@@ -73,12 +89,12 @@ unsigned long long log2_u32_32( unsigned long long val ) {
 
 	// get i
 	const unsigned long long bits = sizeof(val) * __CHAR_BIT__;
-	const unsigned long long lz = __builtin_clzl(val);
+	const unsigned long long lz = __builtin_clzll(val);
 	const unsigned long long i = bits - 1 - lz;
 
 	// get the fractinal part as a u32.32
-	const unsigned long long frac = (val << (lz + 1)) >> 32;
-
+	// (two shifts: lz + 1 can be 64 when val == 1, which is UB in `<< (lz + 1)`)
+	const unsigned long long frac = ((val << lz) << 1) >> 32;
 	// get high order bits for the index into the table
 	const unsigned long long idx0 = frac >> (32 - TABLE_BITS);
 

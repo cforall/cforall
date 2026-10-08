@@ -203,6 +203,10 @@ size_t DEBUG_string_bytes_in_heap( VbyteHeap * heap ) {
 	return heap->CurrSize;
 }
 
+size_t DEBUG_string_num_compactions( VbyteHeap * heap ) {
+	return heap->NoOfCompactions;
+}
+
 const char * DEBUG_string_heap_start( VbyteHeap * heap ) {
 	return heap->StartVbyte;
 }
@@ -745,13 +749,13 @@ void append(string_res & str1, const char * buffer, size_t bsize) {
 	if ( str1.Handle.s + str1.Handle.lnth == buffer ) { // already juxtapose ?
 		// no-op
 	} else {											// must copy some text
-//		if ( str1.Handle.s + str1.Handle.lnth == VbyteAlloc(*str1.Handle.ulink, 0) ) { // str1 at end of string area ?
 		if ( str1.Handle.s + str1.Handle.lnth == str1.Handle.ulink->EndVbyte ) { // str1 at end of string area ?
 			VbyteAlloc( *str1.Handle.ulink, bsize );	// create room for 2nd part at the end of string area
 		} else {										// copy the two parts
-			char * str1newBuf = VbyteAlloc( *str1.Handle.ulink, clnth );
+			char * str1newBuf = VbyteAlloc( *str1.Handle.ulink, clnth ); // destination is new alloc at end
 			char * str1oldBuf = str1.Handle.s;			// must read after VbyteAlloc call in case it gs's
-			str1.Handle.s = str1newBuf;
+			str1.Handle.s = str1newBuf;					// invalidate handle's old list position
+			MoveThisAfter( str1.Handle, * str1.Handle.ulink->Header.blink ); // put handle at back of list to match
 			memcpy( str1.Handle.s, str1oldBuf,  str1.Handle.lnth );
 		} // if
 		memcpy( str1.Handle.s + str1.Handle.lnth, buffer, bsize );

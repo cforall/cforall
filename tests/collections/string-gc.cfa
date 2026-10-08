@@ -5,6 +5,10 @@ size_t bytesRemaining() {
     return DEBUG_string_bytes_avail_until_gc( DEBUG_string_heap() );
 }
 
+size_t compactionsDone() {
+    return DEBUG_string_num_compactions( DEBUG_string_heap() );
+}
+
 size_t heapOffsetStart( string_res & s ) {
     const char * startByte = DEBUG_string_heap_start( DEBUG_string_heap() );
     assert( s.Handle.s >= startByte );
@@ -120,6 +124,33 @@ void fillCompact_withSharedEdits() {
     PRT_STR_REP(y);
 }
 
+void fillCompact_withAppends() {
+    // do appends, occasionally restarting from scratch, watching heap compaction trigger; ensure a bystander string isn't overwritten
+    // Balaji Leninrajan designed this test to detect a so-found string bug (since fixed)
+
+    sout | "======================== fillCompact_withAppends";
+
+    size_t init_compacts = compactionsDone();
+    string_res s, t;
+    for (i; 100) {
+        s = "";                        // s must be reset here (else there's nothing to collect)
+        t = "x";
+        for (42) s += "a";             // s extends here; sometimes heap compacts
+        sout | t;                      // observe t unaffected
+    }
+    size_t final_compacts = compactionsDone();
+    assert( final_compacts - init_compacts >= 2 );
+
+    // test is over; clear scratch work from heap
+    {
+        string_res z = "zzz";
+        while ( bytesRemaining() > 1 ) z += ".";
+    }
+    assert( bytesRemaining() < 10 );
+    s = "0123456789";                  // compact here
+    assert( bytesRemaining() > 10 );
+}
+
 void fillNoCompact() {
     // show that allocating in a heap filled with mostly live strings (no collectable garbage) causes heap growth
 
@@ -150,5 +181,6 @@ void fillNoCompact() {
 int main() {
     basicFillCompact();
     fillCompact_withSharedEdits();
+    fillCompact_withAppends();
     fillNoCompact();
 }

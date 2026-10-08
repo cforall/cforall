@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Tue Jul 12 06:50:22 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Fri Jan 17 14:10:12 2025
-// Update Count     : 45
+// Last Modified On : Mon Oct  5 23:24:59 2026
+// Update Count     : 52
 //
 
 int f( int i ) { return i; }
@@ -103,6 +103,28 @@ int main( void ) {
 	  case 'd':
 		k = 5;
 	} // choose
+
+	// test pointer/reference in switch/choose expression
+
+	char ch = 'a';
+	char * chp = &ch;
+	char & chr = ch;
+
+	switch ( *chp ) {
+	  case 'a':	;
+	} // switch
+
+	switch ( chr ) {
+	  case 'a': ;
+	} // switch
+
+	choose ( *chp ) {
+	  case 'a':	;
+	} // choose
+
+	choose ( chr ) {
+	  case 'a': ;
+	} // switch
 
 	printf("done\n");
 } // main

@@ -9,24 +9,24 @@
 // Author           : Aaron B. Moss
 // Created On       : Sun May 17 12:17:01 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Dec 14 18:44:43 2023
-// Update Count     : 251
+// Last Modified On : Tue Oct  6 09:25:07 2026
+// Update Count     : 254
 //
 
-#include <cassert>                       // for strict_dynamic_cast, assert
-#include <memory>                        // for allocator, allocator_traits<...
-#include <tuple>                         // for get
-#include <vector>                        // for vector
+#include <cassert>										// for strict_dynamic_cast, assert
+#include <memory>										// for allocator, allocator_traits<...
+#include <tuple>										// for get
+#include <vector>										// for vector
 
 #include "Candidate.hpp"
 #include "CandidateFinder.hpp"
-#include "CurrentObject.hpp"             // for CurrentObject
-#include "RenameVars.hpp"                // for RenameVars, global_renamer
+#include "CurrentObject.hpp"							// for CurrentObject
+#include "RenameVars.hpp"								// for RenameVars, global_renamer
 #include "Resolver.hpp"
 #include "ResolveTypeof.hpp"
-#include "ResolveMode.hpp"               // for ResolveMode
-#include "Typeops.hpp"                   // for extractResultType
-#include "Unify.hpp"                     // for unify
+#include "ResolveMode.hpp"								// for ResolveMode
+#include "Typeops.hpp"									// for extractResultType
+#include "Unify.hpp"									// for unify
 #include "CompilationState.hpp"
 #include "AST/Decl.hpp"
 #include "AST/Init.hpp"
@@ -34,17 +34,17 @@
 #include "AST/Print.hpp"
 #include "AST/SymbolTable.hpp"
 #include "AST/Type.hpp"
-#include "Common/Eval.hpp"               // for eval
-#include "Common/Iterate.hpp"            // for group_iterate
-#include "Common/SemanticError.hpp"      // for SemanticError
-#include "Common/Stats/ResolveTime.hpp"  // for ResolveTime::start(), ResolveTime::stop()
-#include "Common/ToString.hpp"           // for toCString
-#include "Common/UniqueName.hpp"         // for UniqueName
+#include "Common/Eval.hpp"								// for eval
+#include "Common/Iterate.hpp"							// for group_iterate
+#include "Common/SemanticError.hpp"						// for SemanticError
+#include "Common/Stats/ResolveTime.hpp"					// for ResolveTime::start(), ResolveTime::stop()
+#include "Common/ToString.hpp"							// for toCString
+#include "Common/UniqueName.hpp"						// for UniqueName
 #include "InitTweak/GenInit.hpp"
-#include "InitTweak/InitTweak.hpp"       // for isIntrinsicSingleArgCallStmt
-#include "SymTab/Mangler.hpp"            // for Mangler
+#include "InitTweak/InitTweak.hpp"						// for isIntrinsicSingleArgCallStmt
+#include "SymTab/Mangler.hpp"							// for Mangler
 #include "Tuples/Tuples.hpp"
-#include "Validate/FindSpecialDecls.hpp" // for SizeType
+#include "Validate/FindSpecialDecls.hpp"				// for SizeType
 
 using namespace std;
 
@@ -131,10 +131,7 @@ namespace {
 		// produce a filtered list of candidates
 		CandidateList candidates;
 		for ( auto & cand : finder.candidates ) {
-			if ( pred( *cand ) ) { 
-				//cand->expr = referenceToRvalueConversion(cand->expr, cand->cost);
-				candidates.emplace_back( cand ); 
-			}
+			if ( pred( *cand ) ) { candidates.emplace_back( cand ); }
 		}
 
 		// produce invalid error if no candidates
@@ -326,24 +323,28 @@ namespace {
 		const ast::Type * t = i.expr->result->stripReferences();
 		return dynamic_cast< const ast::StructInstType * >( t ) || dynamic_cast< const ast::UnionInstType * >( t ) || dynamic_cast< const ast::EnumInstType * >( t );
 	}
+
 	/// Predicate for "Candidate has integral type"
-	bool hasIntegralType( const Candidate & i ){
-		// xxx - need a way to remove references on the candidate
-		// otherwise generated code becomes wrong
-		// no clear solution for this right now since it is passed as a
-		// function argument. has to violate const here
+	bool hasIntegralType( const Candidate & i ) {
+		// Unlike the "if" expression, which becomes "if ( expr != 0 )" and is a boolean (int) type, the "switch"
+		// statement expression, "switch ( expr )", has no implicit "!= 0" and MUST be an integral type.  For switch
+		// expression, the resolver is left with just expr, so there is nothing to force an auto dereference to check
+		// its base type for integral. To handle "switch" expression, and other cases (see below), the reference is
+		// ALWAYS removed, leaving the base type.
 		const ast::Type * type = i.expr->result->stripReferences();
 
 		if ( auto bt = dynamic_cast< const ast::BasicType * >( type ) ) {
-			if (! bt->isInteger()) return false;
+			if ( ! bt->isInteger() ) return false;
 		} else if (
 			dynamic_cast< const ast::EnumInstType * >( type )
 			|| dynamic_cast< const ast::ZeroType * >( type )
 			|| dynamic_cast< const ast::OneType * >( type )
 		) {
-			// do nothing
+			// do nothing => integral type
 		} else return false;
-		// unfortunately has to do const hacking
+
+		// SKULLDUGGERY: change expression type from reference to base type through const pointer, otherwise generated
+		// code is wrong.
 		Candidate & mut = const_cast<Candidate &>(i);
 		mut.expr = referenceToRvalueConversion(mut.expr, mut.cost);
 		return true;

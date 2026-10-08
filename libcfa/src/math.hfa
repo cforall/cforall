@@ -147,6 +147,41 @@ static inline __attribute__((always_inline)) {
 	long double hypot( long double x, long double y ) { return hypotl( x, y ); }
 } // distribution
 
+// Computes log2(val) and returns it as an unsigned 32.32 fixed-point number.
+// The upper 32 bits hold the integral part (floor(log2(val))), in [0, 64];
+// lower-bounded bacause the integral domain cannot encode (0,1) and upper-
+// bounded by the domain's maximum.  The lower 32 bits hold the fractional
+// part, which is always unsigned in two's complement fixed-point; even were
+// it signed, it would represent -1.25 as (-2 + 0.75).  So, both parts can be
+// taken as unsigned, or the whole 64-bit quantity can be taken as a count of 
+// 2^-32 increments.
+//
+// To get the real value:
+//
+//     double r = (double)log2_u32_32(val) / 4294967296.0;  // denom=2^32
+//
+// Qualities:
+//   - Integer arithmetic only, with no floating point or libm, so it is usable
+//     without FPU, and the results are bit-identical across platforms.
+//   - Output resolution is fixed at 2^-32 (absolute, not relative).
+//   - Error sources: truncated internal table entries, quadratic interpolation
+//     over 1/64-wide intervals, and truncating right shifts. Because every
+//     rounding step truncates, errors are biased toward negative infinity.
+//
+// Examples:
+//   0    |-> 0x0000000000000000, 0.0 *
+//   1    |-> 0x0000000000000000, 0.0
+//   2    |-> 0x0000000100000000, 1.0
+//   3    |-> 0x0000000195C01A39, ~1.58496
+//   1024 |-> 0x0000000A00000000, 10.0
+//
+// * Choice made to saturate at zero, on this input where log is undefined.
+//   This choice keeps the function monotonic on [0,64].
+//   Callers that must distinguish inputs 0 from 1 should test val themselves.
+//
+// (LLM-assisted comment, with prompt including unverified comments found in
+// the implementation)
+//
 unsigned long long log2_u32_32( unsigned long long val );
 
 //---------------------- Trigonometric ----------------------

@@ -77,6 +77,13 @@ int main( void ) {
 	sout | "log1p:" | log1p( 1.0F ) | log1p( 1.0D ) | log1p( 1.0L );
 	sout | "ilogb:" | ilogb( 1.0F ) | ilogb( 1.0D ) | ilogb( 1.0L );
 	sout | "logb:" | logb( 8.0F ) | logb( 8.0D ) | logb( 8.0L );
+	sout | "log2_u32_32:" | wd(0,16,hex(log2_u32_32(    0 ))) | wd(0, 2, (double)log2_u32_32(    0 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32(    1 ))) | wd(0, 2, (double)log2_u32_32(    1 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32(    2 ))) | wd(0, 2, (double)log2_u32_32(    2 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32(    3 ))) | wd(0, 2, (double)log2_u32_32(    3 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32( 1024 ))) | wd(0, 2, (double)log2_u32_32( 1024 ) / 4294967296.0);
+
+	//---------------------- Miscellaneous ----------------------
 
 	sout | "sqrt:" | sqrt( 1.0F ) | sqrt( 1.0D ) | sqrt( 1.0L ) | nonl;
 	sout | sqrt( 1.0F+1.0FI ) | sqrt( 1.0D+1.0DI ) | sqrt( 1.0L+1.0LI );

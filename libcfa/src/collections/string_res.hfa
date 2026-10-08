@@ -34,9 +34,10 @@ struct HandleNode {
 }; // HandleNode
 
 VbyteHeap * DEBUG_string_heap();
-size_t DEBUG_string_bytes_in_heap( VbyteHeap * heap );
-size_t DEBUG_string_bytes_avail_until_gc( VbyteHeap * heap );
-const char * DEBUG_string_heap_start( VbyteHeap * heap );
+size_t DEBUG_string_bytes_in_heap( VbyteHeap * );
+size_t DEBUG_string_bytes_avail_until_gc( VbyteHeap * );
+size_t DEBUG_string_num_compactions( VbyteHeap * );
+const char * DEBUG_string_heap_start( VbyteHeap * );
 
 void TUNING_set_string_heap_liveness_threshold( double val );
 

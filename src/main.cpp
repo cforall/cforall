@@ -9,8 +9,8 @@
 // Author           : Peter Buhr and Rob Schluntz
 // Created On       : Fri May 15 23:12:02 2015
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 23 13:56:23 2026
-// Update Count     : 712
+// Last Modified On : Fri Sep 25 07:50:12 2026
+// Update Count     : 715
 //
 
 #include <cxxabi.h>                         // for __cxa_demangle
@@ -237,9 +237,9 @@ int main( int argc, char * argv[] ) {
 		PASS( "Set Length From Initializer", Validate::setLengthFromInitializer, transUnit );
 		PASS( "Find Global Decls", Validate::findGlobalDecls, transUnit );
 
-		if ( symtabp ) {
-			return EXIT_SUCCESS;
-		} // if
+		// if ( symevtp ) {
+		// 	return EXIT_SUCCESS;
+		// } // if
 
 		if ( expranlp ) {
 			ResolvExpr::printCandidates( transUnit );
@@ -266,7 +266,7 @@ int main( int argc, char * argv[] ) {
 
 		DUMP( bresolverp, transUnit );
 
-		if ( resolvprotop ) {
+		if ( rprotop ) {
 			dumpAsResolverProto( transUnit );
 			return EXIT_SUCCESS;
 		} // if
@@ -421,13 +421,13 @@ static struct Printopts {
 	{ "declstats", declstatsp, true, "print code property statistics" },
 	{ "parse", yydebug, true, "print yacc (parsing) debug information" },
 	{ "pretty", prettycodegenp, true, "prettyprint for ascodegen flag" },
-	{ "rproto", resolvprotop, true, "resolver-proto instance" },
-	{ "rsteps", resolvep, true, "print resolver steps" },
+	{ "rproto", rprotop, true, "resolver-proto instance" },
+	{ "rsteps", rstepsp, true, "print resolver steps" },
 	// AST dumps
 	{ "ast", astp, true, "print AST after parsing" },
 	{ "excpdecl", excpdeclp, true, "print AST after translating exception decls" },
 	// These flags are currently disconnected from whatever they did in the past.
-	// { "symevt", symtabp, true, "print AST after symbol table events" },
+	// { "symevt", symevtp, true, "print AST after symbol table events" },
 	// { "expralt", expraltp, true, "print AST after expressions alternatives" },
 	{ "validecl", valideclp, true, "print AST after declaration validation pass" },
 	{ "bresolver", bresolverp, true, "print AST before resolver step" },

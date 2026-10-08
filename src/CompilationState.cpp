@@ -9,8 +9,8 @@
 // Author           : Rob Schluntz
 // Created On       : Mon Ju1 30 10:47:01 2018
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sat Mar  7 15:43:02 2026
-// Update Count     : 11
+// Last Modified On : Fri Sep 25 08:10:40 2026
+// Update Count     : 13
 //
 
 #include "config.h"
@@ -33,9 +33,9 @@ int
 	deterministic_output = false,
 	useNewAST = true,
 	nomainp = false,
-	resolvep = false,
-	resolvprotop = false,
-	symtabp = false,
+	rprotop = false,
+	rstepsp = false,
+	// symevt = false,
 	treep = false,
 	tuplep = false,
 	valideclp = false,
