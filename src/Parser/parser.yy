@@ -1335,7 +1335,7 @@ selection_statement:
 			$$ = $7 ? new StatementNode( build_compound( yylloc, (new StatementNode( $7 ))->set_last( sw ) ) ) : sw;
 		}
 	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA, invalid syntax rule error
-		{ SemanticError( yylloc, "synatx error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
 	| CHOOSE '(' comma_expression ')' case_clause		// CFA
 		{ $$ = new StatementNode( build_switch( yylloc, false, $3, $5 ) ); }
 	| CHOOSE '(' comma_expression ')' '{' push declaration_list_opt switch_clause_list_opt pop '}' // CFA
