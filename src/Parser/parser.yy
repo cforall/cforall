@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Sat Sep  1 20:22:55 2001
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Tue Jun 23 12:37:08 2026
-// Update Count     : 7350
+// Last Modified On : Wed Oct  7 11:51:17 2026
+// Update Count     : 7351
 //
 
 // This grammar is based on the ANSI99/11 C grammar, specifically parts of EXPRESSION and STATEMENTS, and on the C
@@ -1335,7 +1335,7 @@ selection_statement:
 			$$ = $7 ? new StatementNode( build_compound( yylloc, (new StatementNode( $7 ))->set_last( sw ) ) ) : sw;
 		}
 	| SWITCH '(' comma_expression ')' '{' error '}'		// CFA, invalid syntax rule error
-		{ SemanticError( yylloc, "synatx error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
+		{ SemanticError( yylloc, "syntax error, declarations can only appear before the list of case clauses." ); $$ = nullptr; }
 	| CHOOSE '(' comma_expression ')' case_clause		// CFA
 		{ $$ = new StatementNode( build_switch( yylloc, false, $3, $5 ) ); }
 	| CHOOSE '(' comma_expression ')' '{' push declaration_list_opt switch_clause_list_opt pop '}' // CFA

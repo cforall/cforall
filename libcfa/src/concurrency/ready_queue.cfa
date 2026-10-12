@@ -7,10 +7,10 @@
 // ready_queue.cfa --
 //
 // Author           : Thierry Delisle
-// Created On       : Mon Nov dd 16:29:18 2019
-// Last Modified By :
-// Last Modified On :
-// Update Count     :
+// Created On       : Mon Nov 25 16:29:18 2019
+// Last Modified By : Peter A. Buhr
+// Last Modified On : Sun Oct 11 08:09:28 2026
+// Update Count     : 8
 //
 
 #define __cforall_thread__
@@ -262,3 +262,148 @@ static inline struct thread$ * try_pop(struct cluster * cltr, unsigned i, unsign
 
 	return try_pop(cltr, w __STATS(, stats));
 }
+
+
+// ========================================================================
+
+// Not used at the moment, but saving. Should be rewritten with gcc fixed-point numbers.
+
+// Computes log2(val) and returns it as an unsigned 32.32 fixed-point number.  The upper 32 bits hold the integral part
+// (floor(log2(val))), in [0, 64]; lower-bounded bacause the integral domain cannot encode (0,1) and upper- bounded by
+// the domain's maximum.  The lower 32 bits hold the fractional part, which is always unsigned in two's complement
+// fixed-point; even were it signed, it would represent -1.25 as (-2 + 0.75).  So, both parts can be taken as unsigned,
+// or the whole 64-bit quantity can be taken as a count of 2^-32 increments.
+//
+// To get the real value:
+//
+//     double r = (double)log2_u32_32(val) / 4294967296.0;  // denom=2^32
+//
+// Qualities:
+//   - Integer arithmetic only, with no floating point or libm, so it is usable without FPU, and the results are
+//     bit-identical across platforms.
+//   - Output resolution is fixed at 2^-32 (absolute, not relative).
+//   - Error sources: truncated internal table entries, quadratic interpolation over 1/64-wide intervals, and truncating
+//     right shifts. Because every rounding step truncates, errors are biased toward negative infinity.
+//
+// Examples:
+//   0    |-> 0x0000000000000000, 0.0 *
+//   1    |-> 0x0000000000000000, 0.0
+//   2    |-> 0x0000000100000000, 1.0
+//   3    |-> 0x0000000195C01A39, ~1.58496
+//   1024 |-> 0x0000000A00000000, 10.0
+//
+// * Choice made to saturate at zero, on this input where log is undefined.  This choice keeps the function monotonic on
+//   [0,64].  Callers that must distinguish inputs 0 from 1 should test val themselves.
+//
+// (LLM-assisted comment, with prompt including unverified comments found in the implementation)
+//
+
+// Method:
+//   - The integer part is the position of the most significant set bit, found with __builtin_clzll.
+//   - The bits below the MSB form the mantissa fraction f (0 <= f < 1), kept as a 32-bit fraction.
+//   - log2(1 + f) is approximated by quadratic (Lagrange) interpolation over a 64-entry lookup table of log2(1 + k/64)
+//     in 32.32 format. The top TABLE_BITS bits of f select the first of three consecutive samples and the remaining
+//     bits give the offset within that interval. The table has 2 extra entries so the last interval still has 3 sample
+//     points.
+
+#if 0
+unsigned long long log2_u32_32( unsigned long long val ) {
+	// saturation choice explained in %.h; avoids UB on __builtin_clzll
+	if ( val == 0 ) return 0;
+
+	enum {
+		TABLE_BITS = 6,
+		TABLE_SIZE = (1 << TABLE_BITS) + 2,
+	};
+	// for(i; TABLE_SIZE) {
+	//  table[i] = (unsigned long long)(log2(1.0 + i / pow(2, TABLE_BITS)) * pow(2, 32)));
+	// }
+	static const unsigned long long table[] = {
+		0x0000000000, 0x0005b9e5a1, 0x000b5d69ba, 0x0010eb389f,
+		0x001663f6fa, 0x001bc84240, 0x002118b119, 0x002655d3c4,
+		0x002b803473, 0x00309857a0, 0x00359ebc5b, 0x003a93dc98,
+		0x003f782d72, 0x00444c1f6b, 0x0049101eac, 0x004dc4933a,
+		0x005269e12f, 0x00570068e7, 0x005b888736, 0x006002958c,
+		0x00646eea24, 0x0068cdd829, 0x006d1fafdc, 0x007164beb4,
+		0x00759d4f80, 0x0079c9aa87, 0x007dea15a3, 0x0081fed45c,
+		0x0086082806, 0x008a064fd5, 0x008df988f4, 0x0091e20ea1,
+		0x0095c01a39, 0x009993e355, 0x009d5d9fd5, 0x00a11d83f4,
+		0x00a4d3c25e, 0x00a8808c38, 0x00ac241134, 0x00afbe7fa0,
+		0x00b3500472, 0x00b6d8cb53, 0x00ba58feb2, 0x00bdd0c7c9,
+		0x00c1404ead, 0x00c4a7ba58, 0x00c80730b0, 0x00cb5ed695,
+		0x00ceaecfea, 0x00d1f73f9c, 0x00d53847ac, 0x00d8720935,
+		0x00dba4a47a, 0x00ded038e6, 0x00e1f4e517, 0x00e512c6e5,
+		0x00e829fb69, 0x00eb3a9f01, 0x00ee44cd59, 0x00f148a170,
+		0x00f446359b, 0x00f73da38d, 0x00fa2f045e, 0x00fd1a708b,
+		0x0100000000, 0x0102dfca16,
+	};
+	_Static_assert((sizeof(table) / sizeof(table[0])) == TABLE_SIZE, "TABLE_SIZE should be accurate");
+	// Starting from val = (2 ** i)*(1 + f) where 0 <= f < 1
+	// log identities mean log2(val) = log2((2 ** i)*(1 + f)) = log2(2**i) + log2(1+f)
+	//
+	// Getting i is easy to do using builtin_clz (count leading zero)
+	//
+	// Calculate log2(1+f) independently to have a many bits of precision as possible.
+	//     val = (2 ** i)*(1 + f) = 2 ** i + f * 2 ** i
+	// Isolating f gives
+	//     val - 2 ** i = f * 2 ** i
+	//     (val - 2 ** i) / 2 ** i = f
+	//
+	// Interpolate from the table to get the values and compromise by doing quadratic interpolation (rather than higher
+	// degree interpolation)
+	//
+	// For the interpolation, shift everything to the first sample point so the parabola becomes x = 0. This further
+	// simplifies the equations.
+	//
+	// The consequence is 2 forms are needed for f:
+	//  - finding the index of x0
+	//  - finding the distance between f and x0
+	//
+	// Since sample points are equidistant, this significantly simplifies the equations.
+
+	// get i
+	const unsigned long long bits = sizeof(val) * __CHAR_BIT__;
+	const unsigned long long lz = __builtin_clzll( val );
+	const unsigned long long i = bits - 1 - lz;
+
+	// get the fractinal part as a u32.32
+	// (two shifts: lz + 1 can be 64 when val == 1, which is UB in `<< (lz + 1)`)
+	const unsigned long long frac = ((val << lz) << 1) >> 32;
+
+	// get high order bits for the index into the table
+	const unsigned long long idx0 = frac >> (32 - TABLE_BITS);
+
+	// get the x offset, i.e., the difference between the first sample point and the actual fractional part
+	const long long udx = frac - (idx0 << (32 - TABLE_BITS));
+	/* paranoid */ verify((idx0 + 2) < TABLE_SIZE);
+
+	const long long y0 = table[idx0 + 0];
+	const long long y1 = table[idx0 + 1];
+	const long long y2 = table[idx0 + 2];
+
+	// From there, quadraticly interpolate to get the data, using the lagrange polynomial normally it would look like:
+	//     double r0 = y0 * ((x - x1) / (x0 - x1)) * ((x - x2) / (x0 - x2));
+	//     double r1 = y1 * ((x - x0) / (x1 - x0)) * ((x - x2) / (x1 - x2));
+	//     double r2 = y2 * ((x - x0) / (x2 - x0)) * ((x - x1) / (x2 - x1));
+	// but since the spacing between sample points is fixed, it can be simplified and extract common expressions.
+	const long long f1 = (y1 - y0);
+	const long long f2 = (y2 - y0);
+	const long long a = f2 - (f1 * 2l);
+	const long long b = (f1 * 2l) - a;
+
+	// Now compute using the form (ax + b)x + c (which avoids repeating steps)
+	long long sum = ((a*udx) >> (32 - TABLE_BITS))  + b;
+	sum = (sum*udx) >> (32 - TABLE_BITS + 1);
+	sum = y0 + sum;
+
+	return (i << 32) + (sum);
+} // log2_u32_32
+
+// Tests
+
+	sout | "log2_u32_32:" | wd(0,16,hex(log2_u32_32(    0 ))) | wd(0, 2, (double)log2_u32_32(    0 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32(    1 ))) | wd(0, 2, (double)log2_u32_32(    1 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32(    2 ))) | wd(0, 2, (double)log2_u32_32(    2 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32(    3 ))) | wd(0, 2, (double)log2_u32_32(    3 ) / 4294967296.0)
+						  | wd(0,16,hex(log2_u32_32( 1024 ))) | wd(0, 2, (double)log2_u32_32( 1024 ) / 4294967296.0);
+#endif // 0

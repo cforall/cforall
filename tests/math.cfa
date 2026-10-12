@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Fri Apr 22 14:59:21 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Thu Aug 13 20:34:45 2026
-// Update Count     : 126
+// Last Modified On : Sun Oct 11 09:23:27 2026
+// Update Count     : 130
 //
 
 #include <fstream.hfa>
@@ -64,24 +64,21 @@ int main( void ) {
 
 	//---------------------- Logarithm ----------------------
 
-	sout | "log:" | log( 1.0F ) | log( 1.0D ) | log( 1.0L ) | nonl;
-	sout | log( 1.0F+1.0FI ) | log( 1.0D+1.0DI ) | log( 1.0L+1.0LI );
 	sout | "log2:" | log2( 1024 ) | log2( 2 \ 17u ) | log2( 2 \ 23u );
 	sout | "log2:" | log2( 1024l ) | log2( 2l \ 17u ) | log2( 2l \ 23u );
 	sout | "log2:" | log2( 1024ll ) | log2( 2ll \ 17u ) | log2( 2ll \ 23u );
-#if defined( __SIZEOF_INT128__ )
-	sout | "log2:" | log2( 1024l128 ) | log2( 2l128 \ 17u ) | log2( 2l128 \ 23u );
-#endif // __SIZEOF_INT128__
+
+	sout | "ceillog2:" | ceillog2( 1024 ) | ceillog2( 2 \ 17u ) | ceillog2( 2 \ 23u );
+	sout | "ceillog2:" | ceillog2( 1024l ) | ceillog2( 2l \ 17u ) | ceillog2( 2l \ 23u );
+	sout | "ceillog2:" | ceillog2( 1024ll ) | ceillog2( 2ll \ 17u ) | ceillog2( 2ll \ 23u );
+
+	sout | "log:" | log( 1.0F ) | log( 1.0D ) | log( 1.0L ) | nonl;
+	sout | log( 1.0F+1.0FI ) | log( 1.0D+1.0DI ) | log( 1.0L+1.0LI );
 	sout | "log2:" | log2( 8.0F ) | log2( 8.0D ) | log2( 8.0L );
 	sout | "log10:" | log10( 100.0F ) | log10( 100.0D ) | log10( 100.0L );
 	sout | "log1p:" | log1p( 1.0F ) | log1p( 1.0D ) | log1p( 1.0L );
 	sout | "ilogb:" | ilogb( 1.0F ) | ilogb( 1.0D ) | ilogb( 1.0L );
 	sout | "logb:" | logb( 8.0F ) | logb( 8.0D ) | logb( 8.0L );
-	sout | "log2_u32_32:" | wd(0,16,hex(log2_u32_32(    0 ))) | wd(0, 2, (double)log2_u32_32(    0 ) / 4294967296.0)
-						  | wd(0,16,hex(log2_u32_32(    1 ))) | wd(0, 2, (double)log2_u32_32(    1 ) / 4294967296.0)
-						  | wd(0,16,hex(log2_u32_32(    2 ))) | wd(0, 2, (double)log2_u32_32(    2 ) / 4294967296.0)
-						  | wd(0,16,hex(log2_u32_32(    3 ))) | wd(0, 2, (double)log2_u32_32(    3 ) / 4294967296.0)
-						  | wd(0,16,hex(log2_u32_32( 1024 ))) | wd(0, 2, (double)log2_u32_32( 1024 ) / 4294967296.0);
 
 	//---------------------- Miscellaneous ----------------------
 

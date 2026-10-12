@@ -9,8 +9,8 @@
 // Author           : Peter A. Buhr
 // Created On       : Mon Apr 18 23:37:04 2016
 // Last Modified By : Peter A. Buhr
-// Last Modified On : Sun Jun 18 08:13:53 2023
-// Update Count     : 202
+// Last Modified On : Sun Oct 11 09:27:23 2026
+// Update Count     : 215
 //
 
 #pragma once
@@ -101,13 +101,31 @@ static inline __attribute__((always_inline)) {
 	long double _Complex log( long double _Complex x ) { return clogl( x ); }
 
 	// O(1) polymorphic integer log2, using clz, which returns the number of leading 0-bits, starting at the most
-	// significant bit (single instruction on x86)
+	// significant bit (single instruction on x86). Zero argument is -1 (integer NaN).
+	// No 128-bit builtin_clz.
 	int log2( unsigned int n ) { return n == 0 ? -1 : sizeof(n) * __CHAR_BIT__ - 1 - __builtin_clz( n ); }
 	long int log2( unsigned long int n ) { return n == 0 ? -1 : sizeof(n) * __CHAR_BIT__ - 1 - __builtin_clzl( n ); }
 	long long int log2( unsigned long long int n ) { return n == 0 ? -1 : sizeof(n) * __CHAR_BIT__ - 1 - __builtin_clzll( n ); }
+	int ceillog2( unsigned int n ) {
+		if ( n == 0 ) return -1;
+		typeof(n) ln = log2( n );
+		return ln + ( (n - (1 << ln)) != 0 );			// check for any 1 bits to the right of the most significant bit
+	}
+	long int ceillog2( unsigned long int n ) {
+		if ( n == 0 ) return -1;
+		typeof(n) ln = log2( n );
+		return ln + ( (n - (1 << ln)) != 0 );			// check for any 1 bits to the right of the most significant bit
+	}
+	long long ceillog2( unsigned long long int n ) {
+		if ( n == 0 ) return -1;
+		typeof(n) ln = log2( n );
+		return ln + ( (n - (1 << ln)) != 0 );			// check for any 1 bits to the right of the most significant bit
+	}
+
 	float log2( float x ) { return log2f( x ); }
 	// extern "C" { double log2( double ); }
 	long double log2( long double x ) { return log2l( x ); }
+	// The library functions clog2f, clog2, clog2l are reserved for future use in C, but not implemented in glibc.
 	// float _Complex log2( float _Complex x ) { return clog2f( x ); }
 	// double _Complex log2( double _Complex x ) { return clog2( x ); }
 	// long double _Complex log2( long double _Complex x ) { return clog2l( x ); }
@@ -115,6 +133,7 @@ static inline __attribute__((always_inline)) {
 	float log10( float x ) { return log10f( x ); }
 	// extern "C" { double log10( double ); }
 	long double log10( long double x ) { return log10l( x ); }
+	// The library functions clog10f, clog10, clog10l are reserved for future use in C, but not implemented in glibc.
 	// float _Complex log10( float _Complex x ) { return clog10f( x ); }
 	// double _Complex log10( double _Complex x ) { return clog10( x ); }
 	// long double _Complex log10( long double _Complex x ) { return clog10l( x ); }
@@ -146,43 +165,6 @@ static inline __attribute__((always_inline)) {
 	// extern "C" { double hypot( double, double ); }
 	long double hypot( long double x, long double y ) { return hypotl( x, y ); }
 } // distribution
-
-// Computes log2(val) and returns it as an unsigned 32.32 fixed-point number.
-// The upper 32 bits hold the integral part (floor(log2(val))), in [0, 64];
-// lower-bounded bacause the integral domain cannot encode (0,1) and upper-
-// bounded by the domain's maximum.  The lower 32 bits hold the fractional
-// part, which is always unsigned in two's complement fixed-point; even were
-// it signed, it would represent -1.25 as (-2 + 0.75).  So, both parts can be
-// taken as unsigned, or the whole 64-bit quantity can be taken as a count of 
-// 2^-32 increments.
-//
-// To get the real value:
-//
-//     double r = (double)log2_u32_32(val) / 4294967296.0;  // denom=2^32
-//
-// Qualities:
-//   - Integer arithmetic only, with no floating point or libm, so it is usable
-//     without FPU, and the results are bit-identical across platforms.
-//   - Output resolution is fixed at 2^-32 (absolute, not relative).
-//   - Error sources: truncated internal table entries, quadratic interpolation
-//     over 1/64-wide intervals, and truncating right shifts. Because every
-//     rounding step truncates, errors are biased toward negative infinity.
-//
-// Examples:
-//   0    |-> 0x0000000000000000, 0.0 *
-//   1    |-> 0x0000000000000000, 0.0
-//   2    |-> 0x0000000100000000, 1.0
-//   3    |-> 0x0000000195C01A39, ~1.58496
-//   1024 |-> 0x0000000A00000000, 10.0
-//
-// * Choice made to saturate at zero, on this input where log is undefined.
-//   This choice keeps the function monotonic on [0,64].
-//   Callers that must distinguish inputs 0 from 1 should test val themselves.
-//
-// (LLM-assisted comment, with prompt including unverified comments found in
-// the implementation)
-//
-unsigned long long log2_u32_32( unsigned long long val );
 
 //---------------------- Trigonometric ----------------------
 

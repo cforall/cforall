@@ -11469,7 +11469,7 @@ yyreduce:
 
   case 235: /* selection_statement: SWITCH '(' comma_expression ')' '{' error '}'  */
 #line 1338 "/var/lib/jenkins/workspace/Cforall_Distribute_Ref/src/Parser/parser.yy"
-                { SemanticError( yylloc, "synatx error, declarations can only appear before the list of case clauses." ); (yyval.stmt) = nullptr; }
+                { SemanticError( yylloc, "syntax error, declarations can only appear before the list of case clauses." ); (yyval.stmt) = nullptr; }
 #line 11474 "Parser/parser.cc"
     break;
 
