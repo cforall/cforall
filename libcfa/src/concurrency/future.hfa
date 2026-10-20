@@ -272,7 +272,8 @@ forall( T ) {
 		// General
 
 		void ?{}( future_rc( T ) & frc ) with( frc ) {	// default constructor
-			impl = new();
+			// FIXME: the redundant cast is a workaround for #317
+			impl = ( future_rc_impl$(T) * ) new();
 		} // ?{}
 
 		void ?{}( future_rc( T ) & to, future_rc( T ) & from ) with( to ) { // copy constructor
