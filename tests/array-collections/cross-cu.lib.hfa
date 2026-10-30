@@ -1,0 +1,6 @@
+#include <array.hfa>
+
+array( int, 99 ) & f( array( float, 42 ) & );
+
+forall( T, [N], [M] )
+array( int, N ) & g( array( T, N ) &, array( float, M, N ) & );

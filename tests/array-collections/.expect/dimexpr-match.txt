@@ -1,0 +1,435 @@
+==== c runs c array
+---- PTRPARM_CALL:   { void f( float (*x)[__L__] ) { (void) x; } float a[__R__]; f( & a ); }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+done STA NE DYN, L=7, R=cpr42
+done STA NE UNS, L=7, R=mut42
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+done STA NE DYN, L=enu7, R=cpr42
+done STA NE UNS, L=enu7, R=mut42
+done DYN EQ DYN, L=cpr7, R=cpr7
+done DYN NE DYN, L=cpr7, R=cpr42
+done DYN NE STA, L=cpr7, R=42
+done DYN NE STA, L=cpr7, R=enu42
+done DYN NE UNS, L=cpr7, R=mut42
+done UNS EQ UNS, L=mut7, R=mut7
+done UNS NE UNS, L=mut7, R=mut42
+done UNS NE STA, L=mut7, R=42
+done UNS NE STA, L=mut7, R=enu42
+done UNS NE DYN, L=mut7, R=cpr42
+---- PTRVAR_INIT:   { float a[__R__]; float (*b)[__L__] = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+done STA NE DYN, L=7, R=cpr42
+done STA NE UNS, L=7, R=mut42
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+done STA NE DYN, L=enu7, R=cpr42
+done STA NE UNS, L=enu7, R=mut42
+done DYN EQ DYN, L=cpr7, R=cpr7
+done DYN NE DYN, L=cpr7, R=cpr42
+done DYN NE STA, L=cpr7, R=42
+done DYN NE STA, L=cpr7, R=enu42
+done DYN NE UNS, L=cpr7, R=mut42
+done UNS EQ UNS, L=mut7, R=mut7
+done UNS NE UNS, L=mut7, R=mut42
+done UNS NE STA, L=mut7, R=42
+done UNS NE STA, L=mut7, R=enu42
+done UNS NE DYN, L=mut7, R=cpr42
+---- PTRVAR_ASGN:   { float a[__R__]; float (*b)[__L__] = ((void *)0); b = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+done STA NE DYN, L=7, R=cpr42
+done STA NE UNS, L=7, R=mut42
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+done STA NE DYN, L=enu7, R=cpr42
+done STA NE UNS, L=enu7, R=mut42
+done DYN EQ DYN, L=cpr7, R=cpr7
+done DYN NE DYN, L=cpr7, R=cpr42
+done DYN NE STA, L=cpr7, R=42
+done DYN NE STA, L=cpr7, R=enu42
+done DYN NE UNS, L=cpr7, R=mut42
+done UNS EQ UNS, L=mut7, R=mut7
+done UNS NE UNS, L=mut7, R=mut42
+done UNS NE STA, L=mut7, R=42
+done UNS NE STA, L=mut7, R=enu42
+done UNS NE DYN, L=mut7, R=cpr42
+==== cfa runs c array
+---- PTRPARM_CALL:   { void f( float (*x)[__L__] ) { (void) x; } float a[__R__]; f( & a ); }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- PTRVAR_INIT:   { float a[__R__]; float (*b)[__L__] = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- PTRVAR_ASGN:   { float a[__R__]; float (*b)[__L__] = 0p; b = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- REFVAR_ASGN:   { float a[__R__]; float (&b)[__L__] = *0p; & b = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+==== cfa runs cfa array
+---- PTRPARM_CALL:   { void f( array(float, __L__) * ) {} array(float, __R__) a; f( & a ); }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- PTRVAR_INIT:   { array(float, __R__) a; array(float, __L__) * b = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- PTRVAR_ASGN:   { array(float, __R__) a; array(float, __L__) * b = 0p; b = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- REFPARM_CALL:   { void f( array(float, __L__) & ) {} array(float, __R__) a; f( a ); }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- REFVAR_INIT:   { array(float, __R__) a; array(float, __L__) & b = a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- REFVAR_ASGN:   { array(float, __R__) a; array(float, __L__) & b = *0p; & b = & a; (void) b; }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject
+---- CALLZIP:   { array(float, __L__) a; array(float, __R__) b; zip( a, b ); }
+done STA EQ STA, L=7, R=7
+chkr STA NE STA, L=7, R=42 -> reject
+done STA EQ STA, L=7, R=enu7
+chkr STA NE STA, L=7, R=enu42 -> reject
+chkr STA NE DYN, L=7, R=cpr42 -> reject
+chkr STA NE UNS, L=7, R=mut42 -> reject
+done STA EQ STA, L=enu7, R=enu7
+chkr STA NE STA, L=enu7, R=enu42 -> reject
+done STA EQ STA, L=enu7, R=7
+chkr STA NE STA, L=enu7, R=42 -> reject
+chkr STA NE DYN, L=enu7, R=cpr42 -> reject
+chkr STA NE UNS, L=enu7, R=mut42 -> reject
+done DYN EQ DYN, L=cpr7, R=cpr7
+chkr DYN NE DYN, L=cpr7, R=cpr42 -> reject
+chkr DYN NE STA, L=cpr7, R=42 -> reject
+chkr DYN NE STA, L=cpr7, R=enu42 -> reject
+chkr DYN NE UNS, L=cpr7, R=mut42 -> reject
+chkr UNS EQ UNS, L=mut7, R=mut7 -> reject
+chkr UNS NE UNS, L=mut7, R=mut42 -> reject
+chkr UNS NE STA, L=mut7, R=42 -> reject
+chkr UNS NE STA, L=mut7, R=enu42 -> reject
+chkr UNS NE DYN, L=mut7, R=cpr42 -> reject
+chkr STA NE DYN, L=7, R=dim42 -> reject
+chkr STA NE DYN, L=enu7, R=dim42 -> reject
+chkr DYN NE DYN, L=cpr7, R=dim42 -> reject
+done DYN EQ DYN, L=dim7, R=dim7
+chkr DYN NE DYN, L=dim7, R=dim42 -> reject
+chkr DYN NE STA, L=dim7, R=42 -> reject
+chkr DYN NE STA, L=dim7, R=enu42 -> reject
+chkr DYN NE DYN, L=dim7, R=cpr42 -> reject
+chkr DYN NE UNS, L=dim7, R=mut42 -> reject
+chkr UNS NE DYN, L=mut7, R=dim42 -> reject

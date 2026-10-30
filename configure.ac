@@ -262,7 +262,8 @@ M4CFA_CHECK_COMPILE_FLAG([-Wcast-function-type], AC_DEFINE([HAVE_CAST_FUNCTION_T
 
 #==============================================================================
 # backend compiler implementation
-AC_DEFINE_UNQUOTED(CFA_BACKEND_CC, "${CC}", [Backend compiler to use.])
+CFA_BACKEND_CC="${CC}"
+AC_DEFINE_UNQUOTED(CFA_BACKEND_CC, "${CFA_BACKEND_CC}", [Backend compiler to use.])
 AC_SUBST(CFA_BACKEND_CC)
 
 #==============================================================================

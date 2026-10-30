@@ -18017,8 +18017,9 @@ fi
 
 #==============================================================================
 # backend compiler implementation
+CFA_BACKEND_CC="${CC}"
 
-printf "%s\n" "#define CFA_BACKEND_CC \"${CC}\"" >>confdefs.h
+printf "%s\n" "#define CFA_BACKEND_CC \"${CFA_BACKEND_CC}\"" >>confdefs.h
 
 
 

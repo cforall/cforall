@@ -1,0 +1,17 @@
+// The test shows that functions that take and return arrays are callable across compilation units.
+// There once was a bug where this was not so, resulting in a linker error.
+// So success is just, "This silly program runs," standing in for, "This call structure links."
+
+#include "cross-cu.lib.hfa"
+
+void runtest() {
+    array( float, 42 ) x;
+    array( float, 5, 99 ) m;
+    array( int, 99 ) & y = f( x );
+    & y = & g( y, m );
+    (void) & y;
+}
+
+int main() {
+    runtest();
+}

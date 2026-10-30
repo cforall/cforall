@@ -118,8 +118,18 @@ PRETTY_PATH = mkdir -p ${dir ${abspath ${@}}} && cd ${srcdir} &&
 
 .PHONY : concurrency list .validate .test_makeflags
 .INTERMEDIATE : .validate .validate.cfa .test_makeflags
-EXTRA_PROGRAMS = array-collections/boxed avl_test linkonce linking/mangling/anon .dummy_hack # build but do not install
-EXTRA_DIST = test.py \
+# build but do not install
+EXTRA_PROGRAMS = \
+	array-collections/cross-cu \
+	array-collections/boxed \
+	avl_test \
+	linkonce \
+	linking/mangling/anon \
+	.dummy_hack
+# include in `make dist` package (github upload), not covered by general rules
+# add whatever your test needs, beyond input, output and files following the usual naming pattern
+EXTRA_DIST = \
+	test.py \
 	pybin/__init__.py \
 	pybin/print-core.gdb \
 	pybin/settings.py \
@@ -138,8 +148,9 @@ EXTRA_DIST = test.py \
 	concurrency/unified_locking/mutex_test.hfa \
 	concurrency/channels/parallel_harness.hfa \
 	array-collections/dimexpr-match.hfa \
-	array-collections/dimexpr-match-detail.sh \
-	array-collections/array-raii.hfa
+	array-collections/dimexpr-match.py \
+	array-collections/array-raii.hfa \
+	array-collections/cross-cu.lib.hfa
 
 dist-hook:
 	echo "Gathering test files"
@@ -151,6 +162,7 @@ dist-hook:
 	done
 
 array_collections_boxed_SOURCES = array-collections/boxed.main.cfa array-collections/boxed.bookend.cfa
+array_collections_cross_cu_SOURCES = array-collections/cross-cu.main.cfa array-collections/cross-cu.lib.cfa
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
 linking_mangling_anon_SOURCES = linking/mangling/header.hfa linking/mangling/lib.cfa linking/mangling/main.cfa
@@ -275,14 +287,6 @@ array-ERR3 : array.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR3
 	-cp ${test} ${abspath ${@}}
 
-array-collections/dimexpr-match-c-ERRS : array-collections/dimexpr-match-c.cfa
-	${CFACOMPILE_SYNTAX} -DERRS
-	-cp ${test} ${abspath ${@}}
-
-array-collections/dimexpr-match-cfa-ERRS : array-collections/dimexpr-match-cfa.cfa
-	${CFACOMPILE_SYNTAX} -DERRS
-	-cp ${test} ${abspath ${@}}
-
 alloc-ERROR : alloc.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR1
 	-cp ${test} ${abspath ${@}}
@@ -370,3 +374,16 @@ linking/linkerror : linking/linkerror.cfa ${CFACCBIN}
 
 #------------------------------------------------------------------------------
 # Other targets
+
+# Array Dimension Expressions
+# runs the python harness, which invokes gcc+cfa repeatedly, all counting as "compile" time
+# its output (not an executable) is what test.py diffs
+# three runs: c runs c array; cfa runs c array; cfa runs cfa array
+# '-' => keep going on harness failure, so that all output reaches the diff
+DIMEXPR_MATCH = ${PRETTY_PATH} python3 array-collections/dimexpr-match.py --no-trace --bindir ${dir ${abspath ${@}}}
+DIMEXPR_C_CC = ${CFA_BACKEND_CC} -x c ${ARCH_FLAGS} ${WFLAGS}
+DIMEXPR_CFA_CC = ${CFACCLOCAL} ${AM_CFAFLAGS} ${WFLAGS} -quiet
+array-collections/dimexpr-match : array-collections/dimexpr-match.py array-collections/dimexpr-match-c.cfa array-collections/dimexpr-match-cfa.cfa array-collections/dimexpr-match.hfa ${CFACCBIN}
+	-${DIMEXPR_MATCH} --runner c   --compiler '${DIMEXPR_C_CC}'   array-collections/dimexpr-match-c.cfa   >  ${abspath ${@}} 2>&1
+	-${DIMEXPR_MATCH} --runner cfa --compiler '${DIMEXPR_CFA_CC}' array-collections/dimexpr-match-c.cfa   >> ${abspath ${@}} 2>&1
+	-${DIMEXPR_MATCH} --runner cfa --compiler '${DIMEXPR_CFA_CC}' array-collections/dimexpr-match-cfa.cfa >> ${abspath ${@}} 2>&1

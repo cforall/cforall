@@ -22,14 +22,7 @@ void zip( float (*a)[N], float (*b)[N] ) {}
 
 DECLN_runTests {
 
-    enum { enu7 = 7, enu42 = 42 };
-    int mut7 = 7, mut42 = 42;
-
-    // Many are only used in rejection cases, so they are unused in the non-ERRS compilation.
-    (void) cpr7;
-    (void) cpr42;
-    (void) mut7;
-    (void) mut42;
+    PREAMBLE_runTests
 
     #define TRY_COMPAT( LV, RV )        \
     {                                   \
@@ -54,6 +47,7 @@ DECLN_runTests {
         float a[RV];                    \
         float (*b)[LV] = NULL;          \
         b = & a;                        \
+        (void) b;                       \
     }
     ARRANGEMENT( PTRVAR_ASGN )
     #undef TRY_COMPAT
@@ -74,6 +68,7 @@ DECLN_runTests {
     {                                   \
         float a[RV];                    \
         float (&b)[LV] = a;             \
+        (void) b;                       \
     }
     ARRANGEMENT( REFVAR_INIT )
     #undef TRY_COMPAT
@@ -84,6 +79,7 @@ DECLN_runTests {
         float a[RV];                    \
         float (&b)[LV] = *0p;           \
         & b = & a;                      \
+        (void) b;                       \
     }
     ARRANGEMENT( REFVAR_ASGN )
     #undef TRY_COMPAT

@@ -35,7 +35,7 @@ struct CodeGenerator final :
 	void previsit( ast::Node const * );
 	void previsit( ast::ParseNode const * );
 
-	// Error for unhandled node types.
+	// Unhandled node types: error when generating C, otherwise fall back on ast::print*.
 	void postvisit( ast::Node const * );
 
 	// Print type for all expressions.
@@ -116,7 +116,13 @@ struct CodeGenerator final :
 	void postvisit( ast::NullStmt const * );
 	void postvisit( ast::DeclStmt const * );
 	void postvisit( ast::ImplicitCtorDtorStmt const * );
-	void postvisit( ast::MutexStmt const * stmt );
+	void postvisit( ast::MutexStmt const * );
+
+	// delegate to GenType
+	// only serves in recovering from unhandled node
+	// when generating C, treated as unhandled (error)
+	// internal uses call GenType directly
+	void postvisit( ast::Type const * );
 
 private:
 	/// Custom local implementation of endl that updates print location.

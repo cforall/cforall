@@ -90,7 +90,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-EXTRA_PROGRAMS = array-collections/boxed$(EXEEXT) avl_test$(EXEEXT) \
+EXTRA_PROGRAMS = array-collections/cross-cu$(EXEEXT) \
+	array-collections/boxed$(EXEEXT) avl_test$(EXEEXT) \
 	linkonce$(EXEEXT) linking/mangling/anon$(EXEEXT) \
 	.dummy_hack$(EXEEXT)
 subdir = tests
@@ -123,6 +124,12 @@ am_array_collections_boxed_OBJECTS =  \
 array_collections_boxed_OBJECTS =  \
 	$(am_array_collections_boxed_OBJECTS)
 array_collections_boxed_LDADD = $(LDADD)
+am_array_collections_cross_cu_OBJECTS =  \
+	array-collections/cross-cu.main.$(OBJEXT) \
+	array-collections/cross-cu.lib.$(OBJEXT)
+array_collections_cross_cu_OBJECTS =  \
+	$(am_array_collections_cross_cu_OBJECTS)
+array_collections_cross_cu_LDADD = $(LDADD)
 am_avl_test_OBJECTS = avltree/avl_test.$(OBJEXT) \
 	avltree/avl0.$(OBJEXT) avltree/avl1.$(OBJEXT) \
 	avltree/avl2.$(OBJEXT) avltree/avl3.$(OBJEXT) \
@@ -191,9 +198,11 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(nodist__dummy_hack_SOURCES) \
-	$(array_collections_boxed_SOURCES) $(avl_test_SOURCES) \
+	$(array_collections_boxed_SOURCES) \
+	$(array_collections_cross_cu_SOURCES) $(avl_test_SOURCES) \
 	$(linking_mangling_anon_SOURCES) $(linkonce_SOURCES)
-DIST_SOURCES = $(array_collections_boxed_SOURCES) $(avl_test_SOURCES) \
+DIST_SOURCES = $(array_collections_boxed_SOURCES) \
+	$(array_collections_cross_cu_SOURCES) $(avl_test_SOURCES) \
 	$(linking_mangling_anon_SOURCES) $(linkonce_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -504,7 +513,10 @@ CFACCBIN = @CFACC@
 CFACCLOCAL = ${if ${DISTCC_CFA_PATH},${DISTCC_CFA_PATH} ${ARCH_FLAGS} ,${TARGET_CFA} ${DEBUG_FLAGS} ${ARCH_FLAGS}}
 CFACCLINK = ${CFACCLOCAL} -quiet ${if ${test}, 2> ${test}, } ${${shell echo "${@}_FLAGSLD" | sed 's/-\|\//_/g'}}
 PRETTY_PATH = mkdir -p ${dir ${abspath ${@}}} && cd ${srcdir} &&
-EXTRA_DIST = test.py \
+# include in `make dist` package (github upload), not covered by general rules
+# add whatever your test needs, beyond input, output and files following the usual naming pattern
+EXTRA_DIST = \
+	test.py \
 	pybin/__init__.py \
 	pybin/print-core.gdb \
 	pybin/settings.py \
@@ -523,10 +535,12 @@ EXTRA_DIST = test.py \
 	concurrency/unified_locking/mutex_test.hfa \
 	concurrency/channels/parallel_harness.hfa \
 	array-collections/dimexpr-match.hfa \
-	array-collections/dimexpr-match-detail.sh \
-	array-collections/array-raii.hfa
+	array-collections/dimexpr-match.py \
+	array-collections/array-raii.hfa \
+	array-collections/cross-cu.lib.hfa
 
 array_collections_boxed_SOURCES = array-collections/boxed.main.cfa array-collections/boxed.bookend.cfa
+array_collections_cross_cu_SOURCES = array-collections/cross-cu.main.cfa array-collections/cross-cu.lib.cfa
 avl_test_SOURCES = avltree/avl_test.cfa avltree/avl0.cfa avltree/avl1.cfa avltree/avl2.cfa avltree/avl3.cfa avltree/avl4.cfa avltree/avl-private.cfa
 linkonce_SOURCES = link-once/main.cfa link-once/partner.cfa
 linking_mangling_anon_SOURCES = linking/mangling/header.hfa linking/mangling/lib.cfa linking/mangling/main.cfa
@@ -554,6 +568,18 @@ GENERATED_CODE = declarationSpecifier gccExtensions extension attributes functio
 # tests that just validate syntax and compiler output should be compared to stderr
 CFACOMPILE_SYNTAX = ${CFACOMPILETEST} -Wno-unused-variable -Wno-unused-label -c -fsyntax-only -o ${abspath ${@}}
 SYNTAX_ONLY_CODE = attr-priority warnings/self-assignment
+
+#------------------------------------------------------------------------------
+# Other targets
+
+# Array Dimension Expressions
+# runs the python harness, which invokes gcc+cfa repeatedly, all counting as "compile" time
+# its output (not an executable) is what test.py diffs
+# three runs: c runs c array; cfa runs c array; cfa runs cfa array
+# '-' => keep going on harness failure, so that all output reaches the diff
+DIMEXPR_MATCH = ${PRETTY_PATH} python3 array-collections/dimexpr-match.py --no-trace --bindir ${dir ${abspath ${@}}}
+DIMEXPR_C_CC = ${CFA_BACKEND_CC} -x c ${ARCH_FLAGS} ${WFLAGS}
+DIMEXPR_CFA_CC = ${CFACCLOCAL} ${AM_CFAFLAGS} ${WFLAGS} -quiet
 all: all-am
 
 .SUFFIXES:
@@ -610,6 +636,16 @@ array-collections/boxed.bookend.$(OBJEXT):  \
 array-collections/boxed$(EXEEXT): $(array_collections_boxed_OBJECTS) $(array_collections_boxed_DEPENDENCIES) $(EXTRA_array_collections_boxed_DEPENDENCIES) array-collections/$(am__dirstamp)
 	@rm -f array-collections/boxed$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(array_collections_boxed_OBJECTS) $(array_collections_boxed_LDADD) $(LIBS)
+array-collections/cross-cu.main.$(OBJEXT):  \
+	array-collections/$(am__dirstamp) \
+	array-collections/$(DEPDIR)/$(am__dirstamp)
+array-collections/cross-cu.lib.$(OBJEXT):  \
+	array-collections/$(am__dirstamp) \
+	array-collections/$(DEPDIR)/$(am__dirstamp)
+
+array-collections/cross-cu$(EXEEXT): $(array_collections_cross_cu_OBJECTS) $(array_collections_cross_cu_DEPENDENCIES) $(EXTRA_array_collections_cross_cu_DEPENDENCIES) array-collections/$(am__dirstamp)
+	@rm -f array-collections/cross-cu$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(array_collections_cross_cu_OBJECTS) $(array_collections_cross_cu_LDADD) $(LIBS)
 avltree/$(am__dirstamp):
 	@$(MKDIR_P) avltree
 	@: > avltree/$(am__dirstamp)
@@ -1078,14 +1114,6 @@ array-ERR3 : array.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR3
 	-cp ${test} ${abspath ${@}}
 
-array-collections/dimexpr-match-c-ERRS : array-collections/dimexpr-match-c.cfa
-	${CFACOMPILE_SYNTAX} -DERRS
-	-cp ${test} ${abspath ${@}}
-
-array-collections/dimexpr-match-cfa-ERRS : array-collections/dimexpr-match-cfa.cfa
-	${CFACOMPILE_SYNTAX} -DERRS
-	-cp ${test} ${abspath ${@}}
-
 alloc-ERROR : alloc.cfa ${CFACCBIN}
 	${CFACOMPILE_SYNTAX} -DERR1
 	-cp ${test} ${abspath ${@}}
@@ -1170,9 +1198,10 @@ linking/linkerror : linking/linkerror.cfa ${CFACCBIN}
 	${CFACOMPILETEST} -O0 -c -o ${abspath ${@}}.o
 	${CFACCLINK}  -O0 ${@}.o -o ${abspath ${@}}
 	rm ${abspath ${@}}.o
-
-#------------------------------------------------------------------------------
-# Other targets
+array-collections/dimexpr-match : array-collections/dimexpr-match.py array-collections/dimexpr-match-c.cfa array-collections/dimexpr-match-cfa.cfa array-collections/dimexpr-match.hfa ${CFACCBIN}
+	-${DIMEXPR_MATCH} --runner c   --compiler '${DIMEXPR_C_CC}'   array-collections/dimexpr-match-c.cfa   >  ${abspath ${@}} 2>&1
+	-${DIMEXPR_MATCH} --runner cfa --compiler '${DIMEXPR_CFA_CC}' array-collections/dimexpr-match-c.cfa   >> ${abspath ${@}} 2>&1
+	-${DIMEXPR_MATCH} --runner cfa --compiler '${DIMEXPR_CFA_CC}' array-collections/dimexpr-match-cfa.cfa >> ${abspath ${@}} 2>&1
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

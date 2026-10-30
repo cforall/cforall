@@ -1,0 +1,12 @@
+#include "cross-cu.lib.hfa"
+
+array( int, 99 ) & f( array( float, 42 ) & ) {
+    printf( "f\n" );
+    return *0p;
+}
+
+forall( T, [N], [M] )
+array( int, N ) & g( array( T, N ) &, array( float, M, N ) & ) {
+    printf( "g\n" );
+    return *0p;
+}

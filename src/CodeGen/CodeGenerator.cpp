@@ -137,9 +137,44 @@ void CodeGenerator::previsit( ast::ParseNode const * node ) {
 }
 
 void CodeGenerator::postvisit( ast::Node const * node ) {
-	std::stringstream ss;
-	ast::print( ss, node );
-	assertf( false, "Unhandled node reached in CodeGenerator: %s", ss.str().c_str() );
+	// When outputting to GCC, an unhandled node gives an assertion failure and its depiction goes
+	// into the message.
+	// When dumping for analysis or writing code into an error messsage, an unhandled node's
+	// depiction just joins the output.
+
+	// Either way, fall back on the bulleted English depiction (ast::print) for the unhandled node,
+	// but maintain code-gen for its children.
+	// Because the node may have many descendants, and because Printer's bulleted-English output is
+	// verbose, code-gen for the node's children keeps output readable.
+
+	// It is important to support the diagnostic cases nicely because manually inserting
+	// DUMP-exit probes, at locations not offered in the usual "-Pfooo print AST after..." points,
+	// is a great way to figure out what a given transform is doing.  Placing these probes between
+	// SUB passes can reveal node types that exist very temporarily and have not been given a
+	// pompous short form in CodeGenerator.  These node types also show up in GDB-direct
+	// invocations.  Whether finding such a case justifies writing a CodeGenerator short form for
+	// it is a different question.  Offering readable output with no crash helps enable this
+	// diagnostic activity to stay focused on the outcome that it was originally aimed at serving.
+
+	if ( options.genC ) {
+		std::stringstream ss;
+
+		// The message contains generated C that is different from what we were outputting so far.
+		// Indentation starts afresh.  It is not outputting to GCC.
+		Options subopts = options;
+		subopts.genC = false;  subopts.lineMarks = false;
+		ast::Pass<CodeGenerator> subgen( ss, subopts );
+
+		ast::continuePrint( ss, node, subgen, subgen.core.indent );
+		assertf( false, "Unhandled node reached in CodeGenerator: %s", ss.str().c_str() );
+	}
+	else {
+		output << "__cfa_codegen_unhandled__(" << endl;
+		output << ++indent;
+		ast::continuePrint( output, node, *visitor, indent );
+		output << endl;
+		output << --indent << ") ";
+	}
 }
 
 void CodeGenerator::previsit( ast::Expr const * expr ) {
@@ -1307,6 +1342,15 @@ void CodeGenerator::postvisit( ast::MutexStmt const * stmt ) {
 	assertf( !options.genC, "MutexStmt should not reach code generation." );
 	// TODO: But this isn't what a mutex statement looks like.
 	stmt->stmt->accept( *visitor );
+}
+
+void CodeGenerator::postvisit( ast::Type const * type ) {
+	// When generating for GCC, a type reaching here is an unhandled node.
+	if ( options.genC ) {
+		postvisit( (ast::Node const *)type );
+	} else {
+		output << genType( type, "", options );
+	}
 }
 
 std::string genName( ast::DeclWithType const * decl ) {

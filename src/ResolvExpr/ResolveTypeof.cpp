@@ -116,50 +116,12 @@ struct FixArrayDimension {
 	}
 };
 
-const ast::Type * fixArrayType( const ast::Type * type, const ResolveContext & context ) {
+static const ast::Type * fixArrayType( const ast::Type * type, const ResolveContext & context ) {
 	ast::Pass<FixArrayDimension> visitor(context);
 	return type->accept(visitor);
 }
 
-const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ResolveContext & context ) {
-	if ( decl->isTypeFixed ) {
-		return decl;
-	}
-
-	auto mutDecl = mutate(decl);
-	fixObjectInit(decl, context);
-	{
-		auto resolvedType = resolveTypeof(decl->type, context);
-		resolvedType = fixArrayType(resolvedType, context);
-		mutDecl->type = resolvedType;
-	}
-
-	// Do not mangle unnamed variables.
-	if ( !mutDecl->name.empty() ) {
-		mutDecl->mangleName = Mangle::mangle(mutDecl);
-	}
-
-	mutDecl->type = renameTyVars(mutDecl->type, RenameMode::GEN_EXPR_ID);
-	mutDecl->isTypeFixed = true;
-
-	auto enumInst = decl->type.as<ast::EnumInstType>();
-	if ( enumInst && !enumInst->base->is_c_enum() ) {
-		if ( auto init = decl->init.as<ast::SingleInit>() ) {
-			if ( auto initExpr = init->value.as<ast::ConstantExpr>() ) {
-				if ( initExpr->result.as<ast::ZeroType>() ) {
-					auto newInit = new ast::SingleInit( init->location,
-						ast::UntypedExpr::createCall( init->location, "lowerBound", {} )
-					);
-					mutDecl->init = newInit;
-				}
-			}
-		}
-	}
-
-	return mutDecl;
-}
-
-const ast::ObjectDecl *fixObjectInit(
+static const ast::ObjectDecl *fixObjectInit(
 		const ast::ObjectDecl *decl, const ResolveContext &context) {
 	if ( decl->isTypeFixed ) {
 		return decl;
@@ -205,6 +167,44 @@ const ast::ObjectDecl *fixObjectInit(
 		}
 	}
 	return decl;
+}
+
+const ast::ObjectDecl * fixObjectType( const ast::ObjectDecl * decl , const ResolveContext & context ) {
+	if ( decl->isTypeFixed ) {
+		return decl;
+	}
+
+	auto mutDecl = mutate(decl);
+	fixObjectInit(decl, context);
+	{
+		auto resolvedType = resolveTypeof(decl->type, context);
+		resolvedType = fixArrayType(resolvedType, context);
+		mutDecl->type = resolvedType;
+	}
+
+	// Do not mangle unnamed variables.
+	if ( !mutDecl->name.empty() ) {
+		mutDecl->mangleName = Mangle::mangle(mutDecl);
+	}
+
+	mutDecl->type = renameTyVars(mutDecl->type, RenameMode::GEN_EXPR_ID);
+	mutDecl->isTypeFixed = true;
+
+	auto enumInst = decl->type.as<ast::EnumInstType>();
+	if ( enumInst && !enumInst->base->is_c_enum() ) {
+		if ( auto init = decl->init.as<ast::SingleInit>() ) {
+			if ( auto initExpr = init->value.as<ast::ConstantExpr>() ) {
+				if ( initExpr->result.as<ast::ZeroType>() ) {
+					auto newInit = new ast::SingleInit( init->location,
+						ast::UntypedExpr::createCall( init->location, "lowerBound", {} )
+					);
+					mutDecl->init = newInit;
+				}
+			}
+		}
+	}
+
+	return mutDecl;
 }
 
 } // namespace ResolvExpr

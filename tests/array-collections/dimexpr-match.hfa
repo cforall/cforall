@@ -2,7 +2,7 @@
 
 //  Framework for the dimexpr-match tests.
 //
-//  For general test-suite maintenance instrutions, see *-detail.sh.
+//  For general test-suite maintenance instrutions, see dimexpr-match.py.
 //
 //  These tests show whether an expression of type like `float (*)[25]`
 //  can be used in a context expecting a type like `float (*)[rand()]`.
@@ -10,7 +10,8 @@
 //  A test includes this header and defines the function `runTests`.
 //  The `runTests` body is made with macros defined here.
 //
-//  Normally, drive a test either from test.py or ./dimexpr-match-detail.sh.
+//  Normally, drive a test from test.py's array-collections/dimexpr-match target, which runs ./dimexpr-match.py.
+//  You can also run ./dimexpr-match.py manually.
 //  Direct usage is for making small repro cases, while troubleshooting a problem.
 //
 //  Direct usage is:
@@ -29,7 +30,7 @@
 //  Expect the first a.out invocation to print a mix of "done" and "skipped" messages.
 //  Assume the second a.out invocation (through sed) prints several compiler CLI invocations.  For each...
 //  Expect that running the current compiler invocation reports an error.
-//  So far, this is what dimexpr-match-detail.sh does.
+//  So far, this is roughly what dimexpr-match.py does.
 //
 //  The macro logic in here is hard to read.
 //  A specific test's TRY_COMPAT definition is easy to read.
@@ -362,6 +363,16 @@ This format is: tabled function to {ACC,REJ} from {STA,DYN,UNS}^2 x {EQ,NE}
             int cmd4skip                     \
         )
 #endif
+
+#define PREAMBLE_runTests                    \
+    (void) cmd4skip;                         \
+    enum { enu7 = 7, enu42 = 42 };           \
+    int mut7 = 7, mut42 = 42;                \
+    (void) cpr7;                             \
+    (void) cpr42;                            \
+    (void) mut7;                             \
+    (void) mut42;                            \
+
 
 DECLN_runTests;
 

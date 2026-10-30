@@ -1,0 +1,92 @@
+// Compound literals of a type with constructors/destructors.
+// Baseline coverage of what works today: default storage class only, at global level and in a function.
+// Each constructor call should be matched by exactly one destructor call.
+
+#include <fstream.hfa>
+#include <string.hfa>
+
+// Scaffolding, q+d print indentation
+struct isout_t;
+static ofstream & ?|?( isout_t, const char * );
+static void ?|?( isout_t, const char * );
+struct testname_t { const char * n; testname_t * prev; };
+static testname_t testname_root @= { "NONE", 0p };
+static testname_t * testname_cur = & testname_root;
+static void ?{}( testname_t & this, const char * n ) {
+	(this.n){ n };
+	(this.prev){ testname_cur };
+	testname_cur = & this;
+}
+static void ^?{}( testname_t & this ) {
+	assert( & this == testname_cur  && this.prev );
+	testname_cur = this.prev;
+	this.prev = 0p;
+}
+#define TEST(n) testname_t __testname{ n }; SCOPE
+static unsigned int ilevel = 0;
+struct indent_t {};
+static void ?{}( indent_t & ) { ilevel += 1; }
+static void ^?{}( indent_t & ) { ilevel -= 1; }
+#define SCOPE indent_t __scope;
+static struct isout_t {} isout;
+static ofstream & ?|?( isout_t, const char * s ) {
+	return sout | wd(8, testname_cur->n) | nosep | ("  " * ilevel) | nosep | s;
+}
+static void ?|?( isout_t, const char * s ) {
+	(ofstream &) (isout | s);
+	sout | nl;
+}
+
+// Helper decls, a type whose RAII journals
+struct S { int x; };
+static void ?{}( S & this ) { this.x = -1; isout | "ctor S() -> -1"; }
+static void ?{}( S & this, int x ) { this.x = x; isout | "ctor S(" | x | ")"; }
+static void ?{}( S & this, S other ) { this.x = other.x; isout | "copy S(" | other.x | ")"; }
+static void ^?{}( S & this ) { isout | "dtor S(" | this.x | ")"; }
+
+// test_scopes: literals at top and deeper levels
+// unfortunately, its output has to wrap any other test's because of the globals
+TEST( "SCOPES" )
+S * gp = &(S){ 1 };									// address of a literal
+S g = (S){ 2 };										// initializer from a literal (copies, two objects here)
+void test_scopes() { SCOPE
+	void f() { SCOPE
+		isout | "f enter";
+		S * lp = &(S){ 3 };							// address of a literal
+		isout | "lp->x" | lp->x;
+		S l = (S){ 4 };								// initializer from a literal (copies, two objects here)
+		isout | "l.x" | l.x;
+		isout | "use" | ((S){ 5 }).x;				// literal as an rvalue
+		isout | "empty" | ((S){}).x;				// default constructor
+		{ SCOPE
+			isout | "block enter";
+			isout | "inner" | ((S){ 6 }).x;			// destructed at end of enclosing block
+			isout | "block exit";
+		}
+		isout | "f exit";
+	}
+	isout | "gp->x == " | gp->x | nosep | ", g.x == " | g.x;
+	f();
+}
+
+void test_containedStatic() { TEST( "STATICS" )
+	void f() {
+		// there once was a bug where x being static flowed onto n's compound literal
+		int * n;
+		static int x = 1000;
+		n = & (int){ 2000 };
+
+		x += 1;										// should accumulate across f calls
+		*n += 1;									// should not; absolutely nothing static about n
+
+		isout | "f:  x == " | x | nosep | ", *n == " | *n;
+	}
+	f(); f(); f();
+}
+
+int main() {
+	isout | "main enter";
+	test_scopes();
+	test_containedStatic();
+	isout | "main exit";
+}

@@ -17,17 +17,19 @@
 
 #include <ostream>
 
+/// An indentation amount (count of steps), with a printing operator that applies a fixed number of spaces-per-step.
+//  See also, "A note about Indenter, passed by reference and by value," in Print.hpp.
 struct Indenter {
-	static unsigned tabsize;  ///< default number of spaces in one level of indentation
+	static unsigned tabsize;        ///< default number of spaces in one level of indentation
 
-	unsigned int indent;      ///< number of spaces to indent
-	unsigned int amt;         ///< spaces in one level of indentation
+	unsigned int level;             ///< current level of indentation
+	const unsigned int spaces_per;  ///< spaces in one level of indentation
 
-	Indenter( unsigned int indent = 0, unsigned int amt = tabsize )
-	: indent( indent ), amt( amt ) {}
+	Indenter( unsigned int level = 0, unsigned int spaces_per = tabsize )
+	: level( level ), spaces_per( spaces_per ) {}
 
-	Indenter & operator+=(int nlevels) { indent += nlevels; return *this; }
-	Indenter & operator-=(int nlevels) { indent -= nlevels; return *this; }
+	Indenter & operator+=(int nlevels) { level += nlevels; return *this; }
+	Indenter & operator-=(int nlevels) { level -= nlevels; return *this; }
 	Indenter operator+(int nlevels) { Indenter indenter = *this; return indenter += nlevels; }
 	Indenter operator-(int nlevels) { Indenter indenter = *this; return indenter -= nlevels; }
 	Indenter & operator++() { return *this += 1; }
@@ -35,5 +37,5 @@ struct Indenter {
 };
 
 inline std::ostream & operator<<( std::ostream & out, const Indenter & indent ) {
-	return out << std::string(indent.indent * indent.amt, ' ');
+	return out << std::string(indent.level * indent.spaces_per, ' ');
 }

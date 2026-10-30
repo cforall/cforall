@@ -26,30 +26,39 @@ namespace Validate {
 namespace {
 
 struct CompoundLiteral final :
-		public ast::WithDeclsToAdd {
-	ast::Storage::Classes storageClasses;
+		public ast::WithDeclsToAdd, public ast::WithGuards,
+		public ast::WithVisitorRef<CompoundLiteral> {
 
-	void previsit( const ast::ObjectDecl * decl );
+	// Consider a declaration's storage when handling its initializer's immediate expression
+	ast::Storage::Classes declSC = 0;
+	void previsit( const ast::ObjectDecl * decl ) {     // capture
+		GuardValue(declSC) = decl->storage;
+	}
+	void previsit( const ast::Init * ) {}               // preserve
+	void previsit( const ast::Expr * ) {}               // preserve
+	void previsit( const ast::Node * ) {                // reset
+		if (declSC.any()) {
+			GuardValue(declSC) = 0;
+		}
+	}
 	const ast::Expr * postvisit( const ast::CompoundLiteralExpr * expr );
 };
-
-void CompoundLiteral::previsit( const ast::ObjectDecl * decl ) {
-	storageClasses = decl->storage;
-}
 
 const ast::Expr * CompoundLiteral::postvisit(
 		const ast::CompoundLiteralExpr * expr ) {
 	static UniqueName litName( "_compLit" );
 
-	// Transform: [storageClasses] ... (struct S){...} ...
-	// Into:      [storageClasses] struct S _compLit = {...};
-	//                             ... _compLit ...
+	// Transform: [   declSC ] ... (struct S){...} ...
+	// Into:      [tl(declSC)] struct S _compLit = {...};
+	//            [   declSC ] ... _compLit ...
+	// where tl(-) means, "add static for top-level"
+	ast::Storage::Classes topLevelAdj = isInFunction() ? 0 : ast::Storage::Static;
 	ast::ObjectDecl * temp = new ast::ObjectDecl(
 		expr->location,
 		litName.newName(),
 		expr->result,
 		expr->init,
-		storageClasses
+		declSC | topLevelAdj
 		);
 	// FIXME: A resolution of #280 could make the unused attribute unnecessary here
 	//     (let test nowarn/unused decide)

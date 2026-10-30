@@ -1,0 +1,33 @@
+  SCOPES  ctor S(1)
+  SCOPES  ctor S(2)
+  SCOPES  copy S(2)
+  SCOPES  main enter
+  SCOPES    gp->x == 1, g.x == 2
+  SCOPES      f enter
+  SCOPES      ctor S(3)
+  SCOPES      lp->x 3
+  SCOPES      ctor S(4)
+  SCOPES      copy S(4)
+  SCOPES      l.x 4
+  SCOPES      ctor S(5)
+  SCOPES      use 5
+  SCOPES      ctor S() -> -1
+  SCOPES      empty -1
+  SCOPES        block enter
+  SCOPES        ctor S(6)
+  SCOPES        inner 6
+  SCOPES        block exit
+  SCOPES        dtor S(6)
+  SCOPES      f exit
+  SCOPES      dtor S(-1)
+  SCOPES      dtor S(5)
+  SCOPES      dtor S(4)
+  SCOPES      dtor S(4)
+  SCOPES      dtor S(3)
+ STATICS    f:  x == 1001, *n == 2001
+ STATICS    f:  x == 1002, *n == 2001
+ STATICS    f:  x == 1003, *n == 2001
+  SCOPES  main exit
+  SCOPES  dtor S(2)
+  SCOPES  dtor S(2)
+  SCOPES  dtor S(1)

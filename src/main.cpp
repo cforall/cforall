@@ -241,10 +241,10 @@ int main( int argc, char * argv[] ) {
 		// 	return EXIT_SUCCESS;
 		// } // if
 
-		if ( expranlp ) {
-			ResolvExpr::printCandidates( transUnit );
-			return EXIT_SUCCESS;
-		} // if
+		// if ( expraltp ) {
+		// 	ResolvExpr::printCandidates( transUnit );
+		// 	return EXIT_SUCCESS;
+		// } // if
 
 		DUMP( valideclp, transUnit );
 
@@ -427,8 +427,8 @@ static struct Printopts {
 	{ "ast", astp, true, "print AST after parsing" },
 	{ "excpdecl", excpdeclp, true, "print AST after translating exception decls" },
 	// These flags are currently disconnected from whatever they did in the past.
-	// { "symevt", symevtp, true, "print AST after symbol table events" },
-	// { "expralt", expraltp, true, "print AST after expressions alternatives" },
+	// { "symevt", symevtp, true, "print symbol table events during declaration validation pass" },
+	// { "expralt", expraltp, true, "print all alternatives for all expressions after declaration validation pass" },
 	{ "validecl", valideclp, true, "print AST after declaration validation pass" },
 	{ "bresolver", bresolverp, true, "print AST before resolver step" },
 	{ "expranl", expranlp, true, "print AST after expression analysis" },

@@ -64,10 +64,14 @@ void print( ostream & os, const bits_t & bits,
 class Printer final : public Visitor {
 public:
 	ostream & os;
-	Indenter indent;
+	Indenter & indent;
 	bool short_mode;
+	Visitor & cont;  // continuation: when this, printing is deep; otherwise, receives callbacks during shallow printing
 
-	Printer(ostream & os, Indenter indent, bool short_mode) : os( os ), indent( indent ), short_mode(short_mode) {}
+	Printer(ostream & os, Indenter & indent, bool short_mode, Visitor & cont)
+		: os(os), indent(indent), short_mode(short_mode), cont(cont) {}
+	Printer(ostream & os, Indenter & indent, bool short_mode)
+		: Printer( os, indent, short_mode, *this) {}
 
 private:
 	template< typename C >
@@ -75,7 +79,7 @@ private:
 		for ( const auto & i : c ) {
 			if ( i ) {
 				os << indent;
-				i->accept( *this );
+				i->accept( cont );
 				// need an endl after each element because it's not
 				// easy to know when each individual item should end
 				os << endl;
@@ -90,7 +94,7 @@ private:
 
 	/// call for fields that should be mandatory
 	void safe_print( const ast::Node * n ) {
-		if ( n ) n->accept( *this );
+		if ( n ) n->accept( cont );
 		else undefined();
 	}
 
@@ -98,7 +102,7 @@ private:
 	void short_print( const ast::Decl * n ) {
 		if ( ! n ) { undefined(); return; }
 		bool old_short = short_mode; short_mode = true;
-		n->accept( *this );
+		n->accept( cont );
 		short_mode = old_short;
 	}
 
@@ -177,7 +181,7 @@ private:
 			os << endl << indent << "... with base type" << endl;
 			++indent;
 			os << indent;
-			ptrToEnum->base->accept( *this );
+			ptrToEnum->base->accept( cont );
 			--indent;
 		}
 
@@ -212,26 +216,26 @@ private:
 	void print( const ast::WaitStmt * node ) {
 		if ( node->timeout_time ) {
 			os << indent-1 << "timeout of:" << endl;
-			node->timeout_time->accept( *this );
+			node->timeout_time->accept( cont );
 
 			if ( node->timeout_stmt ) {
 				os << indent-1 << "... with statment:" << endl;
-				node->timeout_stmt->accept( *this );
+				node->timeout_stmt->accept( cont );
 			}
 
 			if ( node->timeout_cond ) {
 				os << indent-1 << "... with condition:" << endl;
-				node->timeout_cond->accept( *this );
+				node->timeout_cond->accept( cont );
 			}
 		}
 
 		if ( node->else_stmt ) {
 			os << indent-1 << "else:" << endl;
-			node->else_stmt->accept( *this );
+			node->else_stmt->accept( cont );
 
 			if ( node->else_cond ) {
 				os << indent-1 << "... with condition:" << endl;
-				node->else_cond->accept( *this );
+				node->else_cond->accept( cont );
 			}
 		}
 	}
@@ -251,7 +255,7 @@ private:
 		if ( node->base ) {
 			os << " for ";
 			++indent;
-			node->base->accept( *this );
+			node->base->accept( cont );
 			--indent;
 		}
 
@@ -270,14 +274,14 @@ private:
 			os << endl << indent << "... with resolved type:" << endl;
 			++indent;
 			os << indent;
-			node->result->accept( *this );
+			node->result->accept( cont );
 			--indent;
 		}
 
 		if ( node->env ) {
 			os << endl << indent << "... with environment:" << endl;
 			++indent;
-			node->env->accept( *this );
+			node->env->accept( cont );
 			--indent;
 		}
 
@@ -312,7 +316,7 @@ public:
 		ast::print( os, node->storage );
 
 		if ( node->type ) {
-			node->type->accept( *this );
+			node->type->accept( cont );
 		} else {
 			os << "untyped entity";
 		}
@@ -324,7 +328,7 @@ public:
 					? "maybe constructed"
 					: "not constructed"
 				) << ")" << endl << indent;
-			node->init->accept( *this );
+			node->init->accept( cont );
 			--indent;
 			os << endl;
 		}
@@ -338,7 +342,7 @@ public:
 
 		if ( node->bitfieldWidth ) {
 			os << indent << " with bitfield width ";
-			node->bitfieldWidth->accept( *this );
+			node->bitfieldWidth->accept( cont );
 		}
 
 		return node;
@@ -357,7 +361,7 @@ public:
 		ast::print( os, node->funcSpec );
 
 		if ( node->type && node->isTypeFixed ) {
-			node->type->accept( *this );
+			node->type->accept( cont );
 		} else {
 			if (!node->type_params.empty()) {
 				os << "forall" << endl;
@@ -410,7 +414,7 @@ public:
 		if ( ! short_mode && node->stmts ) {
 			++indent;
 			os << " with body" << endl << indent;
-			node->stmts->accept( *this );
+			node->stmts->accept( cont );
 			--indent;
 		}
 
@@ -449,7 +453,7 @@ public:
 		if ( ! short_mode && node->init ) {
 			os << endl << indent << "with type initializer: ";
 			++indent;
-			node->init->accept( *this );
+			node->init->accept( cont );
 			--indent;
 		}
 
@@ -554,7 +558,7 @@ public:
 			os << indent << "... else:" << endl;
 			++indent;
 			os << indent;
-			node->else_->accept( *this );
+			node->else_->accept( cont );
 			--indent;
 		} // if
 		return node;
@@ -577,7 +581,7 @@ public:
 		if ( node->else_ ) {
 			os << indent-1 << "... with else:" << endl;
 			os << indent;
-			node->else_->accept( *this );
+			node->else_->accept( cont );
 		}
 
 		--indent;
@@ -602,7 +606,7 @@ public:
 			os << indent << "... condition:" << endl;
 			++indent;
 			os << indent;
-			node->cond->accept( *this );
+			node->cond->accept( cont );
 			--indent;
 		}
 
@@ -610,7 +614,7 @@ public:
 			os << indent << "... increment:" << endl;
 			++indent;
 			os << indent;
-			node->inc->accept( *this );
+			node->inc->accept( cont );
 			--indent;
 		}
 
@@ -618,7 +622,7 @@ public:
 			os << indent << "... with body:" << endl;
 			++indent;
 			os << indent;
-			node->body->accept( *this );
+			node->body->accept( cont );
 			--indent;
 		}
 
@@ -626,7 +630,7 @@ public:
 			os << indent << "... with else:" << endl;
 			++indent;
 			os << indent;
-			node->else_->accept( *this );
+			node->else_->accept( cont );
 			--indent;
 		}
 
@@ -658,7 +662,7 @@ public:
 		if ( !node->range ) {
 			os << indent << "... over range:" << endl;
 			++indent;
-			node->range->accept( *this );
+			node->range->accept( cont );
 			--indent;
 		}
 
@@ -666,7 +670,7 @@ public:
 			os << indent << "... with body:" << endl;
 			++indent;
 			os << indent;
-			node->body->accept( *this );
+			node->body->accept( cont );
 			--indent;
 		}
 
@@ -674,7 +678,7 @@ public:
 			os << indent << "... with else:" << endl;
 			++indent;
 			os << indent;
-			node->else_->accept( *this );
+			node->else_->accept( cont );
 			--indent;
 		}
 
@@ -691,7 +695,7 @@ public:
 
 		++indent;
 		for ( const ast::CaseClause * stmt : node->cases ) {
-			stmt->accept( *this );
+			stmt->accept( cont );
 		}
 		--indent;
 
@@ -710,7 +714,7 @@ public:
 		++indent;
 		for ( const ast::Stmt * stmt : node->stmts ) {
 			os << indent;
-			stmt->accept( *this );
+			stmt->accept( cont );
 		}
 		--indent;
 
@@ -730,7 +734,7 @@ public:
 
 		if ( node->computedTarget ) {
 			os << indent << "with computed target: ";
-			node->computedTarget->accept( *this );
+			node->computedTarget->accept( cont );
 			os << endl;
 		}
 		--indent;
@@ -743,7 +747,7 @@ public:
 		if ( node->expr ) {
 			++indent;
 			os << ":" << endl << indent;
-			node->expr->accept( *this );
+			node->expr->accept( cont );
 			--indent;
 		} else {
 			os << " void";
@@ -766,7 +770,7 @@ public:
 		safe_print( node->expr );
 		if ( node->target ) {
 			os << "... at: ";
-			node->target->accept( *this );
+			node->target->accept( cont );
 		}
 		--indent;
 
@@ -782,12 +786,12 @@ public:
 		os << indent-1 << "... and handlers:" << endl;
 		for ( const ast::CatchClause * stmt : node->handlers ) {
 			os << indent;
-			stmt->accept( *this );
+			stmt->accept( cont );
 		}
 
 		if ( node->finally ) {
 			os << indent-1 << "... and finally:" << endl << indent;
-			node->finally->accept( *this );
+			node->finally->accept( cont );
 		}
 		--indent;
 
@@ -809,7 +813,7 @@ public:
 
 		if ( node->cond ) {
 			os << indent-1 << "... with conditional:" << endl << indent;
-			node->cond->accept( *this );
+			node->cond->accept( cont );
 		}
 
 		os << indent-1 << "... with block:" << endl << indent;
@@ -855,12 +859,12 @@ public:
 
 		if ( node->stmt ) {
 			os << indent-1 << "... with statment:" << endl;
-			node->stmt->accept( *this );
+			node->stmt->accept( cont );
 		}
 
 		if ( node->when_cond ) {
 			os << indent-1 << "... with when condition:" << endl;
-			node->when_cond->accept( *this );
+			node->when_cond->accept( cont );
 		}
 
 		return node;
@@ -870,31 +874,31 @@ public:
 		os << "Waitfor Statement" << endl;
 		indent += 2;
 		for( const auto & clause : node->clauses ) {
-			clause->accept( *this );
+			clause->accept( cont );
 		}
 
 		if ( node->timeout_time ) {
 			os << indent-1 << "timeout of:" << endl;
-			node->timeout_time->accept( *this );
+			node->timeout_time->accept( cont );
 
 			if ( node->timeout_stmt ) {
 				os << indent-1 << "... with statment:" << endl;
-				node->timeout_stmt->accept( *this );
+				node->timeout_stmt->accept( cont );
 			}
 
 			if ( node->timeout_cond ) {
 				os << indent-1 << "... with condition:" << endl;
-				node->timeout_cond->accept( *this );
+				node->timeout_cond->accept( cont );
 			}
 		}
 
 		if ( node->else_stmt ) {
 			os << indent-1 << "else:" << endl;
-			node->else_stmt->accept( *this );
+			node->else_stmt->accept( cont );
 
 			if ( node->else_cond ) {
 				os << indent-1 << "... with condition:" << endl;
-				node->else_cond->accept( *this );
+				node->else_cond->accept( cont );
 			}
 		}
 
@@ -908,18 +912,18 @@ public:
 		if ( !node->target_args.empty() ) {
 			os << endl << indent-1 << "... with arguments:" << endl;
 			for( const ast::Expr * arg : node->target_args ) {
-				arg->accept( *this );
+				arg->accept( cont );
 			}
 		}
 
 		if ( node->stmt ) {
 			os << indent-1 << "... with statment:" << endl;
-			node->stmt->accept( *this );
+			node->stmt->accept( cont );
 		}
 
 		if ( node->when_cond ) {
 			os << indent-1 << "... with condition:" << endl;
-			node->when_cond->accept( *this );
+			node->when_cond->accept( cont );
 		}
 
 		return node;
@@ -929,7 +933,7 @@ public:
 		os << "Waituntil Statement" << endl;
 		indent += 2;
 		for( const auto & clause : node->clauses ) {
-			clause->accept( *this );
+			clause->accept( cont );
 		}
 		// calls print( const ast::WaitStmt * node )
 		print(node);
@@ -1016,7 +1020,7 @@ public:
 			os << indent << "... condition:" << endl;
 			++indent;
 			os << indent;
-			node->cond->accept( *this );
+			node->cond->accept( cont );
 			--indent;
 		}
 
@@ -1024,7 +1028,7 @@ public:
 			os << indent << "... increment:" << endl;
 			++indent;
 			os << indent;
-			node->inc->accept( *this );
+			node->inc->accept( cont );
 			--indent;
 		}
 
@@ -1032,7 +1036,7 @@ public:
 			os << indent << "... with body:" << endl;
 			++indent;
 			os << indent;
-			node->body->accept( *this );
+			node->body->accept( cont );
 			--indent;
 		}
 		os << endl;
@@ -1116,7 +1120,7 @@ public:
 			os << " nothing";
 		} else {
 			os << endl << indent;
-			node->result->accept( *this );
+			node->result->accept( cont );
 		} // if
 		--indent;
 		postprint( node );
@@ -1144,7 +1148,7 @@ public:
 			os << " unknown";
 		} else {
 			os << endl << indent;
-			node->result->accept( *this );
+			node->result->accept( cont );
 		}
 		--indent;
 		postprint( node );
@@ -1188,7 +1192,7 @@ public:
 		os << "Constant Expression (" << node->rep;
 		if ( node->result ) {
 			os << ": ";
-			node->result->accept( *this );
+			node->result->accept( cont );
 		}
 		os << ")";
 		postprint( node );
@@ -1199,7 +1203,7 @@ public:
 	virtual const ast::Expr * visit( const ast::SizeofExpr * node ) override final {
 		os << "Sizeof Expression on: ";
 		++indent;
-		node->type->accept( *this );
+		node->type->accept( cont );
 		--indent;
 		postprint( node );
 
@@ -1218,7 +1222,7 @@ public:
 	virtual const ast::Expr * visit( const ast::AlignofExpr * node ) override final {
 		os << "Alignof Expression on: ";
 		++indent;
-		node->type->accept( *this );
+		node->type->accept( cont );
 		--indent;
 		postprint( node );
 
@@ -1309,8 +1313,8 @@ public:
 		os << "Asm Expression:" << endl;
 		++indent;
 		if ( !node->inout.empty() ) os << "[" << node->inout << "] ";
-		if ( node->constraint ) node->constraint->accept( *this );
-		if ( node->operand ) node->operand->accept( *this );
+		if ( node->constraint ) node->constraint->accept( cont );
+		if ( node->operand ) node->operand->accept( cont );
 		--indent;
 
 		return node;
@@ -1481,7 +1485,7 @@ public:
 			os << indent;
 			if ( assoc.type ) {
 				os << "... type: ";
-				assoc.type->accept( *this );
+				assoc.type->accept( cont );
 				os << endl << indent << "... expression: ";
 				safe_print( assoc.expr );
 			} else {
@@ -1530,7 +1534,7 @@ public:
 
 			if ( node->dimension ) {
 				os << " with dimension of ";
-				node->dimension->accept( *this );
+				node->dimension->accept( cont );
 			}
 		}
 
@@ -1555,7 +1559,7 @@ public:
 
 		if ( node->dimension ) {
 			os << " with dimension of ";
-			node->dimension->accept( *this );
+			node->dimension->accept( cont );
 		}
 
 		return node;
@@ -1719,7 +1723,7 @@ public:
 		++indent;
 		for ( const ast::Expr * d : node->designators ) {
 			os << indent;
-			d->accept( *this );
+			d->accept( cont );
 			os << endl;
 		}
 		--indent;
@@ -1739,11 +1743,11 @@ public:
 			const ast::Designation * d = std::get<0>(p);
 			const ast::Init * init = std::get<1>(p);
 			os << indent;
-			init->accept( *this );
+			init->accept( cont );
 			os << endl;
 			if ( ! d->designators.empty() ) {
 				os << indent;
-				d->accept( *this );
+				d->accept( cont );
 			}
 		}
 		--indent;
@@ -1755,21 +1759,21 @@ public:
 		if ( node->ctor ) {
 			os << indent << "... initially constructed with ";
 			++indent;
-			node->ctor->accept( *this );
+			node->ctor->accept( cont );
 			--indent;
 		}
 
 		if ( node->dtor ) {
 			os << indent << "... destructed with ";
 			++indent;
-			node->dtor->accept( *this );
+			node->dtor->accept( cont );
 			--indent;
 		}
 
 		if ( node->init ) {
 			os << indent << "... with fallback C-style initializer: ";
 			++indent;
-			node->init->accept( *this );
+			node->init->accept( cont );
 			--indent;
 		}
 		return node;
@@ -1809,6 +1813,11 @@ void print( ostream & os, const ast::Node * node, Indenter indent ) {
 
 void printShort( ostream & os, const ast::Decl * node, Indenter indent ) {
 	Printer printer { os, indent, true };
+	node->accept(printer);
+}
+
+void continuePrint( std::ostream & os, const ast::Node * node, ast::Visitor & cont, Indenter & indent ) {
+	Printer printer { os, indent, false, cont };
 	node->accept(printer);
 }
 
